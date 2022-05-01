@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import arrow
+# import arrow
 import asyncio
 import aiohttp
 import aiofile
@@ -20,8 +20,9 @@ from icecream import ic
 from pathlib import Path
 # from prettytable import PrettyTable
 # from requests_cache import CachedSession
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+from slack import *
+# from slack_sdk import WebClient
+# from slack_sdk.errors import SlackApiError
 
 ## verbose icecream
 ic.configureOutput(includeContext=True)
@@ -45,16 +46,9 @@ env =  Path('.env')
 
 # creds
 if env.exists():
-    SLACK_BOT_TOKEN = config('SLACK_BOT_TOKEN')
-    SLACK_USER_TOKEN = config('SLACK_USER_TOKEN')
     PORT = config('PORT', default=3000, cast=int)
 else:
-    SLACK_BOT_TOKEN = os.getenv('SLACK_BOT_TOKEN')
-    SLACK_USER_TOKEN = os.getenv('SLACK_USER_TOKEN')
     PORT = os.getenv('PORT', default=3000, cast=int)
-
-base_url = "https://slack.com/api/"
-emoji_url = base_url + "emoji.list"                 # standard permissions
 
 
 """
@@ -88,7 +82,7 @@ async def root():
     return {"message": "Hello World"}
 
 @api_router.get("/emoji")
-def get_emoji_list(url=emoji_url):
+def get_emoji_list(url=endpoint):
     """
     Get the list of emoji from the Slack API.
 
@@ -97,9 +91,9 @@ def get_emoji_list(url=emoji_url):
     https://slack.com/api/admin.emoji.list
     """
 
-    if url == emoji_url:
+    if url == endpoint:
         headers = {
-            'Authorization': f'Bearer {SLACK_BOT_TOKEN}',
+            'Authorization': f'Bearer {BOT_USER_TOKEN}',
         }
 
     response = requests.get(url, headers=headers)
@@ -108,7 +102,7 @@ def get_emoji_list(url=emoji_url):
 
 
 @api_router.get("/export/csv")
-def export_emoji_list(url=emoji_url):
+def export_emoji_list(url=endpoint):
     """
     Export the list of emoji to a CSV file.
 
@@ -147,7 +141,7 @@ def export_emoji_list(url=emoji_url):
 
 
 @api_router.get("/export/images")
-def download_emoji_images(url=emoji_url):
+def download_emoji_images(url=endpoint):
     """
     Download the list of emoji images to a directory.
 
@@ -216,7 +210,6 @@ def download_emoji_images(url=emoji_url):
         print(f"Downloading image: {emoji}")
         asyncio.run(download_image(emoji, file_name))
 
-    # TODO: compress images directory and download
     return {"message": f"Downloaded {delta} images"}
 
 
@@ -228,22 +221,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
-
-
-# TODO: remove if not needed (`requests` fills the void aside from posting messages)
-# msg = r"""
-# @user
-# """
-
-# client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
-# api_response = client.api_test()
-
-# try:
-#     # response = client.chat_postMessage(channel='#hello_dave', text=msg)
-#     # assert response["message"]["text"] == f"{msg}"
-#     emoji_list = client.emoji_list
-# except SlackApiError as e:
-#     # You will get a SlackApiError if "ok" is False
-#     assert e.response["ok"] is False
-#     assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-#     print(f"Got an error: {e.response['error']}")

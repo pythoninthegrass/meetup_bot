@@ -15,13 +15,17 @@ cwd = Path.cwd()
 if env.exists():
     BOT_USER_TOKEN = config('BOT_USER_TOKEN')
     SLACK_WEBHOOK = config('SLACK_WEBHOOK')
+    ENDPOINT = config('ENDPOINT')
     CHANNEL = config('CHANNEL')
 else:
     BOT_USER_TOKEN = os.getenv('BOT_USER_TOKEN')
     SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK')
+    ENDPOINT = os.getenv('ENDPOINT')
     CHANNEL = os.getenv('CHANNEL')
 
 webhook_url = SLACK_WEBHOOK
+base_url = "https://slack.com/api/"
+endpoint = base_url + ENDPOINT
 
 
 def send_message(message):
