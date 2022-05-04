@@ -6,7 +6,7 @@ authors = ["pythoninthegrass <4097471+pythoninthegrass@users.noreply.github.com>
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10.4"
+python = "^3.10"
 aiohttp = "^3.8.1"
 arrow = "^1.2.2"
 bs4 = "^0.0.1"
