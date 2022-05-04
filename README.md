@@ -7,8 +7,8 @@ Use Meetup Pro API to send Slack messages before events occur.
 * Fix Slack POST to mirror curl command (latter's working)
   * Integrate or abandon `knockknock` vs. `requests`
 * GraphQL + Meetup Pro API
-  * `strawberry` [library](https://strawberry.rocks/)
-    * May just be a _server_ and not a _client_ for GraphQL
+  * ~~`strawberry` [library](https://strawberry.rocks/)~~
+    * ~~May~~ *is* just be a _server_ and not a _client_ for GraphQL 👈
   * `requests`
     * GET equivalent for Techlahoma user groups
 * Third-party Meetup lookup
