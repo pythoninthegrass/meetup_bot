@@ -1,33 +1,22 @@
 #!/usr/bin/env python3
 
 import json
-import os
 import requests
-from decouple import config
+# import requests_cache
+# from decouple import config
+from gen_token import main as gen_token
+from icecream import ic
 from pathlib import Path
+from pprint import pprint
 
-# env
-home = Path.home()
-env = Path('.env')
-cwd = Path.cwd()
+# verbose icecream
+ic.configureOutput(includeContext=True)
 
-# creds
-if env.exists():
-    MEETUP_KEY = config('MEETUP_KEY')
-    MEETUP_SECRET = config('MEETUP_SECRET')
-    REDIRECT_URI = config('REDIRECT_URI')
-else:
-    MEETUP_KEY = os.getenv('MEETUP_KEY')
-    MEETUP_SECRET = os.getenv('MEETUP_SECRET')
-    REDIRECT_URI = os.getenv('REDIRECT_URI')
+# cache the requests as script basename
+# requests_cache.install_cache(Path(__file__).stem)
 
-auth_url = f"https://secure.meetup.com/oauth2/authorize?client_id={MEETUP_KEY}&response_type=code&redirect_uri={REDIRECT_URI}"
-token_url = f"https://secure.meetup.com/oauth2/access"
-
-endpoint = f"https://graphql.contentful.com/content/v1/spaces/{spaceID}"
-headers = {"Authorization": f"Bearer {accessToken}"}
-
-query = """query {
+query = """
+query {
   showCollection{
     items {
       title
@@ -38,10 +27,27 @@ query = """query {
       }
     }
   }
-}"""
+}
+"""
+vars = '{ "id": "364335959210266624" }'
+endpoint = 'https://api.meetup.com/gql'
+headers = {
+    'Authorization': 'Bearer {}'.format(gen_token()),
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+}
 
-r = requests.post(endpoint, json={"query": query}, headers=headers)
+r = requests.post(
+    endpoint,
+    json={"query": query, "variables": vars},
+    headers=headers
+)
+
 if r.status_code == 200:
     print(json.dumps(r.json(), indent=2))
 else:
-    raise Exception(f"Query failed to run with a {r.status_code}.")
+    # format the error message
+    formatted_error = '{}:\n\n{}'.format(r.status_code, r.json()['errors'][0]['message'])
+    raise Exception(
+        f"Query failed to run returning status code {formatted_error}"
+    )
