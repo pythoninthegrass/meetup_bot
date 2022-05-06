@@ -9,7 +9,7 @@ import requests_cache
 from decouple import config
 from icecream import ic
 from pathlib import Path
-from playwright.sync_api import Playwright, sync_playwright, expect
+from playwright.sync_api import Playwright, sync_playwright
 
 # TODO: switch to `meetup-client` and `meetup-token-manager`
 
@@ -97,12 +97,8 @@ def run(playwright: Playwright) -> None:
     with page.expect_navigation():
         page.locator("[data-testid=\"submit\"]").click()
 
-    # https://acme.com/?code=abc123
     global CODE
     CODE = page.url.split("code=")[1]
-
-    # wait for 60 seconds
-    # page.wait_for_timeout(60000)
 
     context.close()
     browser.close()
