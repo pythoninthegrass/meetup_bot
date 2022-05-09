@@ -7,11 +7,11 @@ import os
 import requests
 # import requests_cache
 import webbrowser
+from authlib.integrations.requests_client import OAuth2Session
 from decouple import config
 from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
-from requests_oauthlib import OAuth2Session
 from urllib.parse import urlencode
 
 # verbose icecream
@@ -42,6 +42,22 @@ else:
     TOKEN_URL = os.getenv('TOKEN_URL')
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
+
+
+# TODO: replace `get_token_info` with authlib + httpbin instead of playwright
+authorization_endpoint = AUTH_BASE_URL
+client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
+uri, state = client.create_authorization_url(authorization_endpoint, response_type='token')
+print(uri)
+
+# manually log into meetup.com
+webbrowser.open(uri)
+
+# copy full url from browser after logging in
+auth_response = input('Paste the URL returned by the callback: ')
+
+token = client.fetch_token(authorization_response=auth_response)
+print(token)
 
 
 def get_token_info(client_id, client_secret, redirect_uri, code):
@@ -94,6 +110,7 @@ def main():
     with sync_playwright() as playwright:
         run(playwright)
 
+    # TODO: replace `get_token_info` with authlib ^^
     info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
 
     print("***** access_token *****")
