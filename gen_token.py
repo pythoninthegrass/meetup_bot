@@ -5,19 +5,20 @@
 import json
 import os
 import requests
-import requests_cache
+# import requests_cache
+import webbrowser
 from decouple import config
 from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
-
-# TODO: switch to `meetup-client` and `meetup-token-manager`
+from requests_oauthlib import OAuth2Session
+from urllib.parse import urlencode
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
 
 # cache the requests as script basename
-requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
+# requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
 
 # env
 home = Path.home()
@@ -26,68 +27,51 @@ cwd = Path.cwd()
 
 # creds
 if env.exists():
-    CLIENT_KEY = config('CLIENT_KEY')
+    CLIENT_ID = config('CLIENT_ID')
     CLIENT_SECRET = config('CLIENT_SECRET')
     REDIRECT_URI = config('REDIRECT_URI')
+    AUTH_BASE_URL = config('AUTH_BASE_URL')
+    TOKEN_URL = config('TOKEN_URL')
     MEETUP_EMAIL = config('MEETUP_EMAIL')
     MEETUP_PASS = config('MEETUP_PASS')
 else:
-    CLIENT_KEY = os.getenv('CLIENT_KEY')
+    CLIENT_ID = os.getenv('CLIENT_ID')
     CLIENT_SECRET = os.getenv('CLIENT_SECRET')
     REDIRECT_URI = os.getenv('REDIRECT_URI')
+    AUTH_BASE_URL = os.getenv('AUTH_BASE_URL')
+    TOKEN_URL = os.getenv('TOKEN_URL')
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
 
-OAUTH_AUTHORIZE_URL = "https://secure.meetup.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code"
-OAUTH2_TOKEN_URL = 'https://secure.meetup.com/oauth2/access?client_id={}&client_secret={}&redirect_uri={}&code={}&grant_type=authorization_code'
-
 
 def get_token_info(client_id, client_secret, redirect_uri, code):
-    access_uri = OAUTH2_TOKEN_URL.format(client_id, client_secret, redirect_uri.strip("\""), code)
+    endpoint = TOKEN_URL
+    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': 'authorization_code'})
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
     }
-    r = requests.post(access_uri, headers=headers)
+    r = requests.post(endpoint, headers=headers)
     r_json = r.json()
 
     return r_json
 
 
 # TODO: setup httpbin/ngrok/tolocalhost.com
-def gen_url():
-    """
-    This script assists the user to generate an OAuth2 token to access the
-    meetup API. It requires the package requests.
-    An example of execution is provided below:
-
-    Enter your consumer key: 5eeqs...
-    Redirect URI (between quotes): "https://example.com/test"
-    https://secure.meetup.com/oauth2/authorize?client_id=5eeqs4f5h...&redirect_uri=https://example.com/test&response_type=code
-    Access the URL below, authorize the application, and get the code that appears on the URL
-    Enter the code: d33fd...
-    Enter your consumer secret: 1o39i...
-    ***** token *****
-    {
-        "access_token": "67bd7...",
-        "expires_in": 3600,
-        "refresh_token": "c6e13...",
-        "token_type": "bearer"
-    }
-    """
-    global url
-    url = OAUTH_AUTHORIZE_URL.format(CLIENT_KEY, REDIRECT_URI.strip("\""))
-
-    return url
-
-
 def run(playwright: Playwright) -> None:
-    gen_url()
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": 'code'
+    }
+    endpoint = AUTH_BASE_URL
+    endpoint = endpoint + '?' + urlencode(params)
+    # webbrowser.open(endpoint)
 
     browser = playwright.chromium.launch(headless=True)
     context = browser.new_context()
     page = context.new_page()
-    page.goto(url)
+    page.goto(endpoint)
 
     page.locator("[data-testid=\"email\"]").click()
     page.locator("[data-testid=\"email\"]").fill(MEETUP_EMAIL)
@@ -110,14 +94,13 @@ def main():
     with sync_playwright() as playwright:
         run(playwright)
 
-    # CODE = input('Enter the code: ')
-    info = get_token_info(CLIENT_KEY, CLIENT_SECRET, REDIRECT_URI, CODE)
+    info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
 
     print("***** access_token *****")
     print(json.dumps(info, sort_keys=True, indent=4))
 
-    # extract access_token
-    return info['access_token']
+    # extract access_token and refresh_token
+    return info['access_token'], info['refresh_token']
 
 
 if __name__ == "__main__":
