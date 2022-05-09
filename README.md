@@ -18,9 +18,19 @@ Use Meetup Pro API to send Slack messages before events occur.
   * May be able to do away with Playwright re: manual authorization via creds 
 * Format GraphQL output
 * POST formatted messages to Slack channels `#okc-metro` && `#events`
+* Docker/Docker-Compose
+  * Mitigates pain of Poetry virtual environments
+  * Can migrate to prod VPS and/or k8s 
 * Schedule event posts in ___ channels
-  * 3 days before
-  * 2 hours before
+  * Methods
+    * launchd
+    * cron
+    * k8s cron
+    * jupyter
+    * aws lambda
+  * Time Frame 
+    * 3 days before
+    * 2 hours before
 
 ## Stretch Goals
 * Slash commands to manually call:
