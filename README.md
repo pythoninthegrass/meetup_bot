@@ -4,19 +4,22 @@
 Use Meetup Pro API to send Slack messages before events occur.
 
 ## TODO
-* Fix Slack POST to mirror curl command (latter's working)
-  * Integrate or abandon `knockknock` vs. `requests`
+* ~~Fix Slack POST to mirror curl command (latter's working)~~ ✔️
+  * ~~Integrate or abandon `knockknock` vs. `requests`~~ [**EDIT**: went the requests route] ✔️
 * GraphQL + Meetup Pro API
-  * ~~`strawberry` [library](https://strawberry.rocks/)~~
-    * ~~May~~ *is* just be a _server_ and not a _client_ for GraphQL 👈
   * `requests`
-    * GET equivalent for Techlahoma user groups
+    * GET equivalent for Techlahoma user groups ✔️
 * Third-party Meetup lookup
   * If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events
-* Find out Kimberly's manual process
-* Slash commands to manually call:
-  * Next `n` events
-  * This week's events
+* ~~Find out Kimberly's manual process~~ ✔️
+* Format GraphQL output
+* POST formatted messages to Slack channels `#okc-metro` && `#events`
 * Schedule event posts in ___ channels
   * 3 days before
   * 2 hours before
+
+## Stretch Goals
+* Slash commands to manually call:
+  * Next `n` events
+  * This week's events
+  * Create new events
