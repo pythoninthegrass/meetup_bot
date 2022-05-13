@@ -12,9 +12,10 @@ Use Meetup Pro API to send Slack messages before events occur.
 * Third-party Meetup lookup
   * If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events
 * ~~Find out Kimberly's manual process~~ ✔️
-* Refactor token/refresh generation with `authlib`
-* Redirect to httpbin
-  * Pending additional OAuth client (5/9/2022)
+* ~~Refactor token/refresh generation with `authlib`~~
+  * ~~Add redis caching~~
+* ~~Redirect to httpbin~~
+  * ~~Pending additional OAuth client (5/9/2022)~~
   * May be able to do away with Playwright re: manual authorization via creds 
 * Format GraphQL output
 * POST formatted messages to Slack channels `#okc-metro` && `#events`
