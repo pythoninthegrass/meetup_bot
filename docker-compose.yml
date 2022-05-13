@@ -1,11 +1,41 @@
-version: "3.7"
+version: "3.9"
 
 services:
-  app:
-    container_name: hello
-    image: docker_python
-    tty: true               # remove for `entrypoint` in Dockerfile
-    stdin_open: true        # remove for `entrypoint` in Dockerfile
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+  # meetupbot:
+  #   container_name: meetupbot
+  #   image: meetup_bot
+  #   tty: true               # remove for `entrypoint` in Dockerfile
+  #   stdin_open: true        # remove for `entrypoint` in Dockerfile
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile
+
+  redis:
+    container_name: redis-cont
+    image: "redis:alpine"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASS}
+      - REDIS_REPLICATION_MODE=master
+    ports:
+      - "6379:6379"
+    volumes:
+      # save redisearch data to your current working directory
+      - ./redis-data:/data
+    command:
+      # Save if 100 keys are added in every 10 seconds
+      - "--save 10 100"
+      # Set password
+      - "--requirepass ${REDIS_PASS}"
+
+  # redis db visualization dashboard
+  redisinsight:
+    container_name: redisinsight-cont
+    image: redislabs/redisinsight
+    ports:
+      - 8001:8001
+    volumes:
+      - redisinsight:/db
+
+volumes:
+  redis-data:
+  redisinsight:
