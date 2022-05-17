@@ -6,9 +6,11 @@ Use Meetup Pro API to send Slack messages before events occur.
 ## TODO
 * ~~Fix Slack POST to mirror curl command (latter's working)~~ ✔️
   * ~~Integrate or abandon `knockknock` vs. `requests`~~ [**EDIT**: went the requests route] ✔️
-* GraphQL + Meetup Pro API
-  * `requests`
-    * GET equivalent for Techlahoma user groups ✔️
+* ~~GraphQL + Meetup Pro API~~
+  * ~~`requests`~~
+    * ~~GET equivalent for Techlahoma user groups~~ ✔️
+    * ~~Fix `requests` GraphQL call (headers misplaced)~~
+    * Format GraphQL output
 * Third-party Meetup lookup
   * If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events
 * ~~Find out Kimberly's manual process~~ ✔️
@@ -16,8 +18,12 @@ Use Meetup Pro API to send Slack messages before events occur.
   * ~~Add redis caching~~
 * ~~Redirect to httpbin~~
   * ~~Pending additional OAuth client (5/9/2022)~~
-  * May be able to do away with Playwright re: manual authorization via creds 
-* Format GraphQL output
+  * May be able to do away with Playwright re: manual authorization via creds
+* Redis caching
+  * ~~store tokens~~
+  * ~~retrieve tokens~~
+    * ~~fix superfluous playwright call when token is cached~~
+  * renew auth token w/refresh token
 * POST formatted messages to Slack channels `#okc-metro` && `#events`
 * Docker/Docker-Compose
   * Mitigates pain of Poetry virtual environments

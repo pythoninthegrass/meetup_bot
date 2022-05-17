@@ -4,10 +4,13 @@
 
 import json
 import os
+import redis
 import requests
 # import requests_cache
-import webbrowser
+import sys
+# import webbrowser
 from authlib.integrations.requests_client import OAuth2Session
+from datetime import timedelta
 from decouple import config
 from icecream import ic
 from pathlib import Path
@@ -17,7 +20,7 @@ from urllib.parse import urlencode
 # verbose icecream
 ic.configureOutput(includeContext=True)
 
-# cache the requests as script basename
+# cache the requests as script basename, expire after 1 hour
 # requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
 
 # env
@@ -34,6 +37,7 @@ if env.exists():
     TOKEN_URL = config('TOKEN_URL')
     MEETUP_EMAIL = config('MEETUP_EMAIL')
     MEETUP_PASS = config('MEETUP_PASS')
+    REDIS_PASS = config('REDIS_PASS')
 else:
     CLIENT_ID = os.getenv('CLIENT_ID')
     CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -42,27 +46,18 @@ else:
     TOKEN_URL = os.getenv('TOKEN_URL')
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
+    REDIS_PASS = os.getenv('REDIS_PASS')
 
 
-# TODO: replace `get_token_info` with authlib + httpbin instead of playwright
+# TODO: replace playwright w/requests
 authorization_endpoint = AUTH_BASE_URL
 client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
 uri, state = client.create_authorization_url(authorization_endpoint, response_type='token')
-print(uri)
-
-# manually log into meetup.com
-webbrowser.open(uri)
-
-# copy full url from browser after logging in
-auth_response = input('Paste the URL returned by the callback: ')
-
-token = client.fetch_token(authorization_response=auth_response)
-print(token)
 
 
-def get_token_info(client_id, client_secret, redirect_uri, code):
-    endpoint = TOKEN_URL
-    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': 'authorization_code'})
+def get_token_info(endpoint, client_id, client_secret, redirect_uri, code, grant_type):
+    """Get token info."""
+    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': grant_type})
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
@@ -73,8 +68,8 @@ def get_token_info(client_id, client_secret, redirect_uri, code):
     return r_json
 
 
-# TODO: setup httpbin/ngrok/tolocalhost.com
 def run(playwright: Playwright) -> None:
+    """Simulate a user login."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -106,18 +101,80 @@ def run(playwright: Playwright) -> None:
     return CODE
 
 
+def redis_connect() -> redis.client.Redis:
+    try:
+        client = redis.Redis(
+            host="localhost",
+            port=6379,
+            password=REDIS_PASS,
+            db=0,
+            socket_timeout=5,
+        )
+        ping = client.ping()
+        if ping is True:
+            return client
+    except redis.AuthenticationError:
+        print("AuthenticationError")
+        sys.exit(1)
+
+
+client = redis_connect()
+
+
+def get_routes_from_cache(key):
+    """Get cached tokens with expiration times from redis."""
+    val = client.get(key)
+    exp = client.ttl(key)
+
+    return val, exp
+
+
+def set_routes_to_cache(key: str, value: str) -> bool:
+    """Set data to redis."""
+    # TODO: arrow dataerror
+    # set data to redis cache with one hour expiration
+    state = client.setex(key, timedelta(seconds=3600), value=value)
+
+    return state
+
+
 def main():
-    with sync_playwright() as playwright:
-        run(playwright)
+    # look for the data in redis cache
+    data = get_routes_from_cache('access_token')
 
-    # TODO: replace `get_token_info` with authlib ^^
-    info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
+    if data is None:
+        with sync_playwright() as playwright:
+            run(playwright)
 
-    print("***** access_token *****")
-    print(json.dumps(info, sort_keys=True, indent=4))
+        # https://www.meetup.com/api/authentication/#p02-server-flow-section
+        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, 'authorization_code')
 
-    # extract access_token and refresh_token
-    return info['access_token'], info['refresh_token']
+        print(json.dumps(info, sort_keys=True, indent=4))
+
+        token, refresh_token = info['access_token'], info['refresh_token']
+
+        # set the token to redis cache
+        set_routes_to_cache('access_token', token)
+        set_routes_to_cache('refresh_token', refresh_token)
+    # TODO: QA renew bearer token with refresh token: `client.expire('access_token', 5)`
+    elif data is not None and data[1] < 0:
+        # https://www.meetup.com/api/authentication/#p03-server-flow-section
+        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, 'refresh_token')
+
+        print(json.dumps(info, sort_keys=True, indent=4))
+
+        token, refresh_token = info['access_token'], info['refresh_token']
+
+        # set the token to redis cache
+        set_routes_to_cache('access_token', token)
+        set_routes_to_cache('refresh_token', refresh_token)
+    else:
+        # get the tokens from redis cache and convert to string from bytes
+        token = (get_routes_from_cache('access_token'))[0].decode('utf-8')
+        refresh_token = (get_routes_from_cache('refresh_token'))[0].decode('utf-8')
+        print(f"Retrieved cached tokens\ntoken: {token}\nrefresh_token: {refresh_token}")
+
+    return token, refresh_token
 
 
 if __name__ == "__main__":
