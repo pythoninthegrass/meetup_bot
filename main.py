@@ -4,11 +4,8 @@
 import asyncio
 import aiohttp
 import aiofile
-# import io
-# import logging
 import os
 import pandas as pd
-# import re
 import requests
 import requests_cache
 from decouple import config
@@ -16,15 +13,13 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from icecream import ic
-# from <local.py_module> import *
 from pathlib import Path
-# from prettytable import PrettyTable
 # from requests_cache import CachedSession
 from slack import *
 # from slack_sdk import WebClient
 # from slack_sdk.errors import SlackApiError
 
-## verbose icecream
+# verbose icecream
 ic.configureOutput(includeContext=True)
 
 # show all columns
@@ -46,8 +41,18 @@ env =  Path('.env')
 
 # creds
 if env.exists():
+    CLIENT_ID = config('CLIENT_ID')
+    CLIENT_SECRET = config('CLIENT_SECRET')
+    REDIRECT_URI = config('REDIRECT_URI')
+    MEETUP_EMAIL = config('MEETUP_EMAIL')
+    MEETUP_PASS = config('MEETUP_PASS')
     PORT = config('PORT', default=3000, cast=int)
 else:
+    CLIENT_ID = os.getenv('CLIENT_ID')
+    CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+    REDIRECT_URI = os.getenv('REDIRECT_URI')
+    MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
+    MEETUP_PASS = os.getenv('MEETUP_PASS')
     PORT = os.getenv('PORT', default=3000, cast=int)
 
 
@@ -56,7 +61,7 @@ FastAPI app
 """
 
 # main web app
-app = FastAPI(title="slackathon API", openapi_url="/slackathon.json")
+app = FastAPI(title="meetup_bot API", openapi_url="/meetup_bot.json")
 
 # add `/api` route in front of all other endpoints
 api_router = APIRouter(prefix="/api")
@@ -80,6 +85,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
 
 @api_router.get("/emoji")
 def get_emoji_list(url=endpoint):

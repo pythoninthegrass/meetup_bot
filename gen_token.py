@@ -55,9 +55,13 @@ client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
 uri, state = client.create_authorization_url(authorization_endpoint, response_type='token')
 
 
-def get_token_info(endpoint, client_id, client_secret, redirect_uri, code, grant_type):
+# TODO: rewrite as a class and replace *code, **grant_type
+def get_token_info(endpoint, client_id, client_secret, redirect_uri, *code, **grant_type):
     """Get token info."""
-    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': grant_type})
+    if code:
+        endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': grant_type})
+    else:
+        endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'grant_type': grant_type})
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
@@ -146,8 +150,9 @@ def main():
         with sync_playwright() as playwright:
             run(playwright)
 
+        # TODO: debug optional *code and **grant_type
         # https://www.meetup.com/api/authentication/#p02-server-flow-section
-        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, 'authorization_code')
+        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, grant_type='authorization_code')
 
         print(json.dumps(info, sort_keys=True, indent=4))
 
@@ -159,7 +164,7 @@ def main():
     # TODO: QA renew bearer token with refresh token: `client.expire('access_token', 5)`
     elif data is not None and data[1] < 0:
         # https://www.meetup.com/api/authentication/#p03-server-flow-section
-        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, 'refresh_token')
+        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, grant_type='refresh_token')
 
         print(json.dumps(info, sort_keys=True, indent=4))
 
