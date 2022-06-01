@@ -10,7 +10,7 @@ from icecream import ic
 ic.configureOutput(includeContext=True)
 
 """
-Useful open GraphQL API to test syntax
+Useful open API for testing GraphQL syntax
 """
 
 query = """query {
