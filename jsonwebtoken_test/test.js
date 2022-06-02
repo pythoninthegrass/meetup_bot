@@ -1,22 +1,13 @@
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-const privateKey = fs.readFileSync('jwt_priv.pem');
+const privateKey = fs.readFileSync('../jwt_priv.pem');
 
 // source .env file one directory up
-const envFile = require('dotenv').config({path: '.env'});
+const envFile = require('dotenv').config({path: '../.env'});
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const SIGNING_KEY_ID = process.env.SIGNING_KEY_ID;
-
-//   {
-//     algorithm: 'RS256',
-//     issuer: '{YOUR_CONSUMER_KEY}',
-//     subject: '{AUTHORIZED_MEMBER_ID}',
-//     audience: 'api.meetup.com',
-//     keyid: '{SIGNING_KEY_ID}',
-//     expiresIn: 120
-//   }
 
 const token = jwt.sign(
   {},
