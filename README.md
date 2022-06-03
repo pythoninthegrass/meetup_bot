@@ -19,11 +19,11 @@ Use Meetup Pro API to send Slack messages before events occur.
 * ~~Redirect to httpbin~~
   * ~~Pending additional OAuth client (5/9/2022)~~
   * May be able to do away with Playwright re: manual authorization via creds
-* Redis caching
+* ~~Redis caching~~
   * ~~store tokens~~
   * ~~retrieve tokens~~
     * ~~fix superfluous playwright call when token is cached~~
-  * renew auth token w/refresh token
+  * ~~renew auth token w/refresh token~~
 * POST formatted messages to Slack channels `#okc-metro` && `#events`
 * Docker/Docker-Compose
   * Mitigates pain of Poetry virtual environments
@@ -38,6 +38,7 @@ Use Meetup Pro API to send Slack messages before events occur.
   * Time Frame 
     * 3 days before
     * 2 hours before
+* Documentation
 
 ## Stretch Goals
 * JWT instead of OAuth2

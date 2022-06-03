@@ -2,7 +2,7 @@
 
 # SOURCE: https://gist.github.com/valeriocos/e16424bc7dc0f2d6dd8bb9295c6f9a4b
 
-# import json
+import json
 import os
 import redis
 import requests
@@ -38,6 +38,7 @@ if env.exists():
     MEETUP_EMAIL = config('MEETUP_EMAIL')
     MEETUP_PASS = config('MEETUP_PASS')
     REDIS_PASS = config('REDIS_PASS')
+    TTL = config('TTL', default=3600, cast=int)
 else:
     CLIENT_ID = os.getenv('CLIENT_ID')
     CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -47,6 +48,7 @@ else:
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
     REDIS_PASS = os.getenv('REDIS_PASS')
+    TTL = os.getenv('TTL', default=3600, cast=int)
 
 
 # TODO: replace playwright w/requests
@@ -124,47 +126,89 @@ client = redis_connect()
 def get_routes_from_cache(key):
     """Get cached tokens with expiration times from redis."""
     val = client.get(key)
+    if val is not None:
+        # get ttl
+        ttl = client.ttl(key)
+    else:
+        ttl = 0
 
-    return val
+    return {key: val, 'ttl': ttl}
 
 
 def set_routes_to_cache(key: str, value: str) -> bool:
     """Set data to redis."""
     # set data to redis cache with one hour expiration
-    state = client.setex(key, timedelta(seconds=3600), value=value)
+    state = client.setex(key, timedelta(seconds=TTL), value=value)
 
     return state
 
 
-# TODO: QA renew bearer token with refresh token: `client.expire('access_token', 5)`
-# https://www.meetup.com/api/authentication/#p03-server-flow-section
+def renew_token(client_id, client_secret, refresh_token):
+    """
+    POST to TOKEN_URL with refresh_token
+
+    [HTTPIE]
+    http POST https://secure.meetup.com/oauth2/access client_id==$CLIENT_ID client_secret==$CLIENT_SECRET grant_type==refresh_token refresh_token==$refresh_token
+    """
+
+    endpoint = TOKEN_URL
+    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'grant_type': 'refresh_token', 'refresh_token': refresh_token})
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+    }
+    r = requests.post(endpoint, headers=headers)
+    r_json = r.json()
+
+    return r_json
+
+
 def main():
     # look for the data in redis cache
-    data = get_routes_from_cache('access_token')
+    access_token = get_routes_from_cache('access_token')
+    refresh_token = get_routes_from_cache('refresh_token')
 
-    if data is None:
+    if access_token['access_token'] is None:
         with sync_playwright() as playwright:
             run(playwright)
 
-        # https://www.meetup.com/api/authentication/#p02-server-flow-section
         info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
-
         # print(json.dumps(info, sort_keys=True, indent=4))
 
-        token, refresh_token = info['access_token'], info['refresh_token']
+        ttl = info['expires_in']
+
+        access_token, refresh_token = info['access_token'], info['refresh_token']
 
         # set the token to redis cache
-        set_routes_to_cache('access_token', token)
+        set_routes_to_cache('access_token', access_token)
         set_routes_to_cache('refresh_token', refresh_token)
 
-        print(f"Generated tokens\ntoken: {token}\nrefresh_token: {refresh_token}")
-    else:
-        # get the tokens from redis cache and convert to string from bytes
-        token = get_routes_from_cache('access_token').decode('utf-8')
-        refresh_token = get_routes_from_cache('refresh_token').decode('utf-8')
-        print(f"Retrieved cached tokens\ntoken: {token}\nrefresh_token: {refresh_token}")
+        print("Generated tokens\n")
+    # renew token if expired or ttl is less than 5 minutes
+    elif access_token['ttl'] < 300:
+        print("\nRenewing token")
+        r_json = renew_token(CLIENT_ID, CLIENT_SECRET, refresh_token['refresh_token'])
+        access_token = r_json['access_token']
+        refresh_token = r_json['refresh_token']
+        ttl = str(r_json['expires_in'])
 
-    return token, refresh_token
+        # store in redis
+        set_routes_to_cache('access_token', access_token)
+        set_routes_to_cache('refresh_token', refresh_token)
+
+        print("\nRefreshed access token\n")
+    else:
+        print("Retrieved cached tokens\n")
+        ttl = access_token['ttl']
+        access_token = access_token['access_token'].decode('utf-8')
+        refresh_token = refresh_token['refresh_token'].decode('utf-8')
+
+    # TODO: write func/class/decorator to print dynamically
+    print(f"Acc Token: {access_token}")
+    print(f"Ref Token: {refresh_token}")
+    print(f"\nAccess token TTL: {ttl} seconds remaining")
+
+    return access_token, refresh_token
 
 
 if __name__ == "__main__":
