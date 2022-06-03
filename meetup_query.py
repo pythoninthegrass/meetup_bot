@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 # import arrow
-# import json
+import json
 # import os
 import requests
 import requests_cache
-# from authlib.integrations.requests_client import OAuth2Session
 # from decouple import config
 from gen_token import main as gen_token
 from icecream import ic
@@ -41,7 +40,9 @@ query($id: ID!) {
         node {
           id
           title
+          description
           dateTime
+          eventUrl
         }
       }
     }
@@ -70,12 +71,16 @@ def send_request():
             json={'query': query, 'variables': vars},
             headers=headers
         )
-        print('Response HTTP Status Code: {status_code}'.format(
-            status_code=r.status_code))
-        print('Response HTTP Response Body: {content}'.format(
-            content=r.content))
-    except requests.exceptions.RequestException:
-        print('HTTP Request failed')
+        print('Response HTTP Status Code: {status_code}'.format(status_code=r.status_code))
+
+        # pretty prints json response content but skips sorting keys as it rearranges graphql response
+        pretty_response = json.dumps(r.json(), indent=4, sort_keys=False)
+
+        # TODO: traverse nested keys by using dot notation (.node.id)
+        # formatted response
+        print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
+    except requests.exceptions.RequestException as e:
+        print('HTTP Request failed:\n{error}'.format(error=e))
 
 
 send_request()
