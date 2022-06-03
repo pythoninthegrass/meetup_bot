@@ -2,7 +2,7 @@
 
 # SOURCE: https://gist.github.com/valeriocos/e16424bc7dc0f2d6dd8bb9295c6f9a4b
 
-import json
+# import json
 import os
 import redis
 import requests
@@ -55,13 +55,9 @@ client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
 uri, state = client.create_authorization_url(authorization_endpoint, response_type='token')
 
 
-# TODO: rewrite as a class and replace *code, **grant_type
-def get_token_info(endpoint, client_id, client_secret, redirect_uri, *code, **grant_type):
-    """Get token info."""
-    if code:
-        endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': grant_type})
-    else:
-        endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'grant_type': grant_type})
+def get_token_info(client_id, client_secret, redirect_uri, code):
+    endpoint = TOKEN_URL
+    endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': 'authorization_code'})
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
@@ -128,20 +124,20 @@ client = redis_connect()
 def get_routes_from_cache(key):
     """Get cached tokens with expiration times from redis."""
     val = client.get(key)
-    exp = client.ttl(key)
 
-    return val, exp
+    return val
 
 
 def set_routes_to_cache(key: str, value: str) -> bool:
     """Set data to redis."""
-    # TODO: arrow dataerror
     # set data to redis cache with one hour expiration
     state = client.setex(key, timedelta(seconds=3600), value=value)
 
     return state
 
 
+# TODO: QA renew bearer token with refresh token: `client.expire('access_token', 5)`
+# https://www.meetup.com/api/authentication/#p03-server-flow-section
 def main():
     # look for the data in redis cache
     data = get_routes_from_cache('access_token')
@@ -150,33 +146,22 @@ def main():
         with sync_playwright() as playwright:
             run(playwright)
 
-        # TODO: debug optional *code and **grant_type
         # https://www.meetup.com/api/authentication/#p02-server-flow-section
-        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE, grant_type='authorization_code')
+        info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
 
-        print(json.dumps(info, sort_keys=True, indent=4))
-
-        token, refresh_token = info['access_token'], info['refresh_token']
-
-        # set the token to redis cache
-        set_routes_to_cache('access_token', token)
-        set_routes_to_cache('refresh_token', refresh_token)
-    # TODO: QA renew bearer token with refresh token: `client.expire('access_token', 5)`
-    elif data is not None and data[1] < 0:
-        # https://www.meetup.com/api/authentication/#p03-server-flow-section
-        info = get_token_info(AUTH_BASE_URL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, grant_type='refresh_token')
-
-        print(json.dumps(info, sort_keys=True, indent=4))
+        # print(json.dumps(info, sort_keys=True, indent=4))
 
         token, refresh_token = info['access_token'], info['refresh_token']
 
         # set the token to redis cache
         set_routes_to_cache('access_token', token)
         set_routes_to_cache('refresh_token', refresh_token)
+
+        print(f"Generated tokens\ntoken: {token}\nrefresh_token: {refresh_token}")
     else:
         # get the tokens from redis cache and convert to string from bytes
-        token = (get_routes_from_cache('access_token'))[0].decode('utf-8')
-        refresh_token = (get_routes_from_cache('refresh_token'))[0].decode('utf-8')
+        token = get_routes_from_cache('access_token').decode('utf-8')
+        refresh_token = get_routes_from_cache('refresh_token').decode('utf-8')
         print(f"Retrieved cached tokens\ntoken: {token}\nrefresh_token: {refresh_token}")
 
     return token, refresh_token
