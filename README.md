@@ -40,6 +40,7 @@ Use Meetup Pro API to send Slack messages before events occur.
     * 2 hours before
 
 ## Stretch Goals
+* JWT instead of OAuth2
 * Slash commands to manually call:
   * Next `n` events
   * This week's events
