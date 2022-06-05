@@ -2,7 +2,7 @@
 
 # SOURCE: https://gist.github.com/valeriocos/e16424bc7dc0f2d6dd8bb9295c6f9a4b
 
-import json
+# import json
 import os
 import redis
 import requests
@@ -103,6 +103,7 @@ def run(playwright: Playwright) -> None:
     return CODE
 
 
+# TODO: skip redis if it isn't available
 def redis_connect() -> redis.client.Redis:
     try:
         client = redis.Redis(
@@ -118,27 +119,28 @@ def redis_connect() -> redis.client.Redis:
     except redis.AuthenticationError:
         print("AuthenticationError")
         sys.exit(1)
+    except redis.ConnectionError:
+        print("ConnectionError. Start redis to cache tokens.")
+        sys.exit(1)
+        # pass
 
 
-client = redis_connect()
-
-
-def get_routes_from_cache(key):
+def get_routes_from_cache(redis_client, key):
     """Get cached tokens with expiration times from redis."""
-    val = client.get(key)
+
+    val = redis_client.get(key)
     if val is not None:
-        # get ttl
-        ttl = client.ttl(key)
+        ttl = redis_client.ttl(key)
     else:
         ttl = 0
 
     return {key: val, 'ttl': ttl}
 
 
-def set_routes_to_cache(key: str, value: str) -> bool:
+def set_routes_to_cache(redis_client, key: str, value: str) -> bool:
     """Set data to redis."""
     # set data to redis cache with one hour expiration
-    state = client.setex(key, timedelta(seconds=TTL), value=value)
+    state = redis_client.setex(key, timedelta(seconds=TTL), value=value)
 
     return state
 
@@ -164,9 +166,11 @@ def renew_token(client_id, client_secret, refresh_token):
 
 
 def main():
+    client = redis_connect()
+
     # look for the data in redis cache
-    access_token = get_routes_from_cache('access_token')
-    refresh_token = get_routes_from_cache('refresh_token')
+    access_token = get_routes_from_cache(client, 'access_token')
+    refresh_token = get_routes_from_cache(client, 'refresh_token')
 
     if access_token['access_token'] is None:
         with sync_playwright() as playwright:
@@ -180,8 +184,8 @@ def main():
         access_token, refresh_token = info['access_token'], info['refresh_token']
 
         # set the token to redis cache
-        set_routes_to_cache('access_token', access_token)
-        set_routes_to_cache('refresh_token', refresh_token)
+        set_routes_to_cache(client, 'access_token', access_token)
+        set_routes_to_cache(client, 'refresh_token', refresh_token)
 
         print("Generated tokens\n")
     # renew token if expired or ttl is less than 5 minutes
@@ -193,8 +197,8 @@ def main():
         ttl = str(r_json['expires_in'])
 
         # store in redis
-        set_routes_to_cache('access_token', access_token)
-        set_routes_to_cache('refresh_token', refresh_token)
+        set_routes_to_cache(client, 'access_token', access_token)
+        set_routes_to_cache(client, 'refresh_token', refresh_token)
 
         print("\nRefreshed access token\n")
     else:
