@@ -107,15 +107,6 @@ def format_response(response):
     # extract data from json
     data = response_json['data']['self']['upcomingEvents']['edges']
 
-    # loop through data and format for Slack
-    # for i in range(len(data)):
-    #     print(f'{data[i]["node"]["group"]["name"]}')    # group name
-    #     print(f'{data[i]["node"]["dateTime"]}')         # date
-    #     print(f'{data[i]["node"]["title"]}')            # title
-    #     print(f'{data[i]["node"]["description"]}')      # description
-    #     print(f'{data[i]["node"]["group"]["city"]}')    # city
-    #     print(f'{data[i]["node"]["eventUrl"]}\n')       # event url
-
     # pandas don't truncate output
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
