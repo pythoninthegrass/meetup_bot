@@ -3,8 +3,10 @@
 # import arrow
 import json
 # import os
+import pandas as pd
 import requests
 import requests_cache
+import sys
 # from decouple import config
 from gen_token import main as gen_token
 from icecream import ic
@@ -27,11 +29,11 @@ tokens = gen_token()
 token = tokens[0]
 refresh_token = tokens[1]
 
-# TODO: move query and vars to .env
+# TODO: move query and vars to gql file
 query = """
 query($id: ID!) {
   proNetwork(id: $id) {
-    eventsSearch(filter: { status: UPCOMING }, input: { first: 3 }) {
+    eventsSearch(filter: { status: UPCOMING }, input: { first: 25 }) {
       count
       pageInfo {
         endCursor
@@ -74,13 +76,29 @@ def send_request():
         print('Response HTTP Status Code: {status_code}'.format(status_code=r.status_code))
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
-        pretty_response = json.dumps(r.json(), indent=4, sort_keys=False)
+        pretty_response = json.dumps(r.json(), indent=2, sort_keys=False)
 
-        # TODO: traverse nested keys by using dot notation (.node.id)
         # formatted response
         print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
     except requests.exceptions.RequestException as e:
         print('HTTP Request failed:\n{error}'.format(error=e))
+        sys.exit(1)
+
+    return pretty_response
 
 
-send_request()
+# TODO: skip export in prod
+def main():
+    # run function only
+    # send_request()
+
+    # create directory if it doesn't exist
+    Path('raw').mkdir(parents=True, exist_ok=True)
+
+    # export to raw/output.json with pandas
+    df = pd.read_json(send_request())
+    df.to_json('raw/output.json')
+
+
+if __name__ == '__main__':
+    main()

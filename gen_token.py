@@ -206,7 +206,7 @@ def main():
     # TODO: write func/class/decorator to print dynamically
     print(f"Acc Token: {access_token}")
     print(f"Ref Token: {refresh_token}")
-    print(f"\nAccess token TTL: {ttl} seconds remaining")
+    print(f"\nAccess token TTL: {ttl} seconds remaining\n")
 
     return access_token, refresh_token
 

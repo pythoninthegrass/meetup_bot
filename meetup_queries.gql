@@ -1,38 +1,40 @@
 #  events by query var
 # {"eventId":"285533748"}
-  query($eventId: ID) {
-    event(id: $eventId) {
-      title
-      description
-      dateTime
-      eventUrl
-      group {
-        id
-        name
-        proNetwork {
-          id
-        }
-      }
-    }
-  }
+query($eventId: ID) {
+	event(id: $eventId) {
+		title
+		description
+		dateTime
+		eventUrl
+		group {
+			id
+			name
+			proNetwork {
+				id
+			}
+		}
+	}
+}
 
 # search all events by group proNetwork id
 # { "group": { "proNetwork": { "id": "364335959210266624" } } }
 # { "id": "364335959210266624" }
 query($id: ID!) {
-  proNetwork(id: $id) {
-    eventsSearch(filter: { status: UPCOMING }, input: { first: 3 }) {
-      count
-      pageInfo {
-        endCursor
-      }
-      edges {
-        node {
-          id
-          title
-          dateTime
-        }
-      }
-    }
-  }
+	proNetwork(id: $id) {
+		eventsSearch(filter: { status: UPCOMING }, input: { first: 25 }) {
+			count
+			pageInfo {
+				endCursor
+			}
+			edges {
+				node {
+					id
+					title
+          description
+					dateTime
+          eventUrl
+				}
+			}
+		}
+	}
 }
