@@ -24,12 +24,7 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 
-# import bearer token from gen_token.py main function (tuple index 0)
-tokens = gen_token()
-token = tokens[0]
-refresh_token = tokens[1]
-
-# TODO: move query and vars to gql file
+# search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
 query($id: ID!) {
   proNetwork(id: $id) {
@@ -51,21 +46,22 @@ query($id: ID!) {
   }
 }
 """
-
+# shorthand for proNetwork id
 vars = '{ "id": "364335959210266624" }'
-endpoint = 'https://api.meetup.com/gql'
-
-headers = {
-    'Authorization': f'Bearer {token}',
-    'Content-Type': 'application/json; charset=utf-8'
-}
 
 
-def send_request():
+def send_request(token):
     """
     Request
     POST https://api.meetup.com/gql
     """
+
+    endpoint = 'https://api.meetup.com/gql'
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json; charset=utf-8'
+    }
 
     try:
         r = requests.post(
@@ -87,17 +83,40 @@ def send_request():
     return pretty_response
 
 
-# TODO: skip export in prod
-def main():
-    # run function only
-    # send_request()
+def export_to_file(response, type):
+    """
+    Export to CSV or JSON
+    """
+
+    # convert response to json
+    response_json = json.loads(response)
+
+    # extract data from json
+    data = response_json['data']['proNetwork']['eventsSearch']['edges']
+
+    # create dataframe
+    df = pd.DataFrame(data)
 
     # create directory if it doesn't exist
     Path('raw').mkdir(parents=True, exist_ok=True)
 
-    # export to raw/output.json with pandas
-    df = pd.read_json(send_request())
-    df.to_json('raw/output.json')
+    if type == 'csv':
+        df.to_csv(Path('raw/output.csv'), index=False)
+    elif type == 'json':
+        df.to_json(Path('raw/output.json'), orient='records')
+    else:
+        print('Invalid export file type')
+
+
+def main():
+    # import bearer token from gen_token.py main function (tuple index 0)
+    tokens = gen_token()
+    token = tokens[0]
+    # refresh_token = tokens[1]
+
+    response = send_request(token)
+
+    export_to_file(response, 'json')             # skip export in prod
 
 
 if __name__ == '__main__':
