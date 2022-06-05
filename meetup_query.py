@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# import arrow
+import arrow
 import json
 # import os
 import pandas as pd
@@ -24,35 +24,48 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 
+# TODO: format response for slack, query third-party groups
 # search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
-query($id: ID!) {
-  proNetwork(id: $id) {
-    eventsSearch(filter: { status: UPCOMING }, input: { first: 25 }) {
-      count
-      pageInfo {
-        endCursor
-      }
-      edges {
-        node {
-          id
-          title
-          description
-          dateTime
-          eventUrl
+query {
+    self {
+        id
+        name
+        username
+        memberUrl
+        upcomingEvents {
+            count
+            pageInfo {
+                endCursor
+            }
+            edges {
+                node {
+                    id
+                    title
+                    description
+                    dateTime
+                    eventUrl
+                    group {
+                        id
+                        name
+                        urlname
+                        link
+                        city
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }
 """
-# shorthand for proNetwork id
+# shorthand for proNetwork id (unused in `self` query, but required in headers)
 vars = '{ "id": "364335959210266624" }'
 
 
 def send_request(token):
     """
     Request
+
     POST https://api.meetup.com/gql
     """
 
@@ -83,19 +96,63 @@ def send_request(token):
     return pretty_response
 
 
-def export_to_file(response, type):
+def format_response(response):
     """
-    Export to CSV or JSON
+    Format response for Slack
     """
 
     # convert response to json
     response_json = json.loads(response)
 
     # extract data from json
-    data = response_json['data']['proNetwork']['eventsSearch']['edges']
+    data = response_json['data']['self']['upcomingEvents']['edges']
 
-    # create dataframe
-    df = pd.DataFrame(data)
+    # loop through data and format for Slack
+    # for i in range(len(data)):
+    #     print(f'{data[i]["node"]["group"]["name"]}')    # group name
+    #     print(f'{data[i]["node"]["dateTime"]}')         # date
+    #     print(f'{data[i]["node"]["title"]}')            # title
+    #     print(f'{data[i]["node"]["description"]}')      # description
+    #     print(f'{data[i]["node"]["group"]["city"]}')    # city
+    #     print(f'{data[i]["node"]["eventUrl"]}\n')       # event url
+
+    # pandas don't truncate output
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+
+    # create dataframe with columns name, data, title, description, event url
+    df = pd.DataFrame(data, columns=['name', 'date', 'title', 'description', 'city', 'eventUrl'])
+
+    # append data to rows
+    for i in range(len(data)):
+        df.loc[i, 'name'] = data[i]['node']['group']['name']
+        df.loc[i, 'date'] = data[i]['node']['dateTime']
+        df.loc[i, 'title'] = data[i]['node']['title']
+        df.loc[i, 'description'] = data[i]['node']['description']
+        df.loc[i, 'city'] = data[i]['node']['group']['city']
+        df.loc[i, 'eventUrl'] = data[i]['node']['eventUrl']
+
+    # drop rows that aren't located in Oklahoma City
+    df = df[df['city'] == 'Oklahoma City']
+
+    # convert date to human readable format (Thu 5/26 at 11:30 am)
+    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('M/D h:mm a'))
+
+    # drop rows that aren't within the next 7 days
+    time_span = arrow.now().shift(days=7)
+    df = df[df['date'] <= time_span.format('M/D/YYYY')]
+
+    ic(df)
+
+    return df
+
+
+def export_to_file(response, type):
+    """
+    Export to CSV or JSON
+    """
+
+    df = format_response(response)
 
     # create directory if it doesn't exist
     Path('raw').mkdir(parents=True, exist_ok=True)
@@ -103,20 +160,21 @@ def export_to_file(response, type):
     if type == 'csv':
         df.to_csv(Path('raw/output.csv'), index=False)
     elif type == 'json':
-        df.to_json(Path('raw/output.json'), orient='records')
+        df.to_json(Path('raw/output.json'), indent=2, orient='records')
     else:
         print('Invalid export file type')
 
 
 def main():
-    # import bearer token from gen_token.py main function (tuple index 0)
     tokens = gen_token()
     token = tokens[0]
     # refresh_token = tokens[1]
 
     response = send_request(token)
 
-    export_to_file(response, 'json')             # skip export in prod
+    format_response(response)
+
+    export_to_file(response, 'json')             # csv/json (skip export in prod)
 
 
 if __name__ == '__main__':
