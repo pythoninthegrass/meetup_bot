@@ -1,3 +1,45 @@
+# recon
+query {
+  self {
+    id
+    name
+    username
+    memberUrl
+  }
+}
+
+# THIS IS THE END MY FRIEND
+query {
+  self {
+    id
+    name
+    username
+    memberUrl
+    upcomingEvents {
+      count
+			pageInfo {
+				endCursor
+			}
+			edges {
+				node {
+					id
+					title
+          description
+					dateTime
+          eventUrl
+          group {
+            id
+            name
+            urlname
+            link
+            city
+          }
+        }
+      }
+    }
+  }
+}
+
 #  events by query var
 # {"eventId":"285533748"}
 query($eventId: ID) {
@@ -18,7 +60,7 @@ query($eventId: ID) {
 
 # search all events by group proNetwork id
 # { "group": { "proNetwork": { "id": "364335959210266624" } } }
-# { "id": "364335959210266624" }
+{ "id": "364335959210266624" }
 query($id: ID!) {
 	proNetwork(id: $id) {
 		eventsSearch(filter: { status: UPCOMING }, input: { first: 25 }) {
