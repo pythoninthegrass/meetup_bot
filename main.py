@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 
 # import arrow
-import asyncio
-import aiohttp
-import aiofile
+# import asyncio
+from urllib import response
+# import aiohttp
+# import aiofile
+import json
 import os
 import pandas as pd
 import requests
 import requests_cache
 from decouple import config
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
+from gen_token import main as gen_token
+from meetup_query import send_request, format_response, export_to_file
 from icecream import ic
 from pathlib import Path
 # from requests_cache import CachedSession
-from slack import *
+from slack import send_message
 # from slack_sdk import WebClient
 # from slack_sdk.errors import SlackApiError
 
@@ -41,18 +45,8 @@ env =  Path('.env')
 
 # creds
 if env.exists():
-    CLIENT_ID = config('CLIENT_ID')
-    CLIENT_SECRET = config('CLIENT_SECRET')
-    REDIRECT_URI = config('REDIRECT_URI')
-    MEETUP_EMAIL = config('MEETUP_EMAIL')
-    MEETUP_PASS = config('MEETUP_PASS')
     PORT = config('PORT', default=3000, cast=int)
 else:
-    CLIENT_ID = os.getenv('CLIENT_ID')
-    CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-    REDIRECT_URI = os.getenv('REDIRECT_URI')
-    MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
-    MEETUP_PASS = os.getenv('MEETUP_PASS')
     PORT = os.getenv('PORT', default=3000, cast=int)
 
 
@@ -82,36 +76,79 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event('startup')
+def startup_event():
+    """
+    Run startup event
+    """
+    tokens = gen_token()
+    global token
+    token = tokens[0]
+
+    global response
+    response = send_request(token)
+
+    # global json_response
+    # json_response = json.loads(response)
+
+    return token, response
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
 
-@api_router.get("/emoji")
-def get_emoji_list(url=endpoint):
+@api_router.get("/events")
+def get_events(location: str = "Oklahoma City"):
     """
-    Get the list of emoji from the Slack API.
-
-    The two URL methods are:\n
-    https://slack.com/api/emoji.list\n
-    https://slack.com/api/admin.emoji.list
+    Query upcoming Meetup events
     """
 
-    if url == endpoint:
-        headers = {
-            'Authorization': f'Bearer {BOT_USER_TOKEN}',
-        }
+    # if child script raises error, throw 404
+    try:
+        res = format_response(response, location)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=f'No data for {location} found')
 
-    response = requests.get(url, headers=headers)
 
-    return response.json()
+@api_router.get("/export")
+def export_events(format: str = "json"):
+    """
+    Export Meetup events to CSV or JSON
+    """
+
+    # validate format
+    format = format.lower()
+    if format not in ["json", "csv"]:
+        raise HTTPException(status_code=400, detail="Invalid format. Must be either 'json' or 'csv'")
+
+    return export_to_file(response, format)
+
+
+@api_router.get("/slack")
+def post_slack(message):
+    """
+    Post to slack
+    """
+
+    return send_message(message)
 
 
 app.include_router(api_router)
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Run app
+    """
+
     # Use this for debugging purposes only
     import uvicorn
 
     uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -82,13 +82,13 @@ def send_request(token):
             json={'query': query, 'variables': vars},
             headers=headers
         )
-        print('Response HTTP Status Code: {status_code}'.format(status_code=r.status_code))
+        print('Response HTTP Status Code: {status_code}\n'.format(status_code=r.status_code))
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
         pretty_response = json.dumps(r.json(), indent=2, sort_keys=False)
 
         # formatted response
-        print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
+        # print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
     except requests.exceptions.RequestException as e:
         print('HTTP Request failed:\n{error}'.format(error=e))
         sys.exit(1)
@@ -96,7 +96,7 @@ def send_request(token):
     return pretty_response
 
 
-def format_response(response):
+def format_response(response, location='Oklahoma City'):
     """
     Format response for Slack
     """
@@ -106,6 +106,10 @@ def format_response(response):
 
     # extract data from json
     data = response_json['data']['self']['upcomingEvents']['edges']
+
+    # if city is missing, raise error
+    if data[0]['node']['group']['city'] != location:
+        raise ValueError(f'No data for {location} found')
 
     # pandas don't truncate output
     pd.set_option('display.max_rows', None)
@@ -123,8 +127,8 @@ def format_response(response):
         df.loc[i, 'city'] = data[i]['node']['group']['city']
         df.loc[i, 'eventUrl'] = data[i]['node']['eventUrl']
 
-    # drop rows that aren't located in Oklahoma City
-    df = df[df['city'] == 'Oklahoma City']
+    # drop rows that aren't in a specific city
+    df = df[df['city'] == location]
 
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('M/D h:mm a'))
@@ -132,7 +136,6 @@ def format_response(response):
     # drop rows that aren't within the next 7 days
     time_span = arrow.now().shift(days=7)
     df = df[df['date'] <= time_span.format('M/D/YYYY')]
-
     ic(df)
 
     return df
@@ -143,6 +146,7 @@ def export_to_file(response, type):
     Export to CSV or JSON
     """
 
+    # TODO: get location from `format_response` without hardcoding a second time
     df = format_response(response)
 
     # create directory if it doesn't exist
@@ -159,13 +163,12 @@ def export_to_file(response, type):
 def main():
     tokens = gen_token()
     token = tokens[0]
-    # refresh_token = tokens[1]
 
     response = send_request(token)
 
-    format_response(response)
+    # format_response(response)
 
-    export_to_file(response, 'json')             # csv/json (skip export in prod)
+    # export_to_file(response, 'csv')   # csv/json
 
 
 if __name__ == '__main__':
