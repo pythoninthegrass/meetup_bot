@@ -1,18 +1,35 @@
 version: "3.9"
 
 services:
-  # meetupbot:
-  #   container_name: meetupbot
-  #   image: meetup_bot
-  #   tty: true               # remove for `entrypoint` in Dockerfile
-  #   stdin_open: true        # remove for `entrypoint` in Dockerfile
-  #   build:
-  #     context: .
-  #     dockerfile: ./Dockerfile
+  meetupbot:
+    container_name: meetup_bot-cont
+    image: meetup_bot
+    tty: true               # remove for `entrypoint` in Dockerfile
+    stdin_open: true        # remove for `entrypoint` in Dockerfile
+    environment:
+      - PORT=3000
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - AUTH_BASE_URL=${AUTH_BASE_URL}
+      - TOKEN_URL=${TOKEN_URL}
+      - MEETUP_EMAIL=${MEETUP_EMAIL}
+      - MEETUP_PASS=${MEETUP_PASS}
+      - HOST=${HOST}
+      - REDIS_PASSWORD=${REDIS_PASS}
+    volumes:
+      - .:/home/appuser/app
+    ports:
+      - 80:3000
+    build:
+      context: .
+      dockerfile: ./Dockerfile
 
   redis:
     container_name: redis-cont
     image: "redis:alpine"
+    tty: true
+    stdin_open: true
     environment:
       - REDIS_PASSWORD=${REDIS_PASS}
       - REDIS_REPLICATION_MODE=master
@@ -21,21 +38,24 @@ services:
     volumes:
       # save redisearch data to your current working directory
       - ./redis-data:/data
-    command:
-      # Save if 100 keys are added in every 10 seconds
-      - "--save 10 100"
-      # Set password
-      - "--requirepass ${REDIS_PASS}"
+      - ./redis.conf:/redis.conf
+    command: [ "redis-server", "/redis.conf" ]
 
   # redis db visualization dashboard
   redisinsight:
     container_name: redisinsight-cont
     image: redislabs/redisinsight
+    tty: true
+    stdin_open: true
     ports:
       - 8001:8001
     volumes:
-      - redisinsight:/db
+      - ./redis-insight:/db
 
 volumes:
   redis-data:
-  redisinsight:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

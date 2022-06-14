@@ -96,6 +96,7 @@ def send_request(token):
     return pretty_response
 
 
+# TODO: sort json keys (cf. `orient='records'` on `df.to_json` export), format response for slack
 def format_response(response, location='Oklahoma City'):
     """
     Format response for Slack
@@ -160,15 +161,16 @@ def export_to_file(response, type):
         print('Invalid export file type')
 
 
+# TODO: disable in prod (use `main.py`)
 def main():
     tokens = gen_token()
     token = tokens[0]
 
     response = send_request(token)
 
-    # format_response(response)
+    format_response(response)
 
-    # export_to_file(response, 'csv')   # csv/json
+    export_to_file(response, 'json')   # csv/json
 
 
 if __name__ == '__main__':

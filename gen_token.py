@@ -39,6 +39,7 @@ if env.exists():
     MEETUP_PASS = config('MEETUP_PASS')
     REDIS_PASS = config('REDIS_PASS')
     TTL = config('TTL', default=3600, cast=int)
+    HOST = config('HOST', default='localhost')
 else:
     CLIENT_ID = os.getenv('CLIENT_ID')
     CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -48,7 +49,8 @@ else:
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
     REDIS_PASS = os.getenv('REDIS_PASS')
-    TTL = os.getenv('TTL', default=3600, cast=int)
+    TTL = os.getenv('TTL', default=3600)
+    HOST = os.getenv('HOST', default='localhost')
 
 
 # TODO: replace playwright w/requests
@@ -81,7 +83,7 @@ def run(playwright: Playwright) -> None:
     endpoint = endpoint + '?' + urlencode(params)
     # webbrowser.open(endpoint)
 
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.firefox.launch(headless=True)
     context = browser.new_context()
     page = context.new_page()
     page.goto(endpoint)
@@ -107,7 +109,7 @@ def run(playwright: Playwright) -> None:
 def redis_connect() -> redis.client.Redis:
     try:
         client = redis.Redis(
-            host="localhost",
+            host=HOST,
             port=6379,
             password=REDIS_PASS,
             db=0,
@@ -207,7 +209,7 @@ def main():
         access_token = access_token['access_token'].decode('utf-8')
         refresh_token = refresh_token['refresh_token'].decode('utf-8')
 
-    # TODO: write func/class/decorator to print dynamically
+    # TODO: comment out in prod
     print(f"Acc Token: {access_token}")
     print(f"Ref Token: {refresh_token}")
     print(f"\nAccess token TTL: {ttl} seconds remaining\n")
