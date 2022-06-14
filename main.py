@@ -47,7 +47,7 @@ env =  Path('.env')
 if env.exists():
     PORT = config('PORT', default=3000, cast=int)
 else:
-    PORT = os.getenv('PORT', default=3000, cast=int)
+    PORT = os.getenv('PORT', default=3000)
 
 
 """
