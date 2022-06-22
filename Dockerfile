@@ -11,13 +11,12 @@ RUN apt-get update \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
+    curl \
+    git \
     python3.10 \
     python3.10-dev \
     python3.10-venv \
-    python3.10-distutils \
-    build-essential \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    python3.10-distutils
 
 # create and activate virtual environment
 RUN python3.10 -m venv /opt/venv
@@ -31,15 +30,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 FROM ubuntu:20.04 AS runner-image
 
-ARG USERNAME=appuser
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-RUN useradd --create-home $USERNAME && mkdir -p $PLAYWRIGHT_BROWSERS_PATH
-COPY --from=builder-image --chown=$USERNAME:$USERNAME /opt/venv /opt/venv
-
-RUN mkdir -p /home/appuser/app
-COPY --chown=$USERNAME:$USERNAME . /home/${USERNAME}/app
-WORKDIR /home/${USERNAME}/app
+# avoid stuck build due to user prompt
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install \
@@ -48,15 +40,11 @@ RUN apt-get update \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
+    curl \
+    git \
     python3.10 \
     python3.10-venv \
-    curl \
-    sudo \
-    git \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
-    && chmod 0440 /etc/sudoers.d/${USERNAME}
+    && rm -rf /var/lib/apt/lists/*
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -64,17 +52,28 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+ARG USERNAME=appuser
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN useradd --create-home $USERNAME \
+    && mkdir -p /home/appuser/app \
+    && mkdir -p $PLAYWRIGHT_BROWSERS_PATH
+
+COPY --from=builder-image --chown=$USERNAME:$USERNAME /opt/venv /opt/venv
+COPY --chown=$USERNAME:$USERNAME . /home/${USERNAME}/app
+
 # activate virtual environment
 ENV VIRTUAL_ENV="/opt/venv"
 RUN python3.10 -m venv $VIRTUAL_ENV
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 
 RUN playwright install --with-deps firefox \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # In addition to chown above, sets user after files have been copied
 USER appuser
+
+WORKDIR /home/${USERNAME}/app
 
 # EXPOSE 8000
 

@@ -6,17 +6,8 @@ services:
     image: meetup_bot
     tty: true               # remove for `entrypoint` in Dockerfile
     stdin_open: true        # remove for `entrypoint` in Dockerfile
-    environment:
-      - PORT=3000
-      - CLIENT_ID=${CLIENT_ID}
-      - CLIENT_SECRET=${CLIENT_SECRET}
-      - REDIRECT_URI=${REDIRECT_URI}
-      - AUTH_BASE_URL=${AUTH_BASE_URL}
-      - TOKEN_URL=${TOKEN_URL}
-      - MEETUP_EMAIL=${MEETUP_EMAIL}
-      - MEETUP_PASS=${MEETUP_PASS}
-      - HOST=${HOST}
-      - REDIS_PASSWORD=${REDIS_PASS}
+    env_file:
+      - ./.env
     volumes:
       - .:/home/appuser/app
     ports:
@@ -30,8 +21,9 @@ services:
     image: "redis:alpine"
     tty: true
     stdin_open: true
+    env_file:
+      - ./.env
     environment:
-      - REDIS_PASSWORD=${REDIS_PASS}
       - REDIS_REPLICATION_MODE=master
     ports:
       - "6379:6379"
