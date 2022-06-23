@@ -4,6 +4,7 @@
 **/.DS_Store
 **/.editorconfig
 **/.env
+**/.venv
 **/.git
 **/.github
 **/.gitignore
@@ -34,3 +35,6 @@
 **/secrets.dev.yaml
 **/terraform
 **/values.dev.yaml
+*.example
+**/jsonwebtoken_test
+meetup_queries.gql
