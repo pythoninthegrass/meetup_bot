@@ -35,6 +35,10 @@
 **/secrets.dev.yaml
 **/terraform
 **/values.dev.yaml
-*.example
 **/jsonwebtoken_test
+**/redis-data
+**/redis-insight
+**/redis.conf
+*.example
+*test.py
 meetup_queries.gql
