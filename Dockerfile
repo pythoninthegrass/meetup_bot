@@ -34,6 +34,7 @@ RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+
 ARG USERNAME=appuser
 ENV HOME="/home/${USERNAME}"
 ENV PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
@@ -54,15 +55,9 @@ ENV PATH "${POETRY_HOME}/bin:$PATH"
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
-# COPY requirements.txt .
-
 RUN python3.10 -m venv /opt/venv
 
 # Install pip requirements
-# RUN . /opt/venv/bin/activate \
-#     && pip install --no-cache-dir --upgrade pip \
-#     && pip install --no-cache-dir wheel \
-#     && pip install --no-cache-dir --upgrade -r requirements.txt
 RUN . /opt/venv/bin/activate && poetry install
 
 FROM ubuntu:20.04 AS runner-image
