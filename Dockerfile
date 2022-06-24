@@ -1,11 +1,10 @@
 # using ubuntu LTS version
 FROM ubuntu:20.04 AS builder-image
 
-COPY requirements.txt .
-
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
+# TODO: asdf
 RUN apt-get update \
     && apt-get install \
     --no-install-recommends -y \
@@ -21,12 +20,22 @@ RUN apt-get update \
     python3.10-distutils \
     && rm -rf /var/lib/apt/lists/*
 
-# create and activate virtual environment
+# TODO: libexpat.so.1 error
+# ENV POETRY_HOME=/root/.poetry
+# RUN curl -sSL https://install.python-poetry.org | python3.10 -
+# ENV PATH "${POETRY_HOME}/bin:$PATH"
+
+WORKDIR /app
+# COPY pyproject.toml poetry.lock .
+COPY requirements.txt .
+
 RUN python3.10 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
 
 # Install pip requirements
-RUN pip install --no-cache-dir --upgrade pip \
+# RUN . /opt/venv/bin/activate && poetry install
+RUN . /opt/venv/bin/activate \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir wheel \
     && pip install --no-cache-dir --upgrade -r requirements.txt
 
 FROM ubuntu:20.04 AS runner-image
@@ -78,19 +87,19 @@ ENV PYTHONUNBUFFERED=1
 
 # activate virtual environment
 ENV VIRTUAL_ENV="/opt/venv"
-RUN python3.10 -m venv $VIRTUAL_ENV
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
+RUN python3.10 -m venv $VIRTUAL_ENV
 
 # Install playwright
 RUN playwright install --with-deps firefox \
     && rm -rf /var/lib/apt/lists/*
 
+# EXPOSE 8000
+
 # In addition to chown above, sets user after files have been copied
 USER appuser
 
 WORKDIR /home/${USERNAME}/app
-
-# EXPOSE 8000
 
 # ENTRYPOINT ["python", "meetup_query.py"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
