@@ -4,51 +4,82 @@ FROM ubuntu:20.04 AS builder-image
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
-# TODO: asdf
 RUN apt-get update \
     && apt-get install \
     --no-install-recommends -y \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
-    && apt-get update \
-    && apt-get install --no-install-recommends -y \
+    aptitude \
+    autoconf \
+    automake \
+    build-essential \
+    ca-certificates \
     curl \
     git \
-    python3.10 \
-    python3.10-dev \
-    python3.10-venv \
-    python3.10-distutils \
+    locales \
+    libffi-dev \
+    libncurses-dev \
+    libreadline-dev \
+    libssl-dev \
+    libtool \
+    libxslt-dev \
+    libyaml-dev \
+    python3 \
+    python3-dev \
+    python3-pip \
+    unixodbc-dev \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# TODO: libexpat.so.1 error
-# ENV POETRY_HOME=/root/.poetry
-# RUN curl -sSL https://install.python-poetry.org | python3.10 -
-# ENV PATH "${POETRY_HOME}/bin:$PATH"
+# Set locale
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+ARG USERNAME=appuser
+ENV HOME="/home/${USERNAME}"
+ENV PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+
+RUN useradd --create-home $USERNAME
+
+# install asdf then python latest
+RUN bash -c "git clone --depth 1 https://github.com/asdf-vm/asdf.git $HOME/.asdf \
+    && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.bashrc  \
+    && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.profile"
+RUN asdf plugin-add python \
+    && asdf install python 3.10.5 \
+    && asdf global python 3.10.5
+
+ENV POETRY_HOME="$HOME/.poetry"
+RUN curl -sSL https://install.python-poetry.org | python3.10 -
+ENV PATH "${POETRY_HOME}/bin:$PATH"
 
 WORKDIR /app
-# COPY pyproject.toml poetry.lock .
-COPY requirements.txt .
+COPY pyproject.toml poetry.lock ./
+# COPY requirements.txt .
 
 RUN python3.10 -m venv /opt/venv
 
 # Install pip requirements
-# RUN . /opt/venv/bin/activate && poetry install
-RUN . /opt/venv/bin/activate \
-    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir wheel \
-    && pip install --no-cache-dir --upgrade -r requirements.txt
+# RUN . /opt/venv/bin/activate \
+#     && pip install --no-cache-dir --upgrade pip \
+#     && pip install --no-cache-dir wheel \
+#     && pip install --no-cache-dir --upgrade -r requirements.txt
+RUN . /opt/venv/bin/activate && poetry install
 
 FROM ubuntu:20.04 AS runner-image
 
 ARG USERNAME=appuser
+ENV HOME="/home/${USERNAME}"
+ENV VIRTUAL_ENV="/opt/venv"
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PATH="${VIRTUAL_ENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:/ms-playwright:$PATH"
 
 RUN useradd --create-home $USERNAME \
     && mkdir -p /home/${USERNAME}/app \
     && mkdir -p $PLAYWRIGHT_BROWSERS_PATH
 
-COPY --chown=${USERNAME}:${USERNAME} . /home/${USERNAME}/app
+COPY --chown=${USERNAME}:${USERNAME} . $HOME/app
 COPY --from=builder-image --chown=${USERNAME}:${USERNAME} /opt/venv /opt/venv
+COPY --from=builder-image --chown=${USERNAME}:${USERNAME} $HOME/.asdf $HOME/.asdf
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
@@ -56,28 +87,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install \
     --no-install-recommends -y \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
-    && apt-get update \
-    && apt-get install --no-install-recommends -y \
+    ca-certificates \
     curl \
     git \
-    python3.10 \
-    python3.10-venv \
     && rm -rf /var/lib/apt/lists/*
-
-# ENV NODE_ENV=production
-
-# # Install node 14
-# RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-#     && apt-get install -y nodejs \
-#     && rm -rf /var/lib/apt/lists/*
-
-# # TODO: switch back to python playwright when v1.23 release is available
-# # Install playwright
-# RUN npm install -g playwright@next \
-#     && playwright install --with-deps firefox \
-#     && rm -rf /var/lib/apt/lists/*
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -86,20 +99,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # activate virtual environment
-ENV VIRTUAL_ENV="/opt/venv"
-ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
-RUN python3.10 -m venv $VIRTUAL_ENV
+RUN python -m venv $VIRTUAL_ENV
 
 # Install playwright
 RUN playwright install --with-deps firefox \
     && rm -rf /var/lib/apt/lists/*
 
-# EXPOSE 8000
-
-# In addition to chown above, sets user after files have been copied
 USER appuser
 
-WORKDIR /home/${USERNAME}/app
+WORKDIR $HOME/app
 
 # ENTRYPOINT ["python", "meetup_query.py"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
