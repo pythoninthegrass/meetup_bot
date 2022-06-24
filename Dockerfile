@@ -60,6 +60,7 @@ RUN python3.10 -m venv /opt/venv
 # Install pip requirements
 RUN . /opt/venv/bin/activate && poetry install
 
+# TODO: dive + docker-slim
 FROM ubuntu:20.04 AS runner-image
 
 ARG USERNAME=appuser
@@ -104,6 +105,7 @@ USER appuser
 
 WORKDIR $HOME/app
 
+# TODO: QA gen_token.py et al
 # ENTRYPOINT ["python", "meetup_query.py"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
 CMD ["/bin/bash"]
