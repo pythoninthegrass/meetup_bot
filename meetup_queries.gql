@@ -1,22 +1,22 @@
 # recon
 query {
-  self {
-    id
-    name
-    username
-    memberUrl
-  }
+	self {
+		id
+		name
+		username
+		memberUrl
+	}
 }
 
 # THIS IS THE END MY FRIEND
 query {
-  self {
-    id
-    name
-    username
-    memberUrl
-    upcomingEvents {
-      count
+	self {
+		id
+		name
+		username
+		memberUrl
+		upcomingEvents {
+			count
 			pageInfo {
 				endCursor
 			}
@@ -24,20 +24,20 @@ query {
 				node {
 					id
 					title
-          description
+					description
 					dateTime
-          eventUrl
-          group {
-            id
-            name
-            urlname
-            link
-            city
-          }
-        }
-      }
-    }
-  }
+					eventUrl
+					group {
+						id
+						name
+						urlname
+						link
+						city
+					}
+				}
+			}
+		}
+	}
 }
 
 #  events by query var
@@ -72,11 +72,73 @@ query($id: ID!) {
 				node {
 					id
 					title
-          description
+					description
 					dateTime
-          eventUrl
+					eventUrl
 				}
 			}
 		}
 	}
 }
+
+# search for non pro network group by urlname
+{"urlname":"pythonistas"}
+query($urlname: String!) {
+	groupByUrlname(urlname: $urlname) {
+		id
+		description
+		name
+		urlname
+		city
+		link
+		upcomingEvents(input: { first: 3 }) {
+			count
+			pageInfo {
+				endCursor
+			}
+			edges {
+				node {
+					id
+					title
+					description
+					dateTime
+					eventUrl
+					group {
+						id
+						name
+						urlname
+						link
+						city
+					}
+				}
+			}
+		}
+	}
+}
+
+
+# TODO: QA node ID == group ID
+# I.e., https://www.meetup.com/find/?suggested=true&source=GROUPS&keywords=programming&categoryId=546&distance=tenMiles&location=us--ok--Oklahoma%20City
+# query OKC area for programming groups' IDs
+# NOTE: unable to use vars for lat/lon and source (enum: EVENTS/GROUPS)
+{
+	"query": "programming",
+	"city": "Oklahoma City"
+}
+query ($query: String!, $city: String!) {
+	keywordSearch(
+		filter: {query: $query, lat: 35.467560, lon: -97.516426, city: $city, source: GROUPS}
+	) {
+		count
+		pageInfo {
+			endCursor
+		}
+		edges {
+			node {
+				id
+			}
+		}
+	}
+}
+
+# TODO: if group ID is found, get events for that group; else, use `requests` to parse `urlname` from URL
