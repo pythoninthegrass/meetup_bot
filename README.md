@@ -4,10 +4,10 @@
 Use Meetup Pro API to send Slack messages before events occur.
 
 ## TODO
-* Third-party Meetup lookup
-  * If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events
-* Refresh token
-  * Schedule `gen_token.py` every 55 minutes (3300s)
+* ~~Third-party Meetup lookup~~
+  * ~~If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events~~
+* ~~Refresh token~~
+  * ~~Schedule `gen_token.py` every 55 minutes (3300s)~~
 * FastAPI
   * endpoints
     * Meetup query
@@ -22,9 +22,9 @@ Use Meetup Pro API to send Slack messages before events occur.
   * Time Frame 
     * 3 days before
     * 2 hours before
-* Docker/Docker-Compose
-  * Mitigates pain of Poetry virtual environments
-  * Can migrate to prod VPS and/or k8s 
+* ~~Docker/Docker-Compose~~
+  * ~~Mitigates pain of Poetry virtual environments~~
+  * ~~Can migrate to prod VPS and/or k8s~~
 * Documentation
 
 ## Stretch Goals
