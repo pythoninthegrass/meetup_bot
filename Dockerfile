@@ -1,3 +1,4 @@
+# TODO: test 22.04 w/playwright v1.23.0
 # using ubuntu LTS version
 FROM ubuntu:20.04 AS builder-image
 
