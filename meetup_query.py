@@ -24,7 +24,6 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 
-# TODO: format response for slack, query third-party groups
 # search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
 query {
@@ -61,8 +60,58 @@ query {
 # shorthand for proNetwork id (unused in `self` query, but required in headers)
 vars = '{ "id": "364335959210266624" }'
 
+url_query = """
+query($urlname: String!) {
+    groupByUrlname(urlname: $urlname) {
+        id
+        description
+        name
+        urlname
+        city
+        link
+        upcomingEvents(input: { first: 1 }) {
+            count
+            pageInfo {
+                endCursor
+            }
+            edges {
+                node {
+                    id
+                    title
+                    description
+                    dateTime
+                    eventUrl
+                    group {
+                        id
+                        name
+                        urlname
+                        link
+                        city
+                    }
+                }
+            }
+        }
+    }
+}
+"""
 
-def send_request(token):
+# read groups from file via pandas
+csv = pd.read_csv('raw/groups.csv', header=0)
+
+# remove `techlahoma-foundation` row
+sans_tf = csv[csv['urlname'] != 'techlahoma-foundation']
+
+# remove url column
+groups = sans_tf.drop(columns=['url'])
+
+# read groups `_values`
+groups_array = groups['urlname']._values
+
+# assign to `url_vars` as a list
+url_vars = [group for group in groups_array]
+
+
+def send_request(token, query, vars):
     """
     Request
 
@@ -106,7 +155,10 @@ def format_response(response, location='Oklahoma City'):
     response_json = json.loads(response)
 
     # extract data from json
-    data = response_json['data']['self']['upcomingEvents']['edges']
+    try:
+        data = response_json['data']['self']['upcomingEvents']['edges']
+    except KeyError:
+        data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
 
     # if city is missing, raise error
     if data[0]['node']['group']['city'] != location:
@@ -131,13 +183,12 @@ def format_response(response, location='Oklahoma City'):
     # drop rows that aren't in a specific city
     df = df[df['city'] == location]
 
-    # convert date to human readable format (Thu 5/26 at 11:30 am)
-    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('M/D h:mm a'))
-
     # drop rows that aren't within the next 7 days
     time_span = arrow.now().shift(days=7)
-    df = df[df['date'] <= time_span.format('M/D/YYYY')]
-    ic(df)
+    df = df[df['date'] <= time_span.isoformat()]
+
+    # convert date to human readable format (Thu 5/26 at 11:30 am)
+    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('M/D h:mm a'))
 
     return df
 
@@ -147,7 +198,6 @@ def export_to_file(response, type):
     Export to CSV or JSON
     """
 
-    # TODO: get location from `format_response` without hardcoding a second time
     df = format_response(response)
 
     # create directory if it doesn't exist
@@ -156,7 +206,11 @@ def export_to_file(response, type):
     if type == 'csv':
         df.to_csv(Path('raw/output.csv'), index=False)
     elif type == 'json':
-        df.to_json(Path('raw/output.json'), indent=2, orient='records')
+        # convert escaped unicode to utf-8 encoding
+        data = json.loads(df.to_json(orient='records', force_ascii=False))
+
+        with open('raw/output.json', 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=2, sort_keys=False)
     else:
         print('Invalid export file type')
 
@@ -166,7 +220,7 @@ def main():
     tokens = gen_token()
     token = tokens[0]
 
-    response = send_request(token)
+    response = send_request(token, query, vars)
 
     format_response(response)
 
