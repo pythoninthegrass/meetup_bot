@@ -30,6 +30,7 @@ redis = "^4.3.1"
 PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 rauth = "^0.7.3"
 Authomatic = "^1.0.0"
+requests-html = "^0.10.0"
 
 [build-system]
 requires = ["poetry-core"]
