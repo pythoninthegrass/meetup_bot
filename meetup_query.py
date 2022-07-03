@@ -23,6 +23,25 @@ requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
 home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
+format = 'json'
+csv_fn = 'raw/output.csv'
+json_fn = 'raw/output.json'
+groups_csv = 'raw/groups.csv'
+
+# read groups from file via pandas
+csv = pd.read_csv(groups_csv, header=0)
+
+# remove `techlahoma-foundation` row
+sans_tf = csv[csv['urlname'] != 'techlahoma-foundation']
+
+# remove url column
+groups = sans_tf.drop(columns=['url'])
+
+# read groups `_values`
+groups_array = groups['urlname']._values
+
+# assign to `url_vars` as a list
+url_vars = [group for group in groups_array]
 
 # search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
@@ -95,21 +114,6 @@ query($urlname: String!) {
 }
 """
 
-# read groups from file via pandas
-csv = pd.read_csv('raw/groups.csv', header=0)
-
-# remove `techlahoma-foundation` row
-sans_tf = csv[csv['urlname'] != 'techlahoma-foundation']
-
-# remove url column
-groups = sans_tf.drop(columns=['url'])
-
-# read groups `_values`
-groups_array = groups['urlname']._values
-
-# assign to `url_vars` as a list
-url_vars = [group for group in groups_array]
-
 
 def send_request(token, query, vars):
     """
@@ -154,15 +158,16 @@ def format_response(response, location='Oklahoma City'):
     # convert response to json
     response_json = json.loads(response)
 
-    # extract data from json
+    # extract data from json and if city is missing, raise error
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
+        if data[0]['node']['group']['city'] != location:
+            raise ValueError(f'No data for {location} found')
     except KeyError:
         data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
-
-    # if city is missing, raise error
-    if data[0]['node']['group']['city'] != location:
-        raise ValueError(f'No data for {location} found')
+        # TODO: handle no upcoming events to fallback on initial response
+        if response_json['data']['groupByUrlname']['city'] != location:
+            raise ValueError(f'No data for {location} found')
 
     # pandas don't truncate output
     pd.set_option('display.max_rows', None)
@@ -193,7 +198,44 @@ def format_response(response, location='Oklahoma City'):
     return df
 
 
-def export_to_file(response, type):
+# TODO: QA
+def sort_csv(filename):
+    """
+    Sort CSV by date
+    """
+
+    # read csv
+    df = pd.read_csv(filename, header=0)
+
+    # drop duplicates by event url
+    df = df.drop_duplicates(subset='eventUrl')
+
+    # sort by date
+    df = df.sort_values(by=['date'])
+
+    # write csv
+    df.to_csv(filename, index=False)
+
+
+def sort_json(filename):
+    """
+    Sort JSON keys
+    """
+
+    # pandas remove duplicate keys by eventUrl key
+    df = pd.read_json(filename, orient='records')
+    df = df.drop_duplicates(subset='eventUrl')
+
+    # sort by date
+    df = df.sort_values(by='date')
+
+    # export to json (convert escaped unicode to utf-8 encoding first)
+    data = json.loads(df.to_json(orient='records', force_ascii=False))
+    with open(json_fn, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+
+def export_to_file(response, type='json'):
     """
     Export to CSV or JSON
     """
@@ -204,13 +246,24 @@ def export_to_file(response, type):
     Path('raw').mkdir(parents=True, exist_ok=True)
 
     if type == 'csv':
-        df.to_csv(Path('raw/output.csv'), index=False)
+        df.to_csv(Path(csv_fn), mode='a', header=False, index=False)
+        sort_csv(csv_fn)
     elif type == 'json':
         # convert escaped unicode to utf-8 encoding
         data = json.loads(df.to_json(orient='records', force_ascii=False))
 
-        with open('raw/output.json', 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent=2, sort_keys=False)
+        if Path(json_fn).exists():
+            # append to json
+            with open(json_fn, 'r') as f:
+                data_json = json.load(f)
+                data_json.extend(data)
+                with open(json_fn, 'w', encoding='utf-8') as f:
+                    json.dump(data_json, f, indent=2)
+        else:
+            # create json
+            with open(json_fn, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, sort_keys=False)
+        sort_json(json_fn)
     else:
         print('Invalid export file type')
 
@@ -220,11 +273,29 @@ def main():
     tokens = gen_token()
     token = tokens[0]
 
+    # first-party query
     response = send_request(token, query, vars)
+    # format_response(response)                 # don't need if exporting to file
+    export_to_file(response, format)             # csv/json
 
-    format_response(response)
+    # third-party query
+    output = []
+    for url in url_vars:
+        response = send_request(token, url_query, f'{{"urlname": "{url}"}}')
+        # append to output dict if the response is not empty
+        if len(format_response(response)) > 0:
+            output.append(response)
+        else:
+            print(f'No upcoming events for {url} found\n')
+    # loop through output and append to file
+    for i in range(len(output)):
+        export_to_file(output[i], format)
 
-    export_to_file(response, 'json')   # csv/json
+    # cleanup output file
+    if format == 'csv':
+        sort_csv(csv_fn)
+    elif format == 'json':
+        sort_json(json_fn)
 
 
 if __name__ == '__main__':
