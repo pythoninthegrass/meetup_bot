@@ -105,13 +105,14 @@ def run(playwright: Playwright) -> None:
     return CODE
 
 
-# TODO: skip redis if it isn't available
+# TODO: debug redis conf not setting password; skip redis if it isn't available
 def redis_connect() -> redis.client.Redis:
     try:
         client = redis.Redis(
             host=HOST,
             port=6379,
-            password=REDIS_PASS,
+            # password=REDIS_PASS,
+            password="",
             db=0,
             socket_timeout=5,
         )
