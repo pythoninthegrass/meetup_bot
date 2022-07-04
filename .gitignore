@@ -1,6 +1,7 @@
 # ETC
 *.sqlite
 redis*
+!redis.conf.example
 *.pem
 *.key
 raw/
