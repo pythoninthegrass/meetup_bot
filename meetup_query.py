@@ -16,6 +16,11 @@ from pathlib import Path
 # verbose icecream
 ic.configureOutput(includeContext=True)
 
+# pandas don't truncate output
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_colwidth', None)
+
 # cache the requests as script basename, expire after 1 hour
 requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
 
@@ -24,9 +29,9 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 format = 'json'
-csv_fn = 'raw/output.csv'
-json_fn = 'raw/output.json'
-groups_csv = 'raw/groups.csv'
+csv_fn = Path('raw/output.csv')
+json_fn = Path('raw/output.json')
+groups_csv = Path('raw/groups.csv')
 
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
@@ -169,10 +174,6 @@ def format_response(response, location='Oklahoma City'):
         if response_json['data']['groupByUrlname']['city'] != location:
             raise ValueError(f'No data for {location} found')
 
-    # pandas don't truncate output
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-
     # create dataframe with columns name, data, title, description, event url
     df = pd.DataFrame(data, columns=['name', 'date', 'title', 'description', 'city', 'eventUrl'])
 
@@ -252,7 +253,8 @@ def export_to_file(response, type='json'):
         # convert escaped unicode to utf-8 encoding
         data = json.loads(df.to_json(orient='records', force_ascii=False))
 
-        if Path(json_fn).exists():
+        # write json to file
+        if Path(json_fn).exists() and Path(json_fn).stat().st_size > 0:
             # append to json
             with open(json_fn, 'r') as f:
                 data_json = json.load(f)
