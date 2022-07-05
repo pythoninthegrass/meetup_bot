@@ -106,7 +106,6 @@ USER appuser
 
 WORKDIR $HOME/app
 
-# TODO: QA gen_token.py et al
-# ENTRYPOINT ["python", "meetup_query.py"]
+ENTRYPOINT ["python", "meetup_query.py"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
-CMD ["/bin/bash"]
+# CMD ["/bin/bash"]

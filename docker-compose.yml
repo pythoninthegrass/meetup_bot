@@ -30,7 +30,7 @@ services:
     volumes:
       # save redisearch data to your current working directory
       - ./redis-data:/data
-      - ./redis.conf:/redis.conf
+      - ./redis.conf:/redis.conf:ro
     command: [ "redis-server", "/redis.conf" ]
 
   # redis db visualization dashboard
