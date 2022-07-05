@@ -26,11 +26,13 @@ from slack import send_message
 # verbose icecream
 ic.configureOutput(includeContext=True)
 
-# show all columns
+# pandas don't truncate output
+pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
+pd.set_option('display.max_colwidth', None)
 
 # logging.basicConfig(level=logging.DEBUG)
-requests_cache.install_cache("api_cache", expire_after=3600)
+# requests_cache.install_cache("api_cache", expire_after=3600)
 
 ## env
 home = Path.home()
