@@ -53,6 +53,10 @@ else:
     HOST = os.getenv('HOST', default='localhost')
 
 
+# override host env var if system is macos
+if sys.platform == 'darwin':
+    HOST = 'localhost'
+
 # TODO: replace playwright w/requests
 authorization_endpoint = AUTH_BASE_URL
 client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
