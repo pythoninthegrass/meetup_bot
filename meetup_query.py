@@ -2,7 +2,7 @@
 
 import arrow
 import json
-# import os
+import os
 import pandas as pd
 import requests
 import requests_cache
@@ -154,7 +154,6 @@ def send_request(token, query, vars):
     return pretty_response
 
 
-# TODO: sort json keys (cf. `orient='records'` on `df.to_json` export), format response for slack
 def format_response(response, location='Oklahoma City'):
     """
     Format response for Slack
@@ -193,9 +192,6 @@ def format_response(response, location='Oklahoma City'):
     time_span = arrow.now().shift(days=7)
     df = df[df['date'] <= time_span.isoformat()]
 
-    # convert date to human readable format (Thu 5/26 at 11:30 am)
-    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('M/D h:mm a'))
-
     return df
 
 
@@ -212,7 +208,11 @@ def sort_csv(filename):
     df = df.drop_duplicates(subset='eventUrl')
 
     # sort by date
+    df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values(by=['date'])
+
+    # convert date to human readable format (Thu 5/26 at 11:30 am)
+    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
     # write csv
     df.to_csv(filename, index=False)
@@ -228,7 +228,11 @@ def sort_json(filename):
     df = df.drop_duplicates(subset='eventUrl')
 
     # sort by date
-    df = df.sort_values(by='date')
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.sort_values(by=['date'])
+
+    # convert date to human readable format (Thu 5/26 at 11:30 am)
+    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
@@ -248,13 +252,17 @@ def export_to_file(response, type='json'):
 
     if type == 'csv':
         df.to_csv(Path(csv_fn), mode='a', header=False, index=False)
-        sort_csv(csv_fn)
     elif type == 'json':
         # convert escaped unicode to utf-8 encoding
         data = json.loads(df.to_json(orient='records', force_ascii=False))
 
         # write json to file
-        if Path(json_fn).exists() and Path(json_fn).stat().st_size > 0:
+        # if file exists, is less than an hour old, and is not empty, append to file
+        if (
+            Path(json_fn).exists()
+            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < 3600
+            and os.stat(json_fn).st_size > 0
+        ):
             # append to json
             with open(json_fn, 'r') as f:
                 data_json = json.load(f)
@@ -262,10 +270,9 @@ def export_to_file(response, type='json'):
                 with open(json_fn, 'w', encoding='utf-8') as f:
                     json.dump(data_json, f, indent=2)
         else:
-            # create json
+            # create/overwrite json
             with open(json_fn, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, sort_keys=False)
-        sort_json(json_fn)
+                json.dump(data, f, indent=2)
     else:
         print('Invalid export file type')
 
