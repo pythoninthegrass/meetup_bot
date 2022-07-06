@@ -16,6 +16,7 @@ RUN apt-get update \
     curl \
     git \
     locales \
+    libbz2-dev \
     libffi-dev \
     libncurses-dev \
     libreadline-dev \
