@@ -192,10 +192,10 @@ def main():
         set_routes_to_cache(client, 'access_token', access_token)
         set_routes_to_cache(client, 'refresh_token', refresh_token)
 
-        print("Generated tokens\n")
+        print("[INFO] Generated tokens")
     # renew token if expired or ttl is less than 5 minutes
     elif access_token['ttl'] < 300:
-        print("\nRenewing token")
+        print("[INFO] Renewing token")
         r_json = renew_token(CLIENT_ID, CLIENT_SECRET, refresh_token['refresh_token'])
         access_token = r_json['access_token']
         refresh_token = r_json['refresh_token']
@@ -205,17 +205,17 @@ def main():
         set_routes_to_cache(client, 'access_token', access_token)
         set_routes_to_cache(client, 'refresh_token', refresh_token)
 
-        print("\nRefreshed access token\n")
+        print("[INFO] Refreshed access token")
     else:
-        print("Retrieved cached tokens\n")
+        print("[INFO] Retrieved cached tokens")
         ttl = access_token['ttl']
         access_token = access_token['access_token'].decode('utf-8')
         refresh_token = refresh_token['refresh_token'].decode('utf-8')
 
     # TODO: comment out in prod
-    print(f"Acc Token: {access_token}")
-    print(f"Ref Token: {refresh_token}")
-    print(f"\nAccess token TTL: {ttl} seconds remaining\n")
+    # print(f"[DEBUG] Acc Token: {access_token}")
+    # print(f"[DEBUG] Ref Token: {refresh_token}")
+    print(f"[INFO] Access token TTL: {ttl} seconds remaining")
 
     return access_token, refresh_token
 
