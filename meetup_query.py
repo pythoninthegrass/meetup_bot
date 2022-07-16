@@ -4,12 +4,15 @@ import arrow
 import json
 import os
 import pandas as pd
+import re
 import requests
 import requests_cache
 import sys
 # from decouple import config
+from arrow import ParserError
 from gen_token import main as gen_token
 from icecream import ic
+# from pandas.errors import OutOfBoundsDatetime
 from pathlib import Path
 # from pprint import pprint
 
@@ -21,8 +24,12 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 
+# time in seconds
+min = int(10)
+age = int(min * 60)
+
 # cache the requests as script basename, expire after 1 hour
-requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
+requests_cache.install_cache(Path(__file__).stem, expire_after=age)
 
 # env
 home = Path.home()
@@ -140,7 +147,7 @@ def send_request(token, query, vars):
             json={'query': query, 'variables': vars},
             headers=headers
         )
-        print('Response HTTP Status Code: {status_code}\n'.format(status_code=r.status_code))
+        print('[INFO] Response HTTP Status Code: {status_code}'.format(status_code=r.status_code))
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
         pretty_response = json.dumps(r.json(), indent=2, sort_keys=False)
@@ -227,13 +234,33 @@ def sort_json(filename):
     df = pd.read_json(filename, orient='records')
     df = df.drop_duplicates(subset='eventUrl')
 
-    # sort by date
+    # replace '1-07-19 17:00:00' with current year '2022-07-19 17:00:00' via regex
+    # * negative lookahead only matches first digit at the beginning of the line (e.g., 1/0001 vs. 2022)
+    date_regex = r'^1(?![\d])|^0001(?![\d])'
+
+    # TODO: get precise date from event to determine year
+    # choose current year if 7 days from now is before EOY
+    if arrow.now().year == arrow.now().shift(days=7).year:
+        year = str(arrow.now().year)
+    else:
+        year = str(arrow.now().shift(days=7).year)
+
+    # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
+    try:
+        df['date'] = df['date'].apply(lambda x: arrow.get(x, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss'))
+        df['date'] = df['date'].apply(lambda x: x.replace(re.findall(date_regex, x)[0], year))
+    except ParserError:
+        print('[ERROR] ParserError: date column is already in correct format')
+        pass
     df['date'] = pd.to_datetime(df['date'])
+
+    # sort by date
     df = df.sort_values(by=['date'])
 
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
+    # TODO: store json output in redis
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
     with open(json_fn, 'w', encoding='utf-8') as f:
@@ -257,10 +284,10 @@ def export_to_file(response, type='json'):
         data = json.loads(df.to_json(orient='records', force_ascii=False))
 
         # write json to file
-        # if file exists, is less than an hour old, and is not empty, append to file
+        # if file exists, is less than n minutes old, append to file
         if (
             Path(json_fn).exists()
-            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < 3600
+            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < age
             and os.stat(json_fn).st_size > 0
         ):
             # append to json
@@ -295,7 +322,7 @@ def main():
         if len(format_response(response)) > 0:
             output.append(response)
         else:
-            print(f'No upcoming events for {url} found\n')
+            print(f'[INFO] No upcoming events for {url} found')
     # loop through output and append to file
     for i in range(len(output)):
         export_to_file(output[i], format)
