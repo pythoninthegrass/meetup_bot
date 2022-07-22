@@ -160,8 +160,8 @@ def send_request(token, query, vars):
 
     return pretty_response
 
-
-def format_response(response, location='Oklahoma City'):
+# optional exclusion string parameter
+def format_response(response, location='Oklahoma City', exclusions=''):
     """
     Format response for Slack
     """
@@ -192,10 +192,16 @@ def format_response(response, location='Oklahoma City'):
         df.loc[i, 'city'] = data[i]['node']['group']['city']
         df.loc[i, 'eventUrl'] = data[i]['node']['eventUrl']
 
-    # drop rows that aren't in a specific city
+    # filter rows by city
     df = df[df['city'] == location]
 
-    # drop rows that aren't within the next 7 days
+    # filtered rows to exclude keywords by regex OR operator
+    if exclusions:
+        df = df[~df['name'].str.contains('|'.join(exclusions))]
+        df = df[~df['title'].str.contains('|'.join(exclusions))]
+        print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
+
+    # filter rows that aren't within the next 7 days
     time_span = arrow.now().shift(days=7)
     df = df[df['date'] <= time_span.isoformat()]
 
@@ -257,6 +263,7 @@ def sort_json(filename):
     # sort by date
     df = df.sort_values(by=['date'])
 
+    # TODO: control for timestamp edge case `1-07-21 18:00:00` raising OutOfBoundsError
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
@@ -267,12 +274,15 @@ def sort_json(filename):
         json.dump(data, f, indent=2)
 
 
-def export_to_file(response, type='json'):
+def export_to_file(response, type='json', exclusions=''):
     """
     Export to CSV or JSON
     """
 
-    df = format_response(response)
+    if exclusions:
+        df = format_response(response, exclusions=exclusions)
+    else:
+        df = format_response(response)
 
     # create directory if it doesn't exist
     Path('raw').mkdir(parents=True, exist_ok=True)
@@ -309,17 +319,21 @@ def main():
     tokens = gen_token()
     token = tokens[0]
 
+    # exclude keywords
+    exclusions = ['36\u00b0N']
+
+    # TODO: reduce `format_response` calls to 1
     # first-party query
     response = send_request(token, query, vars)
-    # format_response(response)                 # don't need if exporting to file
-    export_to_file(response, format)             # csv/json
+    # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
+    export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
     # third-party query
     output = []
     for url in url_vars:
         response = send_request(token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
-        if len(format_response(response)) > 0:
+        if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
         else:
             print(f'[INFO] No upcoming events for {url} found')
