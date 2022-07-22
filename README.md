@@ -5,6 +5,33 @@
 ## Summary
 Use Meetup Pro API to send Slack messages before events occur.
 
+## Usage
+* meetup_bot
+  * TODO
+* gitleaks
+  * git pre-commit hook
+    ```bash
+    git config hooks.gitleaks true
+    ```
+  * CI/CD
+    * TODO
+  * Manual run
+    ```bash
+    # set env vars
+    export GITLEAKS_CONFIG=$(pwd)/gitleaks.toml         # precedence: --config, env var, --source, default config
+    export GITLEAKS_REPORT=$(pwd)/gitleaks_report.json
+
+    # bash completion
+    gitleaks completion bash >> ~/.gitleaks.bash
+    echo ". ~/.gitleaks.bash" >> ~/.bashrc
+
+    # scan local directories for secrets
+    gitleaks detect --no-git
+
+    # run w/report
+    gitleaks detect -r $GITLEAKS_REPORT                 # generate json report (default)
+    ```
+
 ## TODO
 * ~~Third-party Meetup lookup~~
   * ~~If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events~~

@@ -5,6 +5,7 @@ redis*
 *.pem
 *.key
 raw/
+gitleaks_report*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
