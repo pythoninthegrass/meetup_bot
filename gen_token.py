@@ -15,6 +15,7 @@ from decouple import config
 from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
+from python_on_whales import docker, DockerClient
 from urllib.parse import urlencode
 
 # verbose icecream
@@ -63,7 +64,37 @@ client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI)
 uri, state = client.create_authorization_url(authorization_endpoint, response_type='token')
 
 
+def start_docker(yml_file=None):
+    """Start docker."""
+    # project_config = docker.compose.config()
+    if yml_file is not None:
+        docker = DockerClient(compose_files=[Path(yml_file)])
+        if docker.container.list(all=False) == []:
+            docker.compose.up(
+                services=['redis', 'redisinsight'],
+                build=False,
+                detach=True,
+            )
+    elif yml_file is None:
+        if docker.container.list(all=False):
+            docker.compose.up(
+                services=['redis', 'redisinsight'],
+                build=False,
+                detach=True,
+            )
+    else:
+        print("Docker is already running")
+
+
+def stop_docker():
+    """Stop docker."""
+    docker.compose.stop(
+        services=None,
+    )
+
+
 def get_token_info(client_id, client_secret, redirect_uri, code):
+    """Get token info from Meetup."""
     endpoint = TOKEN_URL
     endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': 'authorization_code'})
     headers = {
@@ -87,29 +118,35 @@ def run(playwright: Playwright) -> None:
     endpoint = endpoint + '?' + urlencode(params)
     # webbrowser.open(endpoint)
 
-    browser = playwright.firefox.launch(headless=True)
-    context = browser.new_context()
-    page = context.new_page()
-    page.goto(endpoint)
+    try:
+        browser = playwright.firefox.launch(headless=True)
+        context = browser.new_context()
+        page = context.new_page()
+        page.goto(endpoint)
 
-    page.locator("[data-testid=\"email\"]").click()
-    page.locator("[data-testid=\"email\"]").fill(MEETUP_EMAIL)
-    page.locator("[data-testid=\"current-password\"]").click()
-    page.locator("[data-testid=\"current-password\"]").fill(MEETUP_PASS)
+        page.locator("[data-testid=\"email\"]").click()
+        page.locator("[data-testid=\"email\"]").fill(MEETUP_EMAIL)
+        page.locator("[data-testid=\"current-password\"]").click()
+        page.locator("[data-testid=\"current-password\"]").fill(MEETUP_PASS)
 
-    with page.expect_navigation():
-        page.locator("[data-testid=\"submit\"]").click()
+        with page.expect_navigation():
+            page.locator("[data-testid=\"submit\"]").click()
 
-    global CODE
-    CODE = page.url.split("code=")[1]
+        global CODE
+        CODE = page.url.split("code=")[1]
 
-    context.close()
-    browser.close()
+        context.close()
+        browser.close()
+    except Exception as e:
+        print(f"{e}. Try running `python -m playwright install firefox`")
+        context.close()
+        browser.close()
 
     return CODE
 
 
 def redis_connect() -> redis.client.Redis:
+    """Connect to redis."""
     try:
         client = redis.Redis(
             host=HOST,
@@ -171,12 +208,18 @@ def renew_token(client_id, client_secret, refresh_token):
 
 
 def main():
+    """Run the main function."""
+    # start containers (only build if images aren't present)
+    start_docker(yml_file='docker-compose.yml')
+
+    # initialize redis client
     client = redis_connect()
 
     # look for the data in redis cache
     access_token = get_routes_from_cache(client, 'access_token')
     refresh_token = get_routes_from_cache(client, 'refresh_token')
 
+    # run playwright if no data in redis cache
     if access_token['access_token'] is None:
         with sync_playwright() as playwright:
             run(playwright)
