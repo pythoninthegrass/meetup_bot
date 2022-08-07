@@ -33,6 +33,8 @@ Authomatic = "^1.0.0"
 requests-html = "^0.10.0"
 slack-bolt = "^1.14.0"
 Markdown = "^3.3.7"
+rocketry = "^2.1.2"
+tinydb = "^4.7.0"
 
 [build-system]
 requires = ["poetry-core"]
