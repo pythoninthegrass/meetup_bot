@@ -29,7 +29,7 @@ min = int(10)
 age = int(min * 60)
 
 # cache the requests as script basename, expire after 1 hour
-requests_cache.install_cache(Path(__file__).stem, expire_after=age)
+# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
 
 # env
 home = Path.home()
@@ -91,6 +91,7 @@ query {
 # shorthand for proNetwork id (unused in `self` query, but required in headers)
 vars = '{ "id": "364335959210266624" }'
 
+# unaffiliated groups
 url_query = """
 query($urlname: String!) {
     groupByUrlname(urlname: $urlname) {
@@ -201,6 +202,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
         df = df[~df['title'].str.contains('|'.join(exclusions))]
         print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
 
+    # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next 7 days
     time_span = arrow.now().shift(days=7)
     df = df[df['date'] <= time_span.isoformat()]
@@ -319,8 +321,9 @@ def main():
     tokens = gen_token()
     token = tokens[0]
 
-    # exclude keywords
-    exclusions = ['36\u00b0N']
+    # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
+    # exclude keywords in event name and title (will miss events with keyword in description)
+    exclusions = ['36\u00b0N', 'Tulsa']
 
     # TODO: reduce `format_response` calls to 1
     # first-party query
