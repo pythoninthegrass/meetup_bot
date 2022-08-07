@@ -6,6 +6,7 @@ redis*
 *.key
 raw/
 gitleaks_report*.json
+db.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
