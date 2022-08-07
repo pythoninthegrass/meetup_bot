@@ -17,6 +17,7 @@ ic.configureOutput(includeContext=True)
 url = "https://www.meetup.com/find/?distance=tenMiles&source=GROUPS&categoryId=546"
 
 
+# TODO: skip groups that are a part of the Techlahoma Foundation
 def run(playwright: Playwright) -> None:
     """
     Open URL, scrape for subdomain, and save to CSV.
