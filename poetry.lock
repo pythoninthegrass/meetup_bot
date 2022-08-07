@@ -146,7 +146,7 @@ optional = false
 python-versions = "*"
 
 [package.extras]
-openid = ["python-openid", "python3-openid"]
+openid = ["python3-openid", "python-openid"]
 
 [[package]]
 name = "beautifulsoup4"
@@ -585,10 +585,10 @@ python-versions = ">=3.6"
 cryptography = {version = ">=3.3.1", optional = true, markers = "extra == \"crypto\""}
 
 [package.extras]
+tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
+docs = ["zope.interface", "sphinx-rtd-theme", "sphinx"]
+dev = ["pre-commit", "mypy", "coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)", "cryptography (>=3.3.1)", "zope.interface", "sphinx-rtd-theme", "sphinx"]
 crypto = ["cryptography (>=3.3.1)"]
-dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
-docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
-tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pyparsing"
@@ -786,14 +786,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "slack-bolt"
-version = "1.14.0"
+version = "1.14.3"
 description = "The Bolt Framework for Python"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-slack-sdk = ">=3.15.2,<4"
+slack-sdk = ">=3.17.2,<4"
 
 [package.extras]
 adapter = ["boto3 (<=2)", "bottle (>=0.12,<1)", "chalice (>=1.26.5,<2)", "click (>=7,<8)", "CherryPy (>=18,<19)", "Django (>=3,<5)", "falcon (>=2,<4)", "fastapi (>=0.70.0,<1)", "Flask (>=1,<3)", "Werkzeug (>=2,<3)", "pyramid (>=1,<3)", "sanic (>=21,<22)", "starlette (>=0.14,<1)", "tornado (>=6,<7)", "uvicorn (<1)", "gunicorn (>=20,<21)", "websocket-client (>=1.2.3,<2)"]
@@ -963,7 +963,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10.5"
-content-hash = "e1750f1f50cf7026e9f2155accc55b30b85aa513d7999504f3316a21d0852cde"
+content-hash = "41c4f702a6b0c3b152bbc595b1426d83e728ae997618a3c0bcc0a7f3c3f6f63c"
 
 [metadata.files]
 aiofile = [
@@ -1711,8 +1711,8 @@ six = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 slack-bolt = [
-    {file = "slack_bolt-1.14.0-py2.py3-none-any.whl", hash = "sha256:86acccfb668ae57d553126cfb46ab694893e71aa7d3f78af597464d4148b4fcb"},
-    {file = "slack_bolt-1.14.0.tar.gz", hash = "sha256:2b3e41249616925325e3788b224440d8a70757885fd364d59eacc71db798a7ee"},
+    {file = "slack_bolt-1.14.3-py2.py3-none-any.whl", hash = "sha256:c99bf8bca2f9fbe21a2712ae319f0a26a86f715d54f44de61d55bd0f8c3d4d5a"},
+    {file = "slack_bolt-1.14.3.tar.gz", hash = "sha256:0be5a3f54bb5c0cbeea79d6ffc7130ddf3ca21a81bb7ba5bc3b5de2a6da56e1d"},
 ]
 slack-sdk = [
     {file = "slack_sdk-3.17.2-py2.py3-none-any.whl", hash = "sha256:70d5a55a5d52ba7128d5347ed995425e1f83e729667ab296035bcf6c1b13a049"},
