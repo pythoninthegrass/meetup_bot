@@ -17,7 +17,7 @@ from pathlib import Path
 # from pprint import pprint
 
 # verbose icecream
-ic.configureOutput(includeContext=True)
+# ic.configureOutput(includeContext=True)
 
 # pandas don't truncate output
 pd.set_option('display.max_rows', None)
@@ -196,11 +196,12 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     # filter rows by city
     df = df[df['city'] == location]
 
+    # TODO: control for mislabeled event locations (e.g. 'Techlahoma Foundation')
     # filtered rows to exclude keywords by regex OR operator
     if exclusions:
+        print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
         df = df[~df['name'].str.contains('|'.join(exclusions))]
         df = df[~df['title'].str.contains('|'.join(exclusions))]
-        print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
 
     # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next 7 days

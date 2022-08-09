@@ -1,35 +1,19 @@
 #!/usr/bin/env python3
 
-# import arrow
-import asyncio
-from urllib import response
-# import aiohttp
-# import aiofile
-import json
-# import nest_asyncio
 import os
 import pandas as pd
-# import requests
-# import requests_cache
-import time
 from decouple import config
-from fastapi import FastAPI, APIRouter, Depends, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-# from fastapi.responses import FileResponse, StreamingResponse
-from icecream import ic
-from pathlib import Path
-# from requests_cache import CachedSession
-# from slack_sdk import WebClient
-# from slack_sdk.errors import SlackApiError
-# import gen_token
-# import meetup_query
-# import slackbot
 from gen_token import main as gen_token
 from meetup_query import *
+from meetup_query import main as meetup_query
 from slackbot import main as send_message
+from icecream import ic
+from pathlib import Path
 
 # verbose icecream
-ic.configureOutput(includeContext=True)
+# ic.configureOutput(includeContext=True)
 
 # pandas don't truncate output
 pd.set_option('display.max_rows', None)
@@ -39,15 +23,13 @@ pd.set_option('display.max_colwidth', None)
 # logging.basicConfig(level=logging.DEBUG)
 # requests_cache.install_cache("api_cache", expire_after=3600)
 
-## env
+# verbose icecream
+# ic.configureOutput(includeContext=True)
+
+# env
 home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
-
-# verbose icecream
-ic.configureOutput(includeContext=True)
-
-# env file
 env =  Path('.env')
 
 # creds
@@ -91,7 +73,7 @@ token = tokens[0]
 
 
 @app.on_event('startup')
-async def startup_event():
+def startup_event():
     """
     Run startup event
     """
@@ -107,68 +89,46 @@ async def root():
     return {"message": "Hello World"}
 
 
-# TODO: fix exclusions blocking response (empty df)
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa"):
+def get_events(
+    location: str = "Oklahoma City",
+    exclusions: str = "Tulsa"):
     """
     Query upcoming Meetup events
     """
 
-    # wait for async function to complete
-    try:
-        asyncio.get_event_loop().run_until_complete(startup_event())
-    except RuntimeError as e:
-        print(e)
-        pass
+    # if exclusions, add to list of exclusions
+    if exclusions:
+        exclusions = exclusions.split(",")
+    else:
+        exclusions = []
 
-    # first-party query
-    res = format_response(response, location=location, exclusions=exclusions)
-
-    # add to df
-    df = pd.DataFrame(res)
-
-    # third-party query
-    for url in url_vars:
-        res = send_request(token, url_query, f'{{"urlname": "{url}"}}')
-        # append to output dict if the response is not empty
-        if len(format_response(res, location=location, exclusions=exclusions)) > 0:
-            df = pd.concat([df, pd.DataFrame(format_response(res, location=location, exclusions=exclusions))])
-        else:
-            print(f'[INFO] No upcoming events for {url} found')
-
-    # clean up duplicates
-    df = df.drop_duplicates()
-
-    # sort
-    df = sort_response(df)
-
-    return df
+    return format_response(response, location=location, exclusions=exclusions)
 
 
 @api_router.get("/export")
-def export_events(format: str = "json", exclusions: str = ""):
+def export_events(format: str = "json"):
     """
     Export Meetup events to CSV or JSON
     """
-
-    # exclude keywords in event name and title (will miss events with keyword in description)
-    exclusions = ['36\u00b0N', 'Tulsa']
 
     # validate format
     format = format.lower()
     if format not in ["json", "csv"]:
         raise HTTPException(status_code=400, detail="Invalid format. Must be either 'json' or 'csv'")
 
-    return export_to_file(response, format, exclusions=exclusions)
+    return export_to_file(response, format)
 
 
 @api_router.get("/slack")
-def post_slack(message):
+def post_slack():
     """
     Post to slack
+
+    Calls main function to post formatted message to predefined channel
     """
 
-    return send_message(message)
+    return send_message()
 
 
 app.include_router(api_router)

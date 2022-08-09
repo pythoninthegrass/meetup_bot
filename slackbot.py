@@ -67,24 +67,6 @@ chan = pd.read_csv('raw/channels.csv')
 # locate id from `CHANNEL` name
 channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
 
-# init redis
-r = redis_connect()
-
-
-def log_post_status(time, key, ex=None):
-    """
-    Insert timestamp of Slack post into Redis
-    """
-    # insert timestamp into redis
-    return r.ts(key, time, ex=ex)
-
-
-def get_post_status(key):
-    """
-    Get timestamp of Slack post from Redis
-    """
-    return r.ts(key)
-
 
 def fmt_json(filename):
     # read json file
