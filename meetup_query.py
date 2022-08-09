@@ -2,7 +2,6 @@
 
 import arrow
 import json
-import numpy as np
 import os
 import pandas as pd
 import re
@@ -13,7 +12,6 @@ import sys
 from arrow import ParserError
 from gen_token import main as gen_token
 from icecream import ic
-from inspect import stack
 # from pandas.errors import OutOfBoundsDatetime
 from pathlib import Path
 # from pprint import pprint
@@ -31,7 +29,7 @@ min = int(10)
 age = int(min * 60)
 
 # cache the requests as script basename, expire after 1 hour
-requests_cache.install_cache(Path(__file__).stem, expire_after=age)
+# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
 
 # env
 home = Path.home()
@@ -198,15 +196,11 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     # filter rows by city
     df = df[df['city'] == location]
 
-    # TODO: fix exclusions wiping out df from main.py
     # filtered rows to exclude keywords by regex OR operator
     if exclusions:
         df = df[~df['name'].str.contains('|'.join(exclusions))]
         df = df[~df['title'].str.contains('|'.join(exclusions))]
         print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
-
-
-
 
     # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next 7 days
@@ -214,44 +208,6 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     df = df[df['date'] <= time_span.isoformat()]
 
     return df
-
-
-def sort_response(res):
-    """
-    Sort raw response by date and clean uo duplicates
-    """
-
-    df = pd.DataFrame(res)
-
-    # replace '1-07-19 17:00:00' with current year '2022-07-19 17:00:00' via regex
-    # * negative lookahead only matches first digit at the beginning of the line (e.g., 1/0001 vs. 2022)
-    date_regex = r'^1(?![\d])|^0001(?![\d])'
-
-    # choose current year if 7 days from now is before EOY
-    if arrow.now().year == arrow.now().shift(days=7).year:
-        year = str(arrow.now().year)
-    else:
-        year = str(arrow.now().shift(days=7).year)
-
-    # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
-    try:
-        df['date'] = df['date'].apply(lambda x: arrow.get(x, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss'))
-        df['date'] = df['date'].apply(lambda x: x.replace(re.findall(date_regex, x)[0], year))
-    except ParserError:
-        print('[ERROR] ParserError: date column is already in correct format')
-        pass
-    df['date'] = pd.to_datetime(df['date'])
-
-    # sort by date
-    df = df.sort_values(by=['date'])
-
-    # convert date to human readable format (Thu 5/26 at 11:30 am)
-    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
-
-    # export to json (convert escaped unicode to utf-8 encoding first)
-    data = json.loads(df.to_json(orient='records', force_ascii=False))
-
-    return data
 
 
 # TODO: QA
