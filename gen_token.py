@@ -2,19 +2,26 @@
 
 # SOURCE: https://gist.github.com/valeriocos/e16424bc7dc0f2d6dd8bb9295c6f9a4b
 
+import anyio
+import asyncio
+# import gevent
 # import json
 import os
 import redis
 import requests
 # import requests_cache
 import sys
+import time
 # import webbrowser
+from asyncer import asyncify
 from authlib.integrations.requests_client import OAuth2Session
 from datetime import timedelta
 from decouple import config
+from gevent import monkey, spawn
 from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
+# from playwright.async_api import async_playwright
 from python_on_whales import docker, DockerClient
 from urllib.parse import urlencode
 
@@ -147,6 +154,9 @@ def run(playwright: Playwright) -> None:
 
 def redis_connect() -> redis.client.Redis:
     """Connect to redis."""
+    # start containers (only build if images aren't present)
+    start_docker(yml_file='docker-compose.yml')
+
     try:
         client = redis.Redis(
             host=HOST,
@@ -209,8 +219,8 @@ def renew_token(client_id, client_secret, refresh_token):
 
 def main():
     """Run the main function."""
-    # start containers (only build if images aren't present)
-    start_docker(yml_file='docker-compose.yml')
+    # # start containers (only build if images aren't present)
+    # start_docker(yml_file='docker-compose.yml')
 
     # initialize redis client
     client = redis_connect()
@@ -225,7 +235,6 @@ def main():
             run(playwright)
 
         info = get_token_info(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, CODE)
-        # print(json.dumps(info, sort_keys=True, indent=4))
 
         ttl = info['expires_in']
 
@@ -264,4 +273,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # asyncio.run(main())
+    # access_token, refresh_token = anyio.run(main)
+    access_token, refresh_token = main()

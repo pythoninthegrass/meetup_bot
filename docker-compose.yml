@@ -21,6 +21,9 @@ services:
     image: "redis:alpine"
     tty: true
     stdin_open: true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
     env_file:
       - ./.env
     environment:
@@ -39,6 +42,8 @@ services:
     image: redislabs/redisinsight
     tty: true
     stdin_open: true
+    depends_on:
+      - redis
     ports:
       - 8001:8001
     volumes:
