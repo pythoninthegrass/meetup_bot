@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
 
 # import arrow
-# import asyncio
+import asyncio
 from urllib import response
 # import aiohttp
 # import aiofile
 import json
+# import nest_asyncio
 import os
 import pandas as pd
-import requests
-import requests_cache
+# import requests
+# import requests_cache
+import time
 from decouple import config
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
-from gen_token import main as gen_token
-from meetup_query import send_request, format_response, export_to_file
+# from fastapi.responses import FileResponse, StreamingResponse
 from icecream import ic
 from pathlib import Path
 # from requests_cache import CachedSession
-from slack import send_message
 # from slack_sdk import WebClient
 # from slack_sdk.errors import SlackApiError
+# import gen_token
+# import meetup_query
+# import slackbot
+from gen_token import main as gen_token
+from meetup_query import *
+from slackbot import main as send_message
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -39,8 +44,8 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 
-## verbose icecream
-# ic.configureOutput(includeContext=True)
+# verbose icecream
+ic.configureOutput(includeContext=True)
 
 # env file
 env =  Path('.env')
@@ -68,6 +73,8 @@ origins = [
     "http://localhost:" + str(PORT),
     "http://127.0.0.1",
     "http://127.0.0.1:" + str(PORT),
+    "http://0.0.0.0",
+    "http://0.0.0.0:" + str(PORT),
 ]
 
 app.add_middleware(
@@ -78,22 +85,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# sync function call to generate token
+tokens = gen_token()
+token = tokens[0]
+
+
 @app.on_event('startup')
-def startup_event():
+async def startup_event():
     """
     Run startup event
     """
-    tokens = gen_token()
-    global token
-    token = tokens[0]
 
     global response
-    response = send_request(token)
+    response = send_request(token, query, vars)
 
-    # global json_response
-    # json_response = json.loads(response)
-
-    return token, response
+    return response
 
 
 @app.get("/")
@@ -101,32 +107,59 @@ async def root():
     return {"message": "Hello World"}
 
 
+# TODO: fix exclusions blocking response (empty df)
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City"):
+def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa"):
     """
     Query upcoming Meetup events
     """
 
-    # if child script raises error, throw 404
+    # wait for async function to complete
     try:
-        res = format_response(response, location)
-        return res
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=f'No data for {location} found')
+        asyncio.get_event_loop().run_until_complete(startup_event())
+    except RuntimeError as e:
+        print(e)
+        pass
+
+    # first-party query
+    res = format_response(response, location=location, exclusions=exclusions)
+
+    # add to df
+    df = pd.DataFrame(res)
+
+    # third-party query
+    for url in url_vars:
+        res = send_request(token, url_query, f'{{"urlname": "{url}"}}')
+        # append to output dict if the response is not empty
+        if len(format_response(res, location=location, exclusions=exclusions)) > 0:
+            df = pd.concat([df, pd.DataFrame(format_response(res, location=location, exclusions=exclusions))])
+        else:
+            print(f'[INFO] No upcoming events for {url} found')
+
+    # clean up duplicates
+    df = df.drop_duplicates()
+
+    # sort
+    df = sort_response(df)
+
+    return df
 
 
 @api_router.get("/export")
-def export_events(format: str = "json"):
+def export_events(format: str = "json", exclusions: str = ""):
     """
     Export Meetup events to CSV or JSON
     """
+
+    # exclude keywords in event name and title (will miss events with keyword in description)
+    exclusions = ['36\u00b0N', 'Tulsa']
 
     # validate format
     format = format.lower()
     if format not in ["json", "csv"]:
         raise HTTPException(status_code=400, detail="Invalid format. Must be either 'json' or 'csv'")
 
-    return export_to_file(response, format)
+    return export_to_file(response, format, exclusions=exclusions)
 
 
 @api_router.get("/slack")
@@ -152,5 +185,6 @@ def main():
     uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
 
 
+# TODO: shutdown docker containers on exit
 if __name__ == "__main__":
     main()
