@@ -6,15 +6,12 @@ import os
 import pandas as pd
 import re
 import requests
-import requests_cache
+# import requests_cache
 import sys
-# from decouple import config
 from arrow import ParserError
 from gen_token import main as gen_token
 from icecream import ic
-# from pandas.errors import OutOfBoundsDatetime
 from pathlib import Path
-# from pprint import pprint
 
 # verbose icecream
 # ic.configureOutput(includeContext=True)

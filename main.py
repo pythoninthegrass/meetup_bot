@@ -7,9 +7,8 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from gen_token import main as gen_token
 from meetup_query import *
-from meetup_query import main as meetup_query
 from slackbot import main as send_message
-from icecream import ic
+# from icecream import ic
 from pathlib import Path
 from python_on_whales import docker
 

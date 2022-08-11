@@ -2,13 +2,10 @@
 
 import arrow
 import json
-# import logging
 import os
 import pandas as pd
-# import redis
 import sys
 from decouple import config
-from gen_token import redis_connect
 from icecream import ic
 # from markdown import markdown
 from pathlib import Path

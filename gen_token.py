@@ -1,23 +1,13 @@
 #!/usr/bin/env python3
 
-# SOURCE: https://gist.github.com/valeriocos/e16424bc7dc0f2d6dd8bb9295c6f9a4b
-
-import anyio
-import asyncio
-# import gevent
-# import json
 import os
 import redis
 import requests
-# import requests_cache
 import sys
 import time
-# import webbrowser
-from asyncer import asyncify
 from authlib.integrations.requests_client import OAuth2Session
 from datetime import timedelta
 from decouple import config
-from gevent import monkey, spawn
 from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
