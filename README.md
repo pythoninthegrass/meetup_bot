@@ -14,6 +14,7 @@ Use Meetup Pro API to send Slack messages before events occur.
     docker-compose up -d
 
     # poetry
+    poetry install
     poetry run main.py
 
     # curl/httpie/requests (httpie shown)
@@ -32,10 +33,7 @@ Use Meetup Pro API to send Slack messages before events occur.
     # get events
     λ http :3000/api/events
     HTTP/1.1 200 OK
-    content-length: 4162
-    content-type: application/json
-    date: Thu, 11 Aug 2022 06:23:12 GMT
-    server: uvicorn
+    ...
 
     {
         "city": {
@@ -44,10 +42,9 @@ Use Meetup Pro API to send Slack messages before events occur.
         },
         "date": {
             "3": "2022-08-12T09:30-05:00",
-            ...
         },
         "description": {
-            "3": "If you can't make it to the [UXOK](https://uxok.org/) design conference in Tulsa, hang out with us instead! We'll be watching the talks live on the stream. If there are any issues with it, we'll watch last year's talks!\n\nThis event is come and go. ...",
+            "3": "If you can't make it to the [UXOK](https://uxok.org/) design conf...",
         },
         "eventUrl": {
             "3": "https://www.meetup.com/okccoffeeandcode/events/287519063",
@@ -63,20 +60,14 @@ Use Meetup Pro API to send Slack messages before events occur.
     # exports to cwd/raw/output.json
     λ http POST :3000/api/export
     HTTP/1.1 200 OK
-    content-length: 4
-    content-type: application/json
-    date: Thu, 11 Aug 2022 06:26:28 GMT
-    server: uvicorn
+    ...
 
     null
 
     # post formatted query results to slack
     λ http POST :3000/api/slack
     HTTP/1.1 200 OK
-    content-length: 4
-    content-type: application/json
-    date: Thu, 11 Aug 2022 06:31:24 GMT
-    server: uvicorn
+    ...
 
     null
     ```
