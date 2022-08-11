@@ -7,14 +7,88 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 ## Usage
 * meetup_bot
-  * TODO
+  * Dev
+    ```bash
+    # docker
+    docker-compose build --pull --parallel --no-cache
+    docker-compose up -d
+
+    # poetry
+    poetry run main.py
+
+    # curl/httpie/requests (httpie shown)
+    # root
+    λ http :3000
+    HTTP/1.1 200 OK
+    content-length: 25
+    content-type: application/json
+    date: Thu, 11 Aug 2022 06:22:01 GMT
+    server: uvicorn
+
+    {
+        "message": "Hello World"
+    }
+
+    # get events
+    λ http :3000/api/events
+    HTTP/1.1 200 OK
+    content-length: 4162
+    content-type: application/json
+    date: Thu, 11 Aug 2022 06:23:12 GMT
+    server: uvicorn
+
+    {
+        "city": {
+            "3": "Oklahoma City",
+            ...
+        },
+        "date": {
+            "3": "2022-08-12T09:30-05:00",
+            ...
+        },
+        "description": {
+            "3": "If you can't make it to the [UXOK](https://uxok.org/) design conference in Tulsa, hang out with us instead! We'll be watching the talks live on the stream. If there are any issues with it, we'll watch last year's talks!\n\nThis event is come and go. ...",
+        },
+        "eventUrl": {
+            "3": "https://www.meetup.com/okccoffeeandcode/events/287519063",
+        },
+        "name": {
+            "3": "OKC Coffee and Code",
+        },
+        "title": {
+            "3": "UXOK Watch Party",
+        }
+    }
+
+    # exports to cwd/raw/output.json
+    λ http POST :3000/api/export
+    HTTP/1.1 200 OK
+    content-length: 4
+    content-type: application/json
+    date: Thu, 11 Aug 2022 06:26:28 GMT
+    server: uvicorn
+
+    null
+
+    # post formatted query results to slack
+    λ http POST :3000/api/slack
+    HTTP/1.1 200 OK
+    content-length: 4
+    content-type: application/json
+    date: Thu, 11 Aug 2022 06:31:24 GMT
+    server: uvicorn
+
+    null
+    ```
+  * Prod
+    * TODO
 * gitleaks
   * git pre-commit hook
     ```bash
     git config hooks.gitleaks true
     ```
   * CI/CD
-    * TODO
+    * See `meetup_bot/.github/workflows/main.yml`
   * Manual run
     ```bash
     # set env vars
@@ -55,6 +129,7 @@ Use Meetup Pro API to send Slack messages before events occur.
 * ~~Docker/Docker-Compose~~
   * ~~Mitigates pain of Poetry virtual environments~~
   * ~~Can migrate to prod VPS and/or k8s~~
+* Lock down endpoints in prod / general hardening
 * Documentation
 
 ## Stretch Goals

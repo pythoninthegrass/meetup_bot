@@ -89,6 +89,7 @@ async def root():
     return {"message": "Hello World"}
 
 
+# TODO: better output than `null` for each endpoint
 @api_router.get("/events")
 def get_events(
     location: str = "Oklahoma City",
@@ -106,7 +107,8 @@ def get_events(
     return format_response(response, location=location, exclusions=exclusions)
 
 
-@api_router.get("/export")
+# TODO: override path in dev and/or use filestream (cf. news aggregator project)
+@api_router.post("/export")
 def export_events(format: str = "json"):
     """
     Export Meetup events to CSV or JSON
@@ -126,7 +128,7 @@ def export_events(format: str = "json"):
         return sort_json(json_fn)
 
 
-@api_router.get("/slack")
+@api_router.post("/slack")
 def post_slack():
     """
     Post to slack
@@ -140,6 +142,7 @@ def post_slack():
 app.include_router(api_router)
 
 
+# TODO: uvicorn server time to either local or utc
 def main():
     """
     Run app
