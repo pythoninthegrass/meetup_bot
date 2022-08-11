@@ -11,6 +11,7 @@ from meetup_query import main as meetup_query
 from slackbot import main as send_message
 from icecream import ic
 from pathlib import Path
+from python_on_whales import docker
 
 # verbose icecream
 # ic.configureOutput(includeContext=True)
@@ -117,7 +118,13 @@ def export_events(format: str = "json"):
     if format not in ["json", "csv"]:
         raise HTTPException(status_code=400, detail="Invalid format. Must be either 'json' or 'csv'")
 
-    return export_to_file(response, format)
+    export_to_file(response, format)
+
+     # cleanup output file
+    if format == 'csv':
+        return sort_csv(csv_fn)
+    elif format == 'json':
+        return sort_json(json_fn)
 
 
 @api_router.get("/slack")
@@ -142,9 +149,22 @@ def main():
     # Use this for debugging purposes only
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+    try:
+        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+    except Exception as e:
+        print(e)
+    finally:
+        print("[INFO] Stopping docker containers")
+        docker.compose.stop(
+            services=[
+                'redis',
+                'redisinsight',
+                'meetupbot',
+            ],
+        )
+        print("[INFO] Successfully stopped containers. Exiting...")
+        exit()
 
 
-# TODO: shutdown docker containers on exit
 if __name__ == "__main__":
     main()

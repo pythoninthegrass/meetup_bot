@@ -24,9 +24,9 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 
-# time in seconds
-min = int(10)
-age = int(min * 60)
+# time span (e.g., 3600 = 1 hour)
+sec = int(60)           # n seconds
+age = int(sec * 1)      # n minutes -> hours
 
 # cache the requests as script basename, expire after 1 hour
 # requests_cache.install_cache(Path(__file__).stem, expire_after=age)
