@@ -1,6 +1,5 @@
-# TODO: test 22.04 w/playwright v1.23.0
 # using ubuntu LTS version
-FROM ubuntu:20.04 AS builder-image
+FROM ubuntu:22.04 AS builder-image
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
@@ -63,7 +62,7 @@ RUN python3.10 -m venv /opt/venv
 RUN . /opt/venv/bin/activate && poetry install
 
 # TODO: dive + docker-slim
-FROM ubuntu:20.04 AS runner-image
+FROM ubuntu:22.04 AS runner-image
 
 ARG USERNAME=appuser
 ENV HOME="/home/${USERNAME}"
@@ -107,6 +106,6 @@ USER appuser
 
 WORKDIR $HOME/app
 
-ENTRYPOINT ["python", "meetup_query.py"]
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
+# ENTRYPOINT ["python", "meetup_query.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
 # CMD ["/bin/bash"]

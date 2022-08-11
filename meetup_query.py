@@ -170,11 +170,12 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     # convert response to json
     response_json = json.loads(response)
 
-    # extract data from json and if city is missing, raise error
+    # TODO: print skipped events
+    # extract data from json
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
         if data[0]['node']['group']['city'] != location:
-            raise ValueError(f'No data for {location} found')
+            print(f"[INFO] Skipping event outside of {location}")
     except KeyError:
         data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
         # TODO: handle no upcoming events to fallback on initial response
