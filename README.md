@@ -38,9 +38,10 @@ Use Meetup Pro API to send Slack messages before events occur.
 * ~~Refresh token~~
   * ~~Schedule `gen_token.py` every 55 minutes (3300s)~~
 * FastAPI
-  * endpoints
-    * Meetup query
+  * ~~endpoints~~
+    * ~~Meetup query~~
     * Slack bot: POST formatted messages to Slack channels `#okc-metro` && `#events`
+      * `#testingchannel` is the canary and works swimmingly
 * Schedule event posts in channels
   * Methods
     * launchd
