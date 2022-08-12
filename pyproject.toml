@@ -20,6 +20,7 @@ requests = "^2.27.1"
 requests-cache = "^0.9.3"
 slack-sdk = "^3.17.2"
 uvicorn = "^0.18.2"
+gunicorn = "^20.1.0"
 
 [tool.poetry.dev-dependencies]
 icecream = "^2.1.3"

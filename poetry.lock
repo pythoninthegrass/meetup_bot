@@ -258,6 +258,20 @@ python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 docs = ["sphinx"]
 
 [[package]]
+name = "gunicorn"
+version = "20.1.0"
+description = "WSGI HTTP Server for UNIX"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.extras]
+eventlet = ["eventlet (>=0.24.1)"]
+gevent = ["gevent (>=1.4.0)"]
+setproctitle = ["setproctitle"]
+tornado = ["tornado (>=0.2)"]
+
+[[package]]
 name = "h11"
 version = "0.13.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
@@ -872,7 +886,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10.5"
-content-hash = "e169aa7ae07eae66adb6abb7c3454a018a616e77675fdf4b4fcb741e5d0f1fe1"
+content-hash = "8e32884c7cb9fd5864589b32bd7238f8d7f2f8f6c750e9771242adae618606a8"
 
 [metadata.files]
 anyio = []
@@ -898,6 +912,7 @@ exceptiongroup = []
 executing = []
 fastapi = []
 greenlet = []
+gunicorn = []
 h11 = []
 icecream = []
 idna = []
