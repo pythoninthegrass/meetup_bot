@@ -8,7 +8,7 @@ import time
 from authlib.integrations.requests_client import OAuth2Session
 from datetime import timedelta
 from decouple import config
-from icecream import ic
+# from icecream import ic
 from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
 # from playwright.async_api import async_playwright
@@ -16,7 +16,7 @@ from python_on_whales import docker, DockerClient
 from urllib.parse import urlencode
 
 # verbose icecream
-ic.configureOutput(includeContext=True)
+# ic.configureOutput(includeContext=True)
 
 # cache the requests as script basename, expire after 1 hour
 # requests_cache.install_cache(Path(__file__).stem, expire_after=3600)
