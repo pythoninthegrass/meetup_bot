@@ -13,7 +13,7 @@ from pathlib import Path
 from playwright.sync_api import Playwright, sync_playwright
 # from playwright.async_api import async_playwright
 from python_on_whales import docker, DockerClient
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 # verbose icecream
 # ic.configureOutput(includeContext=True)
@@ -155,7 +155,8 @@ def redis_connect() -> redis.client.Redis:
         if sys.platform == 'darwin':
             client = redis.Redis(host=HOST, port=6379, password=REDIS_PASS, db=0, socket_timeout=5)
         else:
-            client = redis.from_url(REDIS_URL, db=0, socket_timeout=5)
+            url = urlparse(os.getenv("REDIS_URL"))
+            client = redis.Redis(host=url.hostname, port=url.port, username=url.username, password=url.password, ssl=True, ssl_cert_reqs=None)
         ping = client.ping()
         if ping is True:
             return client
