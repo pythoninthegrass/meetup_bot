@@ -4,7 +4,7 @@ import os
 import redis
 import requests
 import sys
-import time
+# import time
 from authlib.integrations.requests_client import OAuth2Session
 from datetime import timedelta
 from decouple import config
@@ -35,6 +35,7 @@ if env.exists():
     TOKEN_URL = config('TOKEN_URL')
     MEETUP_EMAIL = config('MEETUP_EMAIL')
     MEETUP_PASS = config('MEETUP_PASS')
+    REDIS_URL: config('REDIS_URL', default=None)
     REDIS_PASS = config('REDIS_PASS')
     TTL = config('TTL', default=3600, cast=int)
     HOST = config('HOST', default='localhost')
@@ -46,6 +47,7 @@ else:
     TOKEN_URL = os.getenv('TOKEN_URL')
     MEETUP_EMAIL = os.getenv('MEETUP_EMAIL')
     MEETUP_PASS = os.getenv('MEETUP_PASS')
+    REDIS_URL = os.getenv('REDIS_URL')
     REDIS_PASS = os.getenv('REDIS_PASS')
     TTL = os.getenv('TTL', default=3600)
     HOST = os.getenv('HOST', default='localhost')
@@ -63,6 +65,7 @@ uri, state = client.create_authorization_url(authorization_endpoint, response_ty
 
 def start_docker(yml_file=None):
     """Start docker."""
+
     # project_config = docker.compose.config()
     if yml_file is not None:
         docker = DockerClient(compose_files=[Path(yml_file)])
@@ -92,6 +95,7 @@ def stop_docker():
 
 def get_token_info(client_id, client_secret, redirect_uri, code):
     """Get token info from Meetup."""
+
     endpoint = TOKEN_URL
     endpoint = endpoint + '?' + urlencode({'client_id': client_id, 'client_secret': client_secret, 'redirect_uri': redirect_uri, 'code': code, 'grant_type': 'authorization_code'})
     headers = {
@@ -106,6 +110,7 @@ def get_token_info(client_id, client_secret, redirect_uri, code):
 
 def run(playwright: Playwright) -> None:
     """Simulate a user login."""
+
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -142,19 +147,15 @@ def run(playwright: Playwright) -> None:
     return CODE
 
 
+# TODO: test REDIS_URL in heroku
 def redis_connect() -> redis.client.Redis:
     """Connect to redis."""
-    # start containers (only build if images aren't present)
-    start_docker(yml_file='docker-compose.yml')
 
     try:
-        client = redis.Redis(
-            host=HOST,
-            port=6379,
-            password=REDIS_PASS,
-            db=0,
-            socket_timeout=5,
-        )
+        if sys.platform == 'darwin':
+            client = redis.Redis(host=HOST, port=6379, password=REDIS_PASS, db=0, socket_timeout=5)
+        else:
+            client = redis.from_url(REDIS_URL, db=0, socket_timeout=5)
         ping = client.ping()
         if ping is True:
             return client
@@ -164,7 +165,6 @@ def redis_connect() -> redis.client.Redis:
     except redis.ConnectionError:
         print("ConnectionError. Start redis to cache tokens.")
         sys.exit(1)
-        # pass
 
 
 def get_routes_from_cache(redis_client, key):
@@ -181,6 +181,7 @@ def get_routes_from_cache(redis_client, key):
 
 def set_routes_to_cache(redis_client, key: str, value: str) -> bool:
     """Set data to redis."""
+
     # set data to redis cache with one hour expiration
     state = redis_client.setex(key, timedelta(seconds=TTL), value=value)
 
@@ -209,8 +210,11 @@ def renew_token(client_id, client_secret, refresh_token):
 
 def main():
     """Run the main function."""
-    # # start containers (only build if images aren't present)
-    # start_docker(yml_file='docker-compose.yml')
+
+    # override host env var if system is macos
+    if HOST == 'localhost':
+        # start containers (only build if images aren't present)
+        start_docker(yml_file='docker-compose.yml')
 
     # initialize redis client
     client = redis_connect()
@@ -236,7 +240,7 @@ def main():
 
         print("[INFO] Generated tokens")
     # renew token if expired or ttl is less than 5 minutes
-    elif access_token['ttl'] < 300:
+    elif access_token['ttl'] <= 300:
         print("[INFO] Renewing token")
         r_json = renew_token(CLIENT_ID, CLIENT_SECRET, refresh_token['refresh_token'])
         access_token = r_json['access_token']
@@ -263,6 +267,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # asyncio.run(main())
-    # access_token, refresh_token = anyio.run(main)
     access_token, refresh_token = main()

@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import sys
 from decouple import config
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -156,15 +157,16 @@ def main():
     except Exception as e:
         print(e)
     finally:
-        print("[INFO] Stopping docker containers")
-        docker.compose.stop(
-            services=[
-                'redis',
-                'redisinsight',
-                'meetupbot',
-            ],
-        )
-        print("[INFO] Successfully stopped containers. Exiting...")
+        if sys.platform == 'darwin':
+            print("[INFO] Stopping docker containers")
+            docker.compose.stop(
+                services=[
+                    'redis',
+                    'redisinsight',
+                    'meetupbot',
+                ],
+            )
+            print("[INFO] Successfully stopped containers. Exiting...")
         exit()
 
 
