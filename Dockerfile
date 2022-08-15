@@ -5,7 +5,7 @@ FROM ubuntu:22.04 AS builder-image
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
-    && apt-get install \
+    &&  apt-get install -qq \
     --no-install-recommends -y \
     aptitude \
     autoconf \
@@ -82,7 +82,7 @@ COPY --from=builder-image --chown=${USERNAME}:${USERNAME} $HOME/.asdf $HOME/.asd
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
-    && apt-get install \
+    &&  apt-get install -qq \
     --no-install-recommends -y \
     ca-certificates \
     curl \
