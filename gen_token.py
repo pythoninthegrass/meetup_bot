@@ -4,7 +4,6 @@ import os
 import redis
 import requests
 import sys
-# import time
 from authlib.integrations.requests_client import OAuth2Session
 from datetime import timedelta
 from decouple import config
@@ -69,7 +68,7 @@ def start_docker(yml_file=None):
     # project_config = docker.compose.config()
     if yml_file is not None:
         docker = DockerClient(compose_files=[Path(yml_file)])
-        if docker.container.list(all=False) == []:
+        if (docker.container.list(all=False) != ['redis']) or (docker.container.list(all=False) == []):
             docker.compose.up(
                 services=['redis', 'redisinsight'],
                 build=False,
