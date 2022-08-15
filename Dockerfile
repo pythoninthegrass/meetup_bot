@@ -47,8 +47,8 @@ RUN bash -c "git clone --depth 1 https://github.com/asdf-vm/asdf.git $HOME/.asdf
     && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.bashrc  \
     && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.profile"
 RUN asdf plugin-add python \
-    && asdf install python 3.10.5 \
-    && asdf global python 3.10.5
+    && asdf install python 3.10.6 \
+    && asdf global python 3.10.6
 
 ENV POETRY_HOME="$HOME/.poetry"
 RUN curl -sSL https://install.python-poetry.org | python3.10 -
