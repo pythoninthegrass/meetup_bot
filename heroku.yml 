@@ -1,9 +1,0 @@
-build:
-  docker:
-    release:
-      dockerfile: Dockerfile
-      target: runner-image
-
-run:
-  web: gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app -bind 0.0.0.0:$PORT
-
