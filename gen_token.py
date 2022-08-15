@@ -70,7 +70,7 @@ def start_docker(yml_file=None):
         docker = DockerClient(compose_files=[Path(yml_file)])
         if (docker.container.list(all=False) != ['redis']) or (docker.container.list(all=False) == []):
             docker.compose.up(
-                services=['redis', 'redisinsight'],
+                services=['redis'],
                 build=False,
                 detach=True,
             )

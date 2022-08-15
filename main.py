@@ -155,6 +155,9 @@ def main():
 
     try:
         uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        sys.exit(0)
     except Exception as e:
         print(e)
     finally:
