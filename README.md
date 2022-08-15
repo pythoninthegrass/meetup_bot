@@ -72,7 +72,42 @@ Use Meetup Pro API to send Slack messages before events occur.
     null
     ```
   * Prod
-    * TODO
+    * Heroku
+      * Setup
+        ```bash
+        # install
+        brew tap heroku/brew && brew install heroku
+
+        # autocomplete + login
+        heroku autocomplete --refresh-cache
+
+        # set app
+        export HEROKU_APP=meetup-bot-bot
+
+        # ubuntu 22.*
+        heroku stack:set heroku-22
+
+        # programmatically add .env vars to heroku config vars
+        cat .env | tr '\n' ' ' | xargs heroku config:set -a meetup-bot-bot
+        ```
+      * Container manifest
+        * See [heroku.yml](heroku.yml)
+        * Creates a container from [Dockerfile.prod](Dockerfile.prod), attaches Redis and scheduler
+      * Usage
+        ```bash
+        # deploy container via heroku.yml
+        heroku create meetup-bot-bot --manifest
+
+        # setup python buildpack
+        heroku buildpacks:add heroku/python
+
+        # add a web worker
+        heroku ps:scale web=1                                           # stop dymo via `web=0`
+
+        # destroy app
+        heroku apps:destroy -a meetup-bot-bot --confirm meetup-bot-bot
+        ```
+      * TODO: document scheduler w/API commands
 * gitleaks
   * git pre-commit hook
     ```bash
@@ -109,11 +144,13 @@ Use Meetup Pro API to send Slack messages before events occur.
       * `#testingchannel` is the canary and works swimmingly
 * Schedule event posts in channels
   * Methods
-    * launchd
-    * cron
-    * k8s cron
-    * jupyter
-    * aws lambda
+    * ~~launchd~~
+    * ~~cron~~
+    * ~~k8s cron~~
+    * ~~jupyter~~
+    * ~~aws lambda~~
+    * [scheduler](https://devcenter.heroku.com/articles/scheduler): built-in heroku addon
+      * deploy > document
   * Time Frame 
     * 3 days before
     * 2 hours before
