@@ -1,0 +1,13 @@
+setup:
+  addons:
+    - plan: heroku-redis
+      as: REDIS
+    - plan: scheduler
+      as: SCHEDULER
+  config:
+    APP_NAME: meetup-bot-bot
+build:
+  docker:
+    web: Dockerfile
+run:
+  web: uvicorn main:app --bind 0.0.0.0:$PORT
