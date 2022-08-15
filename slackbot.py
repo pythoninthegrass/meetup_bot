@@ -28,7 +28,7 @@ env = Path('.env')
 cwd = Path.cwd()
 csv_fn = Path('raw/output.csv')
 json_fn = Path('raw/output.json')
-groups_csv = Path('raw/groups.csv')
+groups_csv = Path('groups.csv')
 TZ = config('TZ', default='America/Chicago')
 local = arrow.now().to(TZ)
 

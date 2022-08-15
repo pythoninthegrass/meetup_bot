@@ -58,16 +58,16 @@ def run(playwright: Playwright) -> None:
     df.columns = ["url"]
 
     # export raw CSV
-    df.to_csv("raw/groups.csv", index=False)
+    df.to_csv("groups.csv", index=False)
 
     # read groups.csv
-    df = pd.read_csv("raw/groups.csv")
+    df = pd.read_csv("groups.csv")
 
     # add column for urlname (group name) (split at second to last field)
     df["urlname"] = df["url"].apply(lambda x: x.split("/")[-2])
 
     # export final CSV
-    df.to_csv("raw/groups.csv", index=False)
+    df.to_csv("groups.csv", index=False)
 
 
 with sync_playwright() as playwright:

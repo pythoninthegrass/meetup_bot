@@ -35,7 +35,7 @@ cwd = Path.cwd()
 format = 'json'
 csv_fn = Path('raw/output.csv')
 json_fn = Path('raw/output.json')
-groups_csv = Path('raw/groups.csv')
+groups_csv = Path('groups.csv')
 
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
