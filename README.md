@@ -174,6 +174,8 @@ Use Meetup Pro API to send Slack messages before events occur.
     * ~~Meetup query~~
     * Slack bot: POST formatted messages to Slack channels `#okc-metro` && `#events`
       * `#testingchannel` is the canary and works swimmingly
+* Makefile
+  * `docker buildx` && heroku push/release image
 * Schedule event posts in channels
   * Methods
     * ~~launchd~~
