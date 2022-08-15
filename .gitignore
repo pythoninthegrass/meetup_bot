@@ -6,6 +6,7 @@ redis*
 *.key
 raw/
 !groups.csv
+!channels.csv
 gitleaks_report*.json
 db.json
 

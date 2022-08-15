@@ -59,7 +59,7 @@ if sys.platform == 'darwin':
 client = WebClient(token=BOT_USER_TOKEN)
 
 # read manually entered 'raw/channels.csv'
-chan = pd.read_csv('raw/channels.csv')
+chan = pd.read_csv('channels.csv')
 
 # locate id from `CHANNEL` name
 channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
