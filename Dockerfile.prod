@@ -4,8 +4,8 @@ FROM ubuntu:22.04 AS builder-image
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
-    && apt-get install -qq \
+RUN apt-get -qq update \
+    && apt-get -qq install \
     --no-install-recommends -y \
     aptitude \
     autoconf \
@@ -81,8 +81,8 @@ COPY --from=builder-image --chown=appuser:appuser $HOME/.asdf $HOME/.asdf
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
-    && apt-get install -qq \
+RUN apt-get -qq update \
+    && apt-get -qq install \
     --no-install-recommends -y \
     ca-certificates \
     curl \
