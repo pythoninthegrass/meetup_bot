@@ -92,7 +92,22 @@ Use Meetup Pro API to send Slack messages before events occur.
         ```
       * Container manifest
         * See [heroku.yml](heroku.yml)
-        * Creates a container from [Dockerfile.prod](Dockerfile.prod), attaches Redis and scheduler
+        * Creates a container from [Dockerfile.web](Dockerfile.web), attaches Redis and scheduler
+      * Container registry
+        * Faster than CI builds triggered by GitHub commits
+        ```bash
+        # login
+        heroku container:login
+
+        # build image (w/cache)
+        heroku container:push web
+
+        # release image to app
+        heroku container:release web
+
+        # open website
+        heroku open
+        ```
       * Usage
         ```bash
         # deploy container via heroku.yml
