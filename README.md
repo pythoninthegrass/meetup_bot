@@ -84,8 +84,17 @@ Use Meetup Pro API to send Slack messages before events occur.
         # set app
         export HEROKU_APP=meetup-bot-bot
 
-        # ubuntu 22.*
-        heroku stack:set heroku-22
+        # config vars
+        heroku config
+
+        # stack
+        heroku stack
+
+        # ubuntu 22.* buildpack
+        # heroku stack:set heroku-22
+
+        # custom container via manifest
+        heroku stack:set container
 
         # programmatically add .env vars to heroku config vars
         cat .env | tr '\n' ' ' | xargs heroku config:set -a meetup-bot-bot
@@ -99,11 +108,19 @@ Use Meetup Pro API to send Slack messages before events occur.
         # login
         heroku container:login
 
-        # build image (w/cache)
+        # heroku wrapper build (w/cache)
         heroku container:push web
+
+        # docker buildx (arm)
+        export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
+        docker buildx build -f Dockerfile.web --progress=plain -t $TAG --load .
+        docker push registry.heroku.com/meetup-bot-bot/web
 
         # release image to app
         heroku container:release web
+
+        # exec/ssh into container
+        heroku ps:exec
 
         # open website
         heroku open
