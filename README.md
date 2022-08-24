@@ -1,6 +1,13 @@
 <img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
 
 # meetup_bot
+**Table of Contents**
+* [meetup_bot](#meetup_bot)
+  * [Summary](#summary)
+  * [Usage](#usage)
+  * [TODO](#todo)
+  * [Stretch Goals](#stretch-goals)
+  * [Further Reading](#further-reading)
 
 ## Summary
 Use Meetup Pro API to send Slack messages before events occur.
@@ -165,10 +172,13 @@ Use Meetup Pro API to send Slack messages before events occur.
     ```
 
 ## TODO
-* ~~Third-party Meetup lookup~~
-  * ~~If API only covers org events, use something like [Playwright](https://playwright.dev/python/) to scrape outstanding events~~
-* ~~Refresh token~~
-  * ~~Schedule `gen_token.py` every 55 minutes (3300s)~~
+* JSON Web Token (JWT) Auth Flow
+  * Use JWT vs. OAuth2 flow
+    * Latter needs manual intervention/user spoofing/captcha bypass
+  * ~~Format payload, headers, and sign JWT~~
+  * ~~Successful POST (200) to OAuth URL~~
+  * Extract `access_token` and `refresh_token` from response
+    * Getting raw HTML of a page vs. JSON payload 🤔
 * FastAPI
   * ~~endpoints~~
     * ~~Meetup query~~
@@ -201,3 +211,13 @@ Use Meetup Pro API to send Slack messages before events occur.
   * Next `n` events
   * This week's events
   * Create new events
+
+## Further Reading
+[API Doc Authentication | Meetup](https://www.meetup.com/api/authentication/#p04-jwt-flow-section)
+
+[How to Handle JWTs in Python](https://auth0.com/blog/how-to-handle-jwt-in-python/)
+
+[Usage Examples — PyJWT 2.4.0 documentation](https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-rs256-rsa)
+
+[Building a Basic Authorization Server using Authorization Code Flow (PKCE) | by Ratros Y. | Medium](https://medium.com/@ratrosy/building-a-basic-authorization-server-using-authorization-code-flow-pkce-3155e843466)
+
