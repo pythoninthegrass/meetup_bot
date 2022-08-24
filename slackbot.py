@@ -59,10 +59,15 @@ if sys.platform == 'darwin':
 client = WebClient(token=BOT_USER_TOKEN)
 
 # read manually entered 'raw/channels.csv'
-chan = pd.read_csv('channels.csv')
+chan = pd.read_csv('channels.csv', header=0)
 
+# TODO: debug out of range error in linux
 # locate id from `CHANNEL` name
-channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
+try:
+    channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
+except IndexError as e:
+    # temporarily hard-code #testingchannel id
+    channel_id = 'C02SS2DKSQH'
 
 
 def fmt_json(filename):
@@ -117,7 +122,8 @@ def main():
     msg = fmt_json(json_fn)
 
     # send message as one concatenated string
-    send_message('\n'.join(msg))
+    # send_message('\n'.join(msg))
+    ic(msg)
 
 
 if __name__ == '__main__':
