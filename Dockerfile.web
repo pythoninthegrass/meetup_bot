@@ -54,7 +54,7 @@ ENV POETRY_HOME="$HOME/.poetry"
 RUN curl -sSL https://install.python-poetry.org | python3.10 -
 ENV PATH "${POETRY_HOME}/bin:$PATH"
 
-WORKDIR /app
+WORKDIR $$HOME/app
 COPY pyproject.toml poetry.lock ./
 RUN python3.10 -m venv /opt/venv
 
@@ -106,6 +106,7 @@ USER appuser
 
 WORKDIR $HOME/app
 
-# ENTRYPOINT ["python", "meetup_query.py"]
-CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:${PORT:-3000}", "--log-file", "-"]
+# ENTRYPOINT ["python", "main.py"]
+# CMD ["gunicorn", "-c", "config/gunicorn.conf.py", "main:app"]
+CMD ["/bin/bash", "startup.sh"]
 # CMD ["/bin/bash"]

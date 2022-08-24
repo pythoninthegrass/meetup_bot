@@ -14,16 +14,16 @@ services:
       - 80:3000
     build:
       context: ./
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile.web
 
   redis:
     container_name: redis-cont
     image: "redis:alpine"
     tty: true
     stdin_open: true
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+    # healthcheck:
+    #   test: ["CMD", "redis-cli", "ping"]
+    #   interval: 5s
     env_file:
       - ./.env
     environment:
@@ -37,17 +37,17 @@ services:
     command: [ "redis-server", "/redis.conf" ]
 
   # redis db visualization dashboard
-  redisinsight:
-    container_name: redisinsight-cont
-    image: redislabs/redisinsight
-    tty: true
-    stdin_open: true
-    depends_on:
-      - redis
-    ports:
-      - 8001:8001
-    volumes:
-      - ./redis-insight:/db
+  # redisinsight:
+  #   container_name: redisinsight-cont
+  #   image: redislabs/redisinsight
+  #   tty: true
+  #   stdin_open: true
+  #   depends_on:
+  #     - redis
+  #   ports:
+  #     - 8001:8001
+  #   volumes:
+  #     - ./redis-insight:/db
 
 volumes:
   redis-data:
