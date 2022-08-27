@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import re
 import requests
-# import requests_cache
+import requests_cache
 import sys
 from arrow import ParserError
 from gen_token import main as gen_token
@@ -26,7 +26,7 @@ sec = int(60)           # n seconds
 age = int(sec * 1)      # n minutes -> hours
 
 # cache the requests as script basename, expire after 1 hour
-# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
+requests_cache.install_cache(Path(__file__).stem, expire_after=age)
 
 # env
 home = Path.home()

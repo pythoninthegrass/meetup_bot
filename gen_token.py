@@ -4,7 +4,9 @@ import os
 import redis
 import requests
 import sys
+import time
 from authlib.integrations.requests_client import OAuth2Session
+from contextlib import suppress
 from datetime import timedelta
 from decouple import config
 # from icecream import ic
@@ -77,7 +79,7 @@ def start_docker(yml_file=None):
     elif yml_file is None:
         if docker.container.list(all=False):
             docker.compose.up(
-                services=['redis', 'redisinsight'],
+                services=['redis'],
                 build=False,
                 detach=True,
             )
@@ -117,10 +119,9 @@ def run(playwright: Playwright) -> None:
     }
     endpoint = AUTH_BASE_URL
     endpoint = endpoint + '?' + urlencode(params)
-    # webbrowser.open(endpoint)
 
     try:
-        browser = playwright.firefox.launch(headless=True)
+        browser = playwright.firefox.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
         page.goto(endpoint)
@@ -136,34 +137,54 @@ def run(playwright: Playwright) -> None:
         global CODE
         CODE = page.url.split("code=")[1]
 
-        context.close()
-        browser.close()
+        return CODE
     except Exception as e:
-        print(f"{e}. Try running `python -m playwright install firefox`")
+        print(f"{e}.\nTry running `python -m playwright install firefox`")
+        sys.exit(1)
+    finally:
         context.close()
         browser.close()
-
-    return CODE
 
 
 # TODO: test REDIS_URL in heroku
-def redis_connect() -> redis.client.Redis:
+def redis_connect(retry: int = None) -> redis.client.Redis:
     """Connect to redis."""
 
+    if HOST == 'localhost' or sys.platform == 'darwin':
+        client = redis.Redis(host=HOST, port=6379, password=REDIS_PASS, db=0, socket_keepalive=True)
+    else:
+        url = urlparse(os.getenv("REDIS_URL"))
+        client = redis.Redis(host=url.hostname, port=url.port, username=url.username, password=url.password, ssl=True, ssl_cert_reqs=None, socket_keepalive=True)
+
+    # TODO: debug `TimeoutError` during for loop (2/3 retries then hangs) -- could be the `suppressed` error ¯\_(ツ)_/¯
     try:
-        if sys.platform == 'darwin':
-            client = redis.Redis(host=HOST, port=6379, password=REDIS_PASS, db=0, socket_timeout=5)
+        # try ping n times with delay
+        if retry is not None:
+            attempts = retry
+            for i in range(attempts):
+                print(f"{i+1}/{attempts} tries to connect to redis...")
+                with suppress(redis.ConnectionError):
+                    ping = client.ping()
+                    if ping is True:
+                        return client
+                    elif ping is False and i == attempts - 1:
+                        time.sleep(5)
+                        continue
+                    else:
+                        break
         else:
-            url = urlparse(os.getenv("REDIS_URL"))
-            client = redis.Redis(host=url.hostname, port=url.port, username=url.username, password=url.password, ssl=True, ssl_cert_reqs=None)
-        ping = client.ping()
-        if ping is True:
-            return client
+            ping = client.ping()
+            if ping is True:
+                return client
+
     except redis.AuthenticationError:
         print("AuthenticationError")
         sys.exit(1)
     except redis.ConnectionError:
         print("ConnectionError. Start redis to cache tokens.")
+        sys.exit(1)
+    except redis.TimeoutError:
+        print("TimeoutError")
         sys.exit(1)
 
 

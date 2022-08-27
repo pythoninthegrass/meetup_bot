@@ -122,8 +122,9 @@ def main():
     msg = fmt_json(json_fn)
 
     # send message as one concatenated string
-    # send_message('\n'.join(msg))
-    ic(msg)
+    send_message('\n'.join(msg))
+
+    return ic(msg)
 
 
 if __name__ == '__main__':
