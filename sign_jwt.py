@@ -50,7 +50,6 @@ payload_data = {
 }
 
 
-
 def sign_token():
     """Generate signed JWT"""
     payload = jwt.encode(
@@ -89,23 +88,29 @@ def verify_token(token):
 
 def get_access_token(token):
     """Post token to auth server to get access token"""
-    data = {
-        'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        'assertion': token
-    }
-    endpoint = TOKEN_URL + '&' + urlencode(data)
+
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
     }
-    # TODO: parse response and extract access/refresh tokens
-    res = requests.post(endpoint, headers=headers)
-    print(res.text)
 
-    return
+    # data = {
+    #     'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    #     'assertion': token
+    # }
+    # endpoint = TOKEN_URL + '&' + urlencode(data)
+
+    # data = "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + token
+
+    endpoint = TOKEN_URL + '&' + urlencode({'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': token})
+
+    # session = requests.session()
+    res = requests.post(endpoint, headers=headers)
+
+    print(res.text)
 
 
 if __name__ == "__main__":
     token = sign_token()
-    verify_token(token)
+    # verify_token(token)
     access_token = get_access_token(token)
