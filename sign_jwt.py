@@ -20,6 +20,7 @@ CLIENT_SECRET = config('CLIENT_SECRET')
 SIGNING_KEY_ID = config('SIGNING_KEY_ID')
 SIGNING_SECRET = config('SIGNING_SECRET')
 TOKEN_URL = config('TOKEN_URL')
+REDIRECT_URI = config('REDIRECT_URI')
 JWT_LIFE_SPAN = config('JWT_LIFE_SPAN', default=120, cast=int)
 
 
@@ -36,14 +37,16 @@ with open(pub_key, 'rb') as file:
         backend=default_backend()
     )
 
-headers={
-    'kid': SIGNING_KEY_ID,
-    "typ": "JWT",
-    "alg": "RS256",
-    "aud": "api.meetup.com"
+headers = {
+    "alg": 'RS256',
+    "typ": 'JWT',
+    "Accept": 'application/json',
+    "Content-Type": 'application/x-www-form-urlencoded'
 }
 
 payload_data = {
+    "audience": 'api.meetup.com',
+    "kid": SIGNING_KEY_ID,
     "sub": CLIENT_ID,
     "iss": CLIENT_SECRET,
     "exp": time.time() + JWT_LIFE_SPAN
@@ -52,6 +55,7 @@ payload_data = {
 
 def sign_token():
     """Generate signed JWT"""
+
     payload = jwt.encode(
         headers=headers,
         payload=payload_data,
@@ -64,12 +68,13 @@ def sign_token():
 
 def verify_token(token):
     """Verify signed JWT against public key"""
+
     try:
         decoded_token = jwt.decode(
             jwt=token,
             key=public_key,
             issuer=CLIENT_SECRET,
-            verify=False,
+            verify=True,
             algorithms=['RS256']
         )
         print(f"[decoded_token]: {decoded_token}")
@@ -89,28 +94,23 @@ def verify_token(token):
 def get_access_token(token):
     """Post token to auth server to get access token"""
 
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
+    payload = {
+        "grant_type": 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        "assertion": token,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "audience": 'api.meetup.com',
+        "exp": time.time() + JWT_LIFE_SPAN
     }
+    payload = urlencode(payload)
 
-    # data = {
-    #     'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-    #     'assertion': token
-    # }
-    # endpoint = TOKEN_URL + '&' + urlencode(data)
-
-    # data = "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + token
-
-    endpoint = TOKEN_URL + '&' + urlencode({'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': token})
-
-    # session = requests.session()
-    res = requests.post(endpoint, headers=headers)
-
-    print(res.text)
+    return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
+# TODO: empty 200 response
 if __name__ == "__main__":
     token = sign_token()
-    # verify_token(token)
+    verify_token(token)
     access_token = get_access_token(token)
+    ic(access_token.json())
