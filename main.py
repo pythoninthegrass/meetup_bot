@@ -43,13 +43,13 @@ if env.exists():
     REDIS_URL: config('REDIS_URL', default=None)
     REDIS_PASS = config('REDIS_PASS')
     TTL = config('TTL', default=3600, cast=int)
-    HOST = config('HOST', default='localhost')
+    HOST = config('HOST', default='redis')
     PORT = config('PORT', default=3000, cast=int)
 else:
     REDIS_URL = os.getenv('REDIS_URL')
     REDIS_PASS = os.getenv('REDIS_PASS')
     TTL = os.getenv('TTL', default=3600)
-    HOST = os.getenv('HOST', default='localhost')
+    HOST = os.getenv('HOST', default='redis')
     PORT = os.getenv('PORT', default=3000)
 
 
@@ -94,7 +94,7 @@ def startup_event():
         start_docker(yml_file='docker-compose.yml')
 
     # make handshake with redis
-    redis_connect(3)
+    redis_connect()
 
 
 @app.get("/")
@@ -102,13 +102,23 @@ async def root():
     return {"message": "Hello World"}
 
 
+# TODO: QA hard-coded token pos arg
 @api_router.get("/token")
-def generate_token():
-    """Get auth token"""
+def generate_token(hard_token: str = None):
+    """
+    Get auth token
 
-    tokens = gen_token()
+    Args:
+        hard_token (str): hard-coded token
+    """
+
     global token
-    token = tokens[0]
+
+    if hard_token:
+        token = hard_token
+    else:
+        tokens = gen_token()
+        token = tokens[0]
 
     return token
 
@@ -148,9 +158,11 @@ def get_events(
 
     # cleanup output file
     if format == 'csv':
-        return sort_csv(csv_fn)
+        sort_csv(csv_fn)
+        return pd.read_csv(csv_fn)
     elif format == 'json':
-        return sort_json(json_fn)
+        sort_json(json_fn)
+        return pd.read_json(json_fn)
 
 
 # TODO: see get_events TODO ^^
