@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+import colorama
 import os
 import redis
 import requests
 import sys
 import time
 from authlib.integrations.requests_client import OAuth2Session
+from colorama import Fore, Back, Style
 from contextlib import suppress
 from datetime import timedelta
 from decouple import config
@@ -121,7 +123,7 @@ def run(playwright: Playwright) -> None:
     endpoint = endpoint + '?' + urlencode(params)
 
     try:
-        browser = playwright.firefox.launch(headless=False)
+        browser = playwright.firefox.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
         page.goto(endpoint)
@@ -147,10 +149,13 @@ def run(playwright: Playwright) -> None:
 
 
 # TODO: test REDIS_URL in heroku
-def redis_connect(retry: int = None) -> redis.client.Redis:
+def redis_connect() -> redis.client.Redis:
     """Connect to redis."""
 
-    if HOST == 'localhost' or sys.platform == 'darwin':
+    # check public ip address
+    ip = requests.get('https://icanhazip.com').text.strip()
+
+    if sys.platform == 'darwin' or HOST == 'redis' and '172.127' in ip:
         client = redis.Redis(host=HOST, port=6379, password=REDIS_PASS, db=0, socket_keepalive=True)
     else:
         url = urlparse(os.getenv("REDIS_URL"))
@@ -158,25 +163,11 @@ def redis_connect(retry: int = None) -> redis.client.Redis:
 
     # TODO: debug `TimeoutError` during for loop (2/3 retries then hangs) -- could be the `suppressed` error ¯\_(ツ)_/¯
     try:
-        # try ping n times with delay
-        if retry is not None:
-            attempts = retry
-            for i in range(attempts):
-                print(f"{i+1}/{attempts} tries to connect to redis...")
-                with suppress(redis.ConnectionError):
-                    ping = client.ping()
-                    if ping is True:
-                        return client
-                    elif ping is False and i == attempts - 1:
-                        time.sleep(5)
-                        continue
-                    else:
-                        break
-        else:
-            ping = client.ping()
-            if ping is True:
-                return client
-
+        info = "INFO:"
+        ping = client.ping()
+        if ping is True:
+            print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Connected to redis!")
+            return client
     except redis.AuthenticationError:
         print("AuthenticationError")
         sys.exit(1)
