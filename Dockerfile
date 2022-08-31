@@ -87,6 +87,7 @@ RUN apt-get -qq update \
     ca-certificates \
     curl \
     git \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Keeps Python from generating .pyc files in the container
@@ -106,6 +107,7 @@ USER appuser
 
 WORKDIR $HOME/app
 
-# ENTRYPOINT ["python", "meetup_query.py"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
-# CMD ["/bin/bash"]
+# ENTRYPOINT ["python", "main.py"]
+# CMD ["gunicorn", "-c", "config/gunicorn.conf.py", "main:app"]
+# CMD ["/bin/bash", "startup.sh"]
+CMD ["/bin/bash"]

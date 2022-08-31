@@ -11,7 +11,7 @@ services:
     volumes:
       - .:/home/appuser/app
     ports:
-      - 80:3000
+      - 3000:3000
     build:
       context: ./
       dockerfile: ./Dockerfile.web
@@ -21,9 +21,6 @@ services:
     image: "redis:alpine"
     tty: true
     stdin_open: true
-    # healthcheck:
-    #   test: ["CMD", "redis-cli", "ping"]
-    #   interval: 5s
     env_file:
       - ./.env
     environment:
