@@ -8,7 +8,7 @@ raw/
 !groups.csv
 !channels.csv
 gitleaks_report*.json
-db.json
+db.*
 .bash_history
 
 # Byte-compiled / optimized / DLL files
