@@ -15,6 +15,7 @@ env = Path('.env')
 priv_key = Path('jwt_priv.pem')
 pub_key = Path('jwt_pub.key')
 
+SELF_ID= config('SELF_ID')
 CLIENT_ID = config('CLIENT_ID')
 CLIENT_SECRET = config('CLIENT_SECRET')
 SIGNING_KEY_ID = config('SIGNING_KEY_ID')
@@ -47,7 +48,7 @@ headers = {
 payload_data = {
     "audience": 'api.meetup.com',
     "kid": SIGNING_KEY_ID,
-    "sub": CLIENT_ID,
+    "sub": SELF_ID,
     "iss": CLIENT_SECRET,
     "exp": time.time() + JWT_LIFE_SPAN
 }
@@ -108,7 +109,6 @@ def get_access_token(token):
     return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
-# TODO: empty 200 response
 if __name__ == "__main__":
     token = sign_token()
     verify_token(token)

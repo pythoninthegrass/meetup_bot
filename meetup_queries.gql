@@ -1,3 +1,6 @@
+# techlahoma SELF_ID (graphql playground)
+query { self { id name } }
+
 # recon
 query {
 	self {
