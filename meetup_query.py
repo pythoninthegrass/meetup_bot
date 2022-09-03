@@ -9,12 +9,18 @@ import requests
 import requests_cache
 import sys
 from arrow import ParserError
+from colorama import Fore
 from sign_jwt import main as gen_token
 # from icecream import ic
 from pathlib import Path
 
 # verbose icecream
 # ic.configureOutput(includeContext=True)
+
+# logging prefixes
+info = "INFO:"
+error = "ERROR:"
+warning = "WARNING:"
 
 # pandas don't truncate output
 pd.set_option('display.max_rows', None)
@@ -145,7 +151,7 @@ def send_request(token, query, vars):
             json={'query': query, 'variables': vars},
             headers=headers
         )
-        print('[INFO] Response HTTP Status Code: {status_code}'.format(status_code=r.status_code))
+        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Response HTTP Response Body: {r.status_code}")
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
         pretty_response = json.dumps(r.json(), indent=2, sort_keys=False)
@@ -172,7 +178,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
         if data[0]['node']['group']['city'] != location:
-            print(f"[INFO] Skipping event outside of {location}")
+            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping event outside of {location}")
     except KeyError:
         data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
         # TODO: handle no upcoming events to fallback on initial response
@@ -197,7 +203,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     # TODO: control for mislabeled event locations (e.g. 'Techlahoma Foundation')
     # filtered rows to exclude keywords by regex OR operator
     if exclusions:
-        print('[INFO] Excluded keywords: {exclusions}'.format(exclusions=exclusions))
+        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Excluded keywords: {exclusions}".format(exclusions=exclusions))
         df = df[~df['name'].str.contains('|'.join(exclusions))]
         df = df[~df['title'].str.contains('|'.join(exclusions))]
 
@@ -252,12 +258,13 @@ def sort_json(filename):
     else:
         year = str(arrow.now().shift(days=7).year)
 
+    # TODO: log decorator
     # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
     try:
         df['date'] = df['date'].apply(lambda x: arrow.get(x, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss'))
         df['date'] = df['date'].apply(lambda x: x.replace(re.findall(date_regex, x)[0], year))
     except ParserError:
-        print('[ERROR] ParserError: date column is already in correct format')
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}ParserError: date column is already in correct format")
         pass
     df['date'] = pd.to_datetime(df['date'])
 

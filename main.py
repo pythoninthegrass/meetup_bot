@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 
+import arrow
 import os
 import pandas as pd
 import sys
 import time
+from colorama import Fore
 from decouple import config
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sign_jwt import main as gen_token
 # from icecream import ic
 from meetup_query import *
 from pathlib import Path
-from pony.orm import *
+# from pony.orm import *
+from sign_jwt import main as gen_token
 from slackbot import *
 
 # verbose icecream
 # ic.configureOutput(includeContext=True)
+
+# logging prefixes
+info = "INFO:"
+error = "ERROR:"
+warning = "WARNING:"
 
 # pandas don't truncate output
 pd.set_option('display.max_rows', None)
@@ -34,7 +41,9 @@ env = Path('.env')
 cwd = Path.cwd()
 csv_fn = Path('raw/output.csv')
 json_fn = Path('raw/output.json')
-env =  Path('.env')
+TZ = config('TZ', default='America/Chicago')
+loc_time = arrow.now().to(TZ)
+time.tzset()
 
 # creds
 if env.exists():
@@ -85,53 +94,57 @@ def startup_event():
     # TODO: background tasks: generate access and refresh tokens every 55 minutes(fastapi/rocketry); post to slack every 24 hours
 
     # generate access and refresh tokens
-    # tokens = gen_token()
-    # access_token = tokens['access_token']
-    # refresh_token = tokens['refresh_token']
-    access_token = ''
-    refresh_token = ''
-    expiration = int(time.time()) + TTL
+    tokens = gen_token()
 
-    # init db
-    db = Database()
+    global access_token
+    access_token = tokens['access_token']
 
-    # in-memory sqlite db
-    db.bind(provider='sqlite', filename=':memory:')
+    global refresh_token
+    refresh_token = tokens['refresh_token']
+    # access_token = ''
+    # refresh_token = ''
+    # expiration = int(time.time()) + TTL
 
+    # # init db
+    # db = Database()
 
-    class Token(db.Entity):
-        access_token = Required(str)
-        refresh_token = Required(str)
-        expiration = Optional(str)
+    # # in-memory sqlite db
+    # db.bind(provider='sqlite', filename=':memory:')
 
 
-    db.generate_mapping(create_tables=True)
+    # class Token(db.Entity):
+    #     access_token = Required(str)
+    #     refresh_token = Required(str)
+    #     expiration = Optional(str)
 
 
-    # TODO: QA expiration cast
-    @db_session
-    def add_tokens(access_token: str = None, refresh_token: str = None, expiration: str = None):
-        Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expiration=expiration
-        )
+    # db.generate_mapping(create_tables=True)
 
 
-    @db_session
-    def get_token(access_token: str = None, refresh_token: str = None, expiration: str = None):
-        access_token = Token.get(access_token='access_token')
-        refresh_token = Token.get(refresh_token='refresh_token')
-        expiration = Token.get(expiration='expiration')
+    # # TODO: QA expiration cast
+    # @db_session
+    # def add_tokens(access_token: str = None, refresh_token: str = None, expiration: str = None):
+    #     Token(
+    #         access_token=access_token,
+    #         refresh_token=refresh_token,
+    #         expiration=expiration
+    #     )
 
-        return access_token, refresh_token, expiration
+
+    # @db_session
+    # def get_token(access_token: str = None, refresh_token: str = None, expiration: str = None):
+    #     access_token = Token.get(access_token='access_token')
+    #     refresh_token = Token.get(refresh_token='refresh_token')
+    #     expiration = Token.get(expiration='expiration')
+
+    #     return access_token, refresh_token, expiration
 
 
-    # add tokens to db
-    add_tokens(access_token, refresh_token, expiration)
+    # # add tokens to db
+    # add_tokens(access_token, refresh_token, expiration)
 
-    # get tokens from db
-    get_token('access_token', 'refresh_token')
+    # # get tokens from db
+    # get_token('access_token', 'refresh_token')
 
     return access_token, refresh_token
 
@@ -143,8 +156,7 @@ async def root():
 
 # TODO: QA hard-coded token pos arg
 @api_router.get("/token")
-def generate_token(access_token: str = None,
-                    refresh_token: str = None):
+def generate_token(access_token: str = None, refresh_token: str = None):
     """
     Get access and refresh tokens
 
@@ -166,9 +178,7 @@ def generate_token(access_token: str = None,
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(
-    location: str = "Oklahoma City",
-    exclusions: str = "Tulsa"):
+def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa"):
     """
     Query upcoming Meetup events
     """
@@ -179,11 +189,11 @@ def get_events(
     else:
         exclusions = []
 
-    access_token, refresh_token = generate_token()
     response = send_request(access_token, query, vars)
 
     export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
+    # TODO: log decorator
     # third-party query
     output = []
     for url in url_vars:
@@ -192,7 +202,7 @@ def get_events(
         if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
         else:
-            print(f'[INFO] No upcoming events for {url} found')
+            print(f"{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found")
     # loop through output and append to file
     for i in range(len(output)):
         export_to_file(output[i], format)
@@ -207,9 +217,7 @@ def get_events(
 
 
 @api_router.post("/slack")
-def post_slack(
-    location: str = "Oklahoma City",
-    exclusions: str = "Tulsa"):
+def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa"):
     """
     Post to slack
 

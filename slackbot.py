@@ -5,6 +5,7 @@ import json
 import os
 import pandas as pd
 # import sys
+import time
 from decouple import config
 from icecream import ic
 from pathlib import Path
@@ -29,7 +30,8 @@ csv_fn = Path('raw/output.csv')
 json_fn = Path('raw/output.json')
 groups_csv = Path('groups.csv')
 TZ = config('TZ', default='America/Chicago')
-local = arrow.now().to(TZ)
+loc_time = arrow.now().to(TZ)
+time.tzset()
 
 # creds
 if env.exists():

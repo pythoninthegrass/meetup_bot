@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 
-import colorama
 import jwt
 import requests
 import time
-from colorama import Fore, Back, Style
+from colorama import Fore
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from decouple import config
 from icecream import ic
 from pathlib import Path
 from urllib.parse import urlencode
+
+# verbose icecream
+# ic.configureOutput(includeContext=True)
+
+# logging prefixes
+info = "INFO:"
+error = "ERROR:"
+warning = "WARNING:"
 
 # env
 env = Path('.env')
@@ -72,6 +79,7 @@ def sign_token():
 def verify_token(token):
     """Verify signed JWT against public key"""
 
+    # TODO: log decorator
     try:
         decoded_token = jwt.decode(
             jwt=token,
@@ -81,7 +89,6 @@ def verify_token(token):
             algorithms=['RS256']
         )
         # print(f"[decoded_token]: {decoded_token}")
-        info = "INFO:"
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Success! Token verified.")
 
         return True
@@ -91,7 +98,6 @@ def verify_token(token):
         jwt.exceptions.InvalidIssuerError,
         jwt.exceptions.ExpiredSignatureError
         ) as e:
-        error = "ERROR:"
         print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
 
         return False
