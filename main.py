@@ -2,18 +2,16 @@
 
 import os
 import pandas as pd
-import redis
 import sys
+import time
 from decouple import config
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from gen_token import main as gen_token
-from gen_token import redis_connect as redis_connect
-from gen_token import start_docker as start_docker
+from sign_jwt import main as gen_token
 # from icecream import ic
 from meetup_query import *
 from pathlib import Path
-from python_on_whales import docker
+from pony.orm import *
 from slackbot import *
 
 # verbose icecream
@@ -40,16 +38,12 @@ env =  Path('.env')
 
 # creds
 if env.exists():
-    REDIS_URL: config('REDIS_URL', default=None)
-    REDIS_PASS = config('REDIS_PASS')
     TTL = config('TTL', default=3600, cast=int)
-    HOST = config('HOST', default='redis')
+    HOST = config('HOST')
     PORT = config('PORT', default=3000, cast=int)
 else:
-    REDIS_URL = os.getenv('REDIS_URL')
-    REDIS_PASS = os.getenv('REDIS_PASS')
     TTL = os.getenv('TTL', default=3600)
-    HOST = os.getenv('HOST', default='redis')
+    HOST = os.getenv('HOST')
     PORT = os.getenv('PORT', default=3000)
 
 
@@ -88,13 +82,58 @@ def startup_event():
     Run startup event
     """
 
-    # override host env var if system is macos
-    if HOST == 'localhost' or sys.platform == 'darwin':
-        # start containers (only build if images aren't present)
-        start_docker(yml_file='docker-compose.yml')
+    # TODO: background tasks: generate access and refresh tokens every 55 minutes(fastapi/rocketry); post to slack every 24 hours
 
-    # make handshake with redis
-    redis_connect()
+    # generate access and refresh tokens
+    # tokens = gen_token()
+    # access_token = tokens['access_token']
+    # refresh_token = tokens['refresh_token']
+    access_token = ''
+    refresh_token = ''
+    expiration = int(time.time()) + TTL
+
+    # init db
+    db = Database()
+
+    # in-memory sqlite db
+    db.bind(provider='sqlite', filename=':memory:')
+
+
+    class Token(db.Entity):
+        access_token = Required(str)
+        refresh_token = Required(str)
+        expiration = Optional(str)
+
+
+    db.generate_mapping(create_tables=True)
+
+
+    # TODO: QA expiration cast
+    @db_session
+    def add_tokens(access_token: str = None, refresh_token: str = None, expiration: str = None):
+        Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expiration=expiration
+        )
+
+
+    @db_session
+    def get_token(access_token: str = None, refresh_token: str = None, expiration: str = None):
+        access_token = Token.get(access_token='access_token')
+        refresh_token = Token.get(refresh_token='refresh_token')
+        expiration = Token.get(expiration='expiration')
+
+        return access_token, refresh_token, expiration
+
+
+    # add tokens to db
+    add_tokens(access_token, refresh_token, expiration)
+
+    # get tokens from db
+    get_token('access_token', 'refresh_token')
+
+    return access_token, refresh_token
 
 
 @app.get("/")
@@ -104,23 +143,25 @@ async def root():
 
 # TODO: QA hard-coded token pos arg
 @api_router.get("/token")
-def generate_token(hard_token: str = None):
+def generate_token(access_token: str = None,
+                    refresh_token: str = None):
     """
-    Get auth token
+    Get access and refresh tokens
 
     Args:
-        hard_token (str): hard-coded token
+        access_token (str): hard-coded access_token
+        refresh_token (str): hard-coded refresh_token
     """
 
-    global token
-
-    if hard_token:
-        token = hard_token
+    if access_token and refresh_token:
+        access_token = access_token
+        refresh_token = refresh_token
     else:
         tokens = gen_token()
-        token = tokens[0]
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
 
-    return token
+    return access_token, refresh_token
 
 
 # TODO: decouple export from formatted response
@@ -138,15 +179,15 @@ def get_events(
     else:
         exclusions = []
 
-    token = generate_token()
-    response = send_request(token, query, vars)
+    access_token, refresh_token = generate_token()
+    response = send_request(access_token, query, vars)
 
     export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
     # third-party query
     output = []
     for url in url_vars:
-        response = send_request(token, url_query, f'{{"urlname": "{url}"}}')
+        response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
         if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
@@ -163,31 +204,6 @@ def get_events(
     elif format == 'json':
         sort_json(json_fn)
         return pd.read_json(json_fn)
-
-
-# TODO: see get_events TODO ^^
-# @api_router.post("/export")
-# def export_events(format: str = "json"):
-#     """
-#     Export Meetup events to CSV or JSON
-#     """
-
-#     # validate format
-#     format = format.lower()
-#     if format not in ["json", "csv"]:
-#         raise HTTPException(status_code=400, detail="Invalid format. Must be either 'json' or 'csv'")
-
-#     # token = generate_token()
-#     # response = send_request(token, query, vars)
-
-#     response = get_events()
-#     export_to_file(response, format)
-
-#      # cleanup output file
-#     if format == 'csv':
-#         return sort_csv(csv_fn)
-#     elif format == 'json':
-#         return sort_json(json_fn)
 
 
 @api_router.post("/slack")
@@ -228,18 +244,7 @@ def main():
         sys.exit(0)
     except Exception as e:
         print(e)
-    finally:
-        if sys.platform == 'darwin':
-            print("[INFO] Stopping docker containers")
-            docker.compose.stop(
-                services=[
-                    'redis',
-                    'redisinsight',
-                    'meetupbot',
-                ],
-            )
-            print("[INFO] Successfully stopped containers. Exiting...")
-        exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
