@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import colorama
 import jwt
 import requests
 import time
+from colorama import Fore, Back, Style
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from decouple import config
@@ -78,7 +80,9 @@ def verify_token(token):
             verify=True,
             algorithms=['RS256']
         )
-        print(f"[decoded_token]: {decoded_token}")
+        # print(f"[decoded_token]: {decoded_token}")
+        info = "INFO:"
+        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Success! Token verified.")
 
         return True
     except (
@@ -87,7 +91,8 @@ def verify_token(token):
         jwt.exceptions.InvalidIssuerError,
         jwt.exceptions.ExpiredSignatureError
         ) as e:
-        print(f"[error]: {e}")
+        error = "ERROR:"
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
 
         return False
 
@@ -109,8 +114,15 @@ def get_access_token(token):
     return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
-if __name__ == "__main__":
+def main():
+    """Generate signed JWT, verify, and get access token"""
+
     token = sign_token()
     verify_token(token)
     access_token = get_access_token(token)
-    ic(access_token.json())
+
+    return access_token.json()
+
+
+if __name__ == "__main__":
+    main()
