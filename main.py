@@ -24,17 +24,6 @@ info = "INFO:"
 error = "ERROR:"
 warning = "WARNING:"
 
-# pandas don't truncate output
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_colwidth', None)
-
-# logging.basicConfig(level=logging.DEBUG)
-# requests_cache.install_cache("api_cache", expire_after=3600)
-
-# verbose icecream
-# ic.configureOutput(includeContext=True)
-
 # env
 home = Path.home()
 env = Path('.env')
@@ -44,6 +33,14 @@ json_fn = Path('raw/output.json')
 TZ = config('TZ', default='America/Chicago')
 loc_time = arrow.now().to(TZ)
 time.tzset()
+
+# pandas don't truncate output
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_colwidth', None)
+
+# logging.basicConfig(level=logging.DEBUG)
+# requests_cache.install_cache("api_cache", expire_after=3600)
 
 # creds
 if env.exists():
