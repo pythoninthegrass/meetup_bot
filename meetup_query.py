@@ -9,8 +9,8 @@ import requests
 import requests_cache
 import sys
 from arrow import ParserError
-from gen_token import main as gen_token
-from icecream import ic
+from sign_jwt import main as gen_token
+# from icecream import ic
 from pathlib import Path
 
 # verbose icecream
@@ -318,7 +318,8 @@ def export_to_file(response, type='json', exclusions=''):
 # TODO: disable in prod (use `main.py`)
 def main():
     tokens = gen_token()
-    token = tokens[0]
+    access_token = tokens['access_token']
+    refresh_token = tokens['refresh_token']
 
     # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
     # exclude keywords in event name and title (will miss events with keyword in description)
@@ -326,14 +327,14 @@ def main():
 
     # TODO: reduce `format_response` calls to 1
     # first-party query
-    response = send_request(token, query, vars)
+    response = send_request(access_token, query, vars)
     # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
     export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
     # third-party query
     output = []
     for url in url_vars:
-        response = send_request(token, url_query, f'{{"urlname": "{url}"}}')
+        response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
         if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
@@ -348,6 +349,8 @@ def main():
         sort_csv(csv_fn)
     elif format == 'json':
         sort_json(json_fn)
+
+    return response
 
 
 if __name__ == '__main__':
