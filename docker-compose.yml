@@ -16,40 +16,6 @@ services:
       context: ./
       dockerfile: ./Dockerfile.web
 
-  redis:
-    container_name: redis-cont
-    image: "redis:alpine"
-    tty: true
-    stdin_open: true
-    env_file:
-      - ./.env
-    environment:
-      - REDIS_REPLICATION_MODE=master
-    ports:
-      - 6379:6379
-    volumes:
-      # save redisearch data to your current working directory
-      - ./redis-data:/data
-      - ./redis.conf:/redis.conf:ro
-    command: [ "redis-server", "/redis.conf" ]
-
-  # redis db visualization dashboard
-  # redisinsight:
-  #   container_name: redisinsight-cont
-  #   image: redislabs/redisinsight
-  #   tty: true
-  #   stdin_open: true
-  #   depends_on:
-  #     - redis
-  #   ports:
-  #     - 8001:8001
-  #   volumes:
-  #     - ./redis-insight:/db
-
-volumes:
-  redis-data:
-    driver: local
-
 networks:
   default:
     driver: bridge

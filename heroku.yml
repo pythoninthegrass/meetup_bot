@@ -1,7 +1,5 @@
 setup:
   addons:
-    - plan: heroku-redis
-      as: REDIS
     - plan: scheduler
       as: SCHEDULER
   config:
