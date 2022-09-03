@@ -4,10 +4,9 @@ import arrow
 import json
 import os
 import pandas as pd
-import sys
+# import sys
 from decouple import config
 from icecream import ic
-# from markdown import markdown
 from pathlib import Path
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -38,7 +37,6 @@ if env.exists():
     BOT_USER_TOKEN = config('BOT_USER_TOKEN')
     SLACK_WEBHOOK = config('SLACK_WEBHOOK')
     CHANNEL = config('CHANNEL')
-    REDIS_PASS = config('REDIS_PASS')
     TTL = config('TTL', default=3600, cast=int)
     HOST = config('HOST', default='localhost')
 else:
@@ -46,14 +44,13 @@ else:
     BOT_USER_TOKEN = os.getenv('BOT_USER_TOKEN')
     SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK')
     CHANNEL = os.getenv('CHANNEL')
-    REDIS_PASS = os.getenv('REDIS_PASS')
     TTL = os.getenv('TTL', default=3600)
     HOST = os.getenv('HOST', default='localhost')
 
 
-# override host env var if system is macos
-if sys.platform == 'darwin':
-    HOST = 'localhost'
+# # override host env var if system is macos
+# if sys.platform == 'darwin':
+#     HOST = 'localhost'
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
