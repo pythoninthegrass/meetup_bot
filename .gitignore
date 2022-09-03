@@ -7,6 +7,7 @@ redis*
 raw/
 !groups.csv
 !channels.csv
+gen_token.py
 gitleaks_report*.json
 db.*
 .bash_history
