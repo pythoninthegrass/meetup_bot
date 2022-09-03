@@ -217,7 +217,5 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 [How to Handle JWTs in Python](https://auth0.com/blog/how-to-handle-jwt-in-python/)
 
-[Usage Examples — PyJWT 2.4.0 documentation](https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-rs256-rsa)
-
 [Building a Basic Authorization Server using Authorization Code Flow (PKCE) | by Ratros Y. | Medium](https://medium.com/@ratrosy/building-a-basic-authorization-server-using-authorization-code-flow-pkce-3155e843466)
 
