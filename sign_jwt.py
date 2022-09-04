@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import jwt
+import os
 import requests
 import time
 from colorama import Fore
@@ -23,7 +24,6 @@ warning = "WARNING:"
 env = Path('.env')
 priv_key = Path('jwt_priv.pem')
 pub_key = Path('jwt_pub.key')
-
 SELF_ID = config('SELF_ID')
 CLIENT_ID = config('CLIENT_ID')
 CLIENT_SECRET = config('CLIENT_SECRET')
@@ -33,19 +33,46 @@ TOKEN_URL = config('TOKEN_URL')
 REDIRECT_URI = config('REDIRECT_URI')
 JWT_LIFE_SPAN = config('JWT_LIFE_SPAN', default=120, cast=int)
 
-
-with open(priv_key, 'rb') as file:
+if Path(priv_key).exists():
+    with open(priv_key, 'rb') as f:
+        private_key = serialization.load_pem_private_key(
+            data=f.read(),
+            password=None,
+            backend=default_backend()
+        )
+else:
+    # load private key from env
+    private_key = config('PRIVATE_KEY')
+    # insert line breaks at \n with os.linesep
+    private_key = os.linesep.join(private_key.split('\\n'))
+    # convert to bytes
+    private_key = private_key.encode('utf-8')
+    # load private key
     private_key = serialization.load_pem_private_key(
-        file.read(),
+        data=private_key,
         password=None,
         backend=default_backend()
     )
 
-with open(pub_key, 'rb') as file:
+if Path(pub_key).exists():
+    with open(pub_key, 'rb') as f:
+        public_key = serialization.load_pem_public_key(
+            data=f.read(),
+            backend=default_backend()
+        )
+else:
+    # load public key from env
+    public_key = config('PUBLIC_KEY')
+    # insert line breaks at \n with os.linesep
+    public_key = os.linesep.join(public_key.split('\\n'))
+    # convert to bytes
+    public_key = public_key.encode('utf-8')
+    # load public key
     public_key = serialization.load_pem_public_key(
-        file.read(),
+        data=public_key,
         backend=default_backend()
     )
+
 
 headers = {
     "alg": 'RS256',
