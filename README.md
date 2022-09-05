@@ -121,6 +121,24 @@ Use Meetup Pro API to send Slack messages before events occur.
 
         # watch logs (build, server activity)
         heroku logs --tail
+
+        # test image locally
+        docker pull registry.heroku.com/meetup-bot-bot/web
+        docker run --rm -it registry.heroku.com/meetup-bot-bot/web bash
+
+        # control remote builds (e.g., CI)
+        heroku plugins:install heroku-builds
+
+        # get all builds
+        # * NOTE: append `-a $HEROKU_APP` if env var isn't set
+        heroku builds
+
+        # cancel specific build
+        λ heroku builds:cancel fd8ee600-46d8-4f2c-99e9-b77c109ba431
+        Stopping build fd8ee600-46d8-4f2c-99e9-b77c109ba431... done
+
+        # cancel latest build
+        heroku builds:cancel
         ```
       * Container manifest
         * See [heroku.yml](heroku.yml)
@@ -227,3 +245,4 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 [Building a Basic Authorization Server using Authorization Code Flow (PKCE) | by Ratros Y. | Medium](https://medium.com/@ratrosy/building-a-basic-authorization-server-using-authorization-code-flow-pkce-3155e843466)
 
+[How to cancel a Heroku build | remarkablemark](https://remarkablemark.org/blog/2021/05/05/heroku-cancel-build/)
