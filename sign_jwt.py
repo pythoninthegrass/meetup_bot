@@ -154,7 +154,8 @@ def main():
     verify_token(token)
     access_token = get_access_token(token)
 
-    return access_token.json()
+    # TODO: fastapi_login setup for access_token
+    # return access_token.json()
 
 
 if __name__ == "__main__":
