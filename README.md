@@ -25,6 +25,10 @@ Use Meetup Pro API to send Slack messages before events occur.
     poetry run main.py
 
     # curl/httpie/requests (httpie shown)
+    # install httpie
+    brew update
+    brew install httpie
+
     # root
     λ http :3000
     HTTP/1.1 200 OK
@@ -88,6 +92,9 @@ Use Meetup Pro API to send Slack messages before events occur.
         # autocomplete + login
         heroku autocomplete --refresh-cache
 
+        # move to git repo
+        cd meetup-bot-bot/
+
         # set app
         export HEROKU_APP=meetup-bot-bot
 
@@ -100,11 +107,20 @@ Use Meetup Pro API to send Slack messages before events occur.
         # ubuntu 22.* buildpack
         # heroku stack:set heroku-22
 
+        # set heroku git to app
+        heroku git:remote -a $HEROKU_APP
+
         # custom container via manifest
         heroku stack:set container
 
         # programmatically add .env vars to heroku config vars
         cat .env | tr '\n' ' ' | xargs heroku config:set -a meetup-bot-bot
+
+        # deploy to heroku
+        git push heroku main
+
+        # watch logs (build, server activity)
+        heroku logs --tail
         ```
       * Container manifest
         * See [heroku.yml](heroku.yml)
@@ -172,13 +188,6 @@ Use Meetup Pro API to send Slack messages before events occur.
     ```
 
 ## TODO
-* JSON Web Token (JWT) Auth Flow
-  * Use JWT vs. OAuth2 flow
-    * Latter needs manual intervention/user spoofing/captcha bypass
-  * ~~Format payload, headers, and sign JWT~~
-  * ~~Successful POST (200) to OAuth URL~~
-  * Extract `access_token` and `refresh_token` from response
-    * Getting raw HTML of a page vs. JSON payload 🤔
 * FastAPI
   * ~~endpoints~~
     * ~~Meetup query~~
@@ -205,8 +214,7 @@ Use Meetup Pro API to send Slack messages before events occur.
 * Documentation
 
 ## Stretch Goals
-* JWT instead of OAuth2
-  * May be able to do away with Playwright re: manual authorization via creds + requests
+* Indicate online vs. in-person
 * Slash commands to manually call:
   * Next `n` events
   * This week's events
