@@ -8,18 +8,18 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10.6"
 arrow = "^1.2.2"
+colorama = "^0.4.5"
+exceptiongroup = "^1.0.0-rc.9"
 fastapi = ">=0.82.0"
 gunicorn = "^20.1.0"
 pandas = "^1.4.2"
+pony = "^0.7.16"
+PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 python-decouple = "^3.6"
 requests = "^2.27.1"
 requests-cache = "^0.9.3"
 slack-sdk = "^3.17.2"
 uvicorn = "^0.18.2"
-pony = "^0.7.16"
-colorama = "^0.4.5"
-exceptiongroup = "^1.0.0-rc.9"
-jwt = "^1.3.1"
 
 [tool.poetry.dev-dependencies]
 icecream = "^2.1.3"

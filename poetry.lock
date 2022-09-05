@@ -308,17 +308,6 @@ qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
 testing = ["Django (<3.1)", "colorama", "docopt", "pytest (<7.0.0)"]
 
 [[package]]
-name = "jwt"
-version = "1.3.1"
-description = "JSON Web Token library for Python 3."
-category = "main"
-optional = false
-python-versions = ">= 3.6"
-
-[package.dependencies]
-cryptography = ">=3.1,<3.4.0 || >3.4.0"
-
-[[package]]
 name = "matplotlib-inline"
 version = "0.1.6"
 description = "Inline Matplotlib backend for Jupyter"
@@ -455,6 +444,23 @@ python-versions = ">=3.6"
 
 [package.extras]
 plugins = ["importlib-metadata"]
+
+[[package]]
+name = "pyjwt"
+version = "2.4.0"
+description = "JSON Web Token implementation in Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+cryptography = {version = ">=3.3.1", optional = true, markers = "extra == \"crypto\""}
+
+[package.extras]
+tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
+docs = ["zope.interface", "sphinx-rtd-theme", "sphinx"]
+dev = ["pre-commit", "mypy", "coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)", "cryptography (>=3.3.1)", "zope.interface", "sphinx-rtd-theme", "sphinx"]
+crypto = ["cryptography (>=3.3.1)"]
 
 [[package]]
 name = "python-dateutil"
@@ -670,7 +676,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10.6"
-content-hash = "caa5679b9e6f5de45eabab17d6cc1cbed1838f943762f223c1226da0a768974a"
+content-hash = "ec896e24e79d2e8d5677d630cf96a8633f77b6a45bdeca69fcdb7d4636bebc55"
 
 [metadata.files]
 anyio = []
@@ -716,9 +722,6 @@ icecream = []
 idna = []
 ipython = []
 jedi = []
-jwt = [
-    {file = "jwt-1.3.1-py3-none-any.whl", hash = "sha256:61c9170f92e736b530655e75374681d4fcca9cfa8763ab42be57353b2b203494"},
-]
 matplotlib-inline = [
     {file = "matplotlib-inline-0.1.6.tar.gz", hash = "sha256:f887e5f10ba98e8d2b150ddcf4702c1e5f8b3a20005eb0f74bfdbd360ee6f304"},
     {file = "matplotlib_inline-0.1.6-py3-none-any.whl", hash = "sha256:f1f41aab5328aa5aaea9b16d083b128102f8712542f819fe7e6a420ff581b311"},
@@ -832,6 +835,7 @@ pygments = [
     {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
     {file = "Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
 ]
+pyjwt = []
 python-dateutil = []
 python-decouple = []
 pytz = [
