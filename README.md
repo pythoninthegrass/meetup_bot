@@ -114,7 +114,7 @@ Use Meetup Pro API to send Slack messages before events occur.
         heroku stack:set container
 
         # programmatically add .env vars to heroku config vars
-        cat .env | tr '\n' ' ' | xargs heroku config:set -a meetup-bot-bot
+        cat .env | tr '\n' ' ' | xargs heroku config:set -a $HEROKU_APP
 
         # deploy to heroku
         git push heroku main
@@ -160,7 +160,7 @@ Use Meetup Pro API to send Slack messages before events occur.
         heroku ps:scale web=1                                           # stop dymo via `web=0`
 
         # destroy app
-        heroku apps:destroy -a meetup-bot-bot --confirm meetup-bot-bot
+        heroku apps:destroy -a meetup-bot-bot --confirm $HEROKU_APP
         ```
       * TODO: document scheduler w/API commands
 * gitleaks
