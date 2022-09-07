@@ -104,34 +104,6 @@ db.bind(provider='sqlite', filename='meetup.sqlite', create_db=True)
 # generate mapping
 db.generate_mapping(create_tables=True)
 
-# import bcrypt
-# # hash password
-# def hash_password(password, salt):
-#     """
-#     Hash password
-#     """
-
-#     # hash password
-#     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-
-#     return hashed_password
-
-
-# # verify password
-# def verify_password(plain_password):
-#     """
-#     Verify password
-#     """
-
-#     with db_session:
-#         salt = User.get(username=DB_USER).salt
-#         hashed = hash_password(plain_password, salt)
-
-#     if bcrypt.checkpw(plain_password.encode('utf-8'), hashed):
-#         return True
-#     else:
-#         return False
-
 
 """
 Authentication
