@@ -246,3 +246,11 @@ Use Meetup Pro API to send Slack messages before events occur.
 [Building a Basic Authorization Server using Authorization Code Flow (PKCE) | by Ratros Y. | Medium](https://medium.com/@ratrosy/building-a-basic-authorization-server-using-authorization-code-flow-pkce-3155e843466)
 
 [How to cancel a Heroku build | remarkablemark](https://remarkablemark.org/blog/2021/05/05/heroku-cancel-build/)
+
+[OAuth2 with Password (and hashing), Bearer with JWT tokens - FastAPI](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+
+[Python bcrypt - hashing passwords in Python with bcrypt](https://zetcode.com/python/bcrypt/)
+
+[MushroomMaula/fastapi_login](https://github.com/MushroomMaula/fastapi_login)
+
+[FastAPI Auth + Login Page](https://dev.to/athulcajay/fastapi-auth-login-page-48po)
