@@ -122,7 +122,7 @@ def main():
 
     # TODO: fastapi_login setup slack post
     # send message as one concatenated string
-    # send_message('\n'.join(msg))
+    send_message('\n'.join(msg))
 
     return ic(msg)
 
