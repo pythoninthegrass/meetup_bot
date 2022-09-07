@@ -147,15 +147,15 @@ def get_access_token(token):
     return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
+# TODO: skip get_access_token() if access_token is not expired
 def main():
     """Generate signed JWT, verify, and get access token"""
 
     token = sign_token()
     verify_token(token)
-    access_token = get_access_token(token)
+    res = get_access_token(token)
 
-    # TODO: fastapi_login setup for access_token
-    # return access_token.json()
+    return res.json()
 
 
 if __name__ == "__main__":
