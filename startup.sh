@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 export VIRTUAL_ENV="/opt/venv"
-export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-export PATH="${VIRTUAL_ENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:/ms-playwright:$PATH"
+export PATH="${VIRTUAL_ENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
 
 # source .venv/bin/activate
 
