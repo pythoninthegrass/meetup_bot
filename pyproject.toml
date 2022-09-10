@@ -25,6 +25,8 @@ python-multipart = "^0.0.5"
 jose = "^1.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+fastapi-login = "^1.8.2"
+rocketry = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
 icecream = "^2.1.3"
