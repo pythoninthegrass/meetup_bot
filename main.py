@@ -5,10 +5,11 @@ import os
 import pandas as pd
 import sys
 import time
+import uvicorn
 from colorama import Fore
 from datetime import datetime, timedelta
 from decouple import config
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -20,6 +21,7 @@ from passlib.context import CryptContext
 from pathlib import Path
 from pony.orm import *
 from pydantic import BaseModel
+from scheduler import app as app_rocketry, do_things
 from sign_jwt import main as gen_token
 from slackbot import *
 
@@ -80,6 +82,67 @@ else:
     DB_USER = os.getenv('DB_USER')
     DB_PASS = os.getenv('DB_PASS')
     DB_PORT = os.getenv('DB_PORT', default=5432)
+
+
+"""
+FastAPI app
+"""
+
+# main web app
+app = FastAPI(title="meetup_bot API", openapi_url="/meetup_bot.json")
+
+# add `/api` route in front of all other endpoints
+api_router = APIRouter(prefix="/api")
+
+# CORS
+origins = [
+    "http://localhost",
+    "http://localhost:" + str(PORT),
+    "http://127.0.0.1",
+    "http://127.0.0.1:" + str(PORT),
+    "http://0.0.0.0",
+    "http://0.0.0.0:" + str(PORT),
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+"""
+Scheduler
+"""
+
+session = app_rocketry.session
+
+
+@app.post("/session/shut_down")
+async def shut_down_session():
+    "Shut down the scheduler"
+    session.shut_down()
+
+
+@app.post("/tasks/{task_name}/run")
+async def run_task(task_name:str):
+    "Run given task"
+    task = session[task_name]
+    task.force_run = True
+
+
+@app.get("/tasks")
+async def read_tasks():
+    return list(session.tasks)
+
+
+@app.get("/logs")
+async def read_logs():
+    "Get task logs"
+    repo = session.get_repo()
+    return repo.filter_by().all()
 
 
 """
@@ -147,7 +210,7 @@ def get_user(username: str):
     with db_session:
         user = UserInfo.get(username=username)
         if user:
-            return UserInDB(**user.to_dict())
+            return UserInDB(username=user.username, hashed_password=user.hashed_password)
 
 
 def authenticate_user(username: str, password: str):
@@ -204,13 +267,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-# main web app
-app = FastAPI(title="meetup_bot API", openapi_url="/meetup_bot.json")
-
-security = HTTPBasic()
-
-
-# @app.post("/token", response_model=Token)
+@app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """Login for access token"""
     user = authenticate_user(form_data.username, form_data.password)
@@ -228,35 +285,10 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/users/me")
-def read_current_user(credentials: HTTPBasicCredentials = Depends(security)):
-    return {"username": credentials.username}
-
-
-"""
-FastAPI app
-"""
-
-# add `/api` route in front of all other endpoints
-api_router = APIRouter(prefix="/api")
-
-# CORS
-origins = [
-    "http://localhost",
-    "http://localhost:" + str(PORT),
-    "http://127.0.0.1",
-    "http://127.0.0.1:" + str(PORT),
-    "http://0.0.0.0",
-    "http://0.0.0.0:" + str(PORT),
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# @app.get("/users/me")
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    """Read users me"""
+    return current_user
 
 
 """
@@ -270,39 +302,6 @@ def load_user(username: str):
             return user
         else:
             raise HTTPException(status_code=404, detail="User not found")
-
-
-@app.post("/auth/login")
-async def login(data: OAuth2PasswordRequestForm = Depends()):
-    username = data.username
-    password = data.password
-    with db_session:
-        user = UserInfo.get(username=username)
-        hashed_password = user.hashed_password
-
-    # authenticate_user
-    user = authenticate_user(username, password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    else:
-        access_token_expires = timedelta(minutes=TOKEN_EXPIRE)
-        access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        res = RedirectResponse(url="/docs", status_code=status.HTTP_302_FOUND)
-        res.set_cookie(
-            "Authorization",
-            value=f"Bearer {access_token}",
-            httponly=False,
-            max_age=TTL,
-            expires=TTL,
-        )
-
-        return res
 
 
 """
@@ -332,31 +331,6 @@ def startup_event():
     global refresh_token
     refresh_token = tokens['refresh_token']
 
-    # # TODO: QA expiration cast
-    # @db_session
-    # def add_tokens(access_token: str = None, refresh_token: str = None, expiration: str = None):
-    #     Token(
-    #         access_token=access_token,
-    #         refresh_token=refresh_token,
-    #         expiration=expiration
-    #     )
-
-
-    # @db_session
-    # def get_token(access_token: str = None, refresh_token: str = None, expiration: str = None):
-    #     access_token = Token.get(access_token='access_token')
-    #     refresh_token = Token.get(refresh_token='refresh_token')
-    #     expiration = Token.get(expiration='expiration')
-
-    #     return access_token, refresh_token, expiration
-
-
-    # # add tokens to db
-    # add_tokens(access_token, refresh_token, expiration)
-
-    # # get tokens from db
-    # get_token('access_token', 'refresh_token')
-
     return access_token, refresh_token
 
 
@@ -366,8 +340,15 @@ def index(request: Request):
         return HTMLResponse(content=f.read(), status_code=200)
 
 
+@app.post("/auth/login")
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    """Redirect to "/docs" from index page if user successfully logs in with HTML form"""
+    if load_user(username) and verify_password(password, load_user(username).hashed_password):
+        return RedirectResponse(url="/docs", status_code=303)
+
+
 @api_router.get("/token")
-def generate_token(credentials: HTTPBasicCredentials = Depends(security)):
+def generate_token(current_user: User = Depends(get_current_active_user)):
     """
     Get access and refresh tokens
 
@@ -376,6 +357,10 @@ def generate_token(credentials: HTTPBasicCredentials = Depends(security)):
         refresh_token (str): hard-coded refresh_token
     """
 
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    # generate access and refresh tokens
     tokens = gen_token()
     access_token = tokens['access_token']
     refresh_token = tokens['refresh_token']
@@ -385,10 +370,13 @@ def generate_token(credentials: HTTPBasicCredentials = Depends(security)):
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", credentials: HTTPBasicCredentials = Depends(security)):
+def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
     Query upcoming Meetup events
     """
+
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     # if exclusions, add to list of exclusions
     if exclusions:
@@ -424,17 +412,18 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", crede
 
 
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", credentials: HTTPBasicCredentials = Depends(security)):
+def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
     Post to slack
 
     Calls main function to post formatted message to predefined channel
     """
 
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     get_events(location, exclusions)
-
     msg = fmt_json(json_fn)
-
     send_message('\n'.join(msg))
 
     return ic(msg)
@@ -444,14 +433,10 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", crede
 app.include_router(api_router)
 
 
-# TODO: docs endpoint behind auth (currently can bypass root login); uvicorn server time to either local or utc
 def main():
     """
     Run app
     """
-
-    # Use this for debugging purposes only
-    import uvicorn
 
     try:
         uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
