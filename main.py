@@ -71,16 +71,16 @@ if env.exists():
     DB_PORT = config('DB_PORT', default=5432, cast=int)
 
 else:
-    TTL = os.getenv('TTL', default=3600)
+    TTL = int(os.getenv('TTL', default=3600))
     HOST = os.getenv('HOST')
-    PORT = os.getenv('PORT', default=3000)
+    PORT = int(os.getenv('PORT', default=3000))
     SECRET_KEY = os.getenv('SECRET_KEY')
     ALGORITHM = os.getenv('ALGORITHM', default='HS256')
-    TOKEN_EXPIRE = os.getenv('TOKEN_EXPIRE', default=30)
+    TOKEN_EXPIRE = int(os.getenv('TOKEN_EXPIRE', default=30))
     DB_NAME = os.getenv('DB_NAME')
     DB_USER = os.getenv('DB_USER')
     DB_PASS = os.getenv('DB_PASS')
-    DB_PORT = os.getenv('DB_PORT', default=5432)
+    DB_PORT = int(os.getenv('DB_PORT', default=5432))
 
 
 """
@@ -136,7 +136,7 @@ class UserInfo(db.Entity):
 
 
 # sqlite db
-# db.bind(provider='sqlite', filename='meetup.sqlite', create_db=True)      # local db
+# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)              # local db
 db.bind(provider='sqlite', filename=':memory:')                             # in-memory db
 
 # generate mapping
