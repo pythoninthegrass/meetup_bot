@@ -42,3 +42,4 @@
 *.example
 *test.py
 meetup_queries.gql
+jsonwebtoken_test/

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import base64
 import jwt
 import os
+import pathlib
 import requests
 import time
 from colorama import Fore
@@ -22,18 +24,33 @@ warning = "WARNING:"
 
 # env
 env = Path('.env')
-priv_key = Path('jwt_priv.pem')
-pub_key = Path('jwt_pub.key')
-SELF_ID = config('SELF_ID')
-CLIENT_ID = config('CLIENT_ID')
-CLIENT_SECRET = config('CLIENT_SECRET')
-SIGNING_KEY_ID = config('SIGNING_KEY_ID')
-SIGNING_SECRET = config('SIGNING_SECRET')
-TOKEN_URL = config('TOKEN_URL')
-REDIRECT_URI = config('REDIRECT_URI')
-JWT_LIFE_SPAN = config('JWT_LIFE_SPAN', default=120, cast=int)
 
-if Path(priv_key).exists():
+# check if .env exists and isn't empty
+if env.exists() and env.stat().st_size != 0:
+    priv_key = Path('jwt_priv.pem')
+    pub_key = Path('jwt_pub.key')
+    SELF_ID = config('SELF_ID')
+    CLIENT_ID = config('CLIENT_ID')
+    CLIENT_SECRET = config('CLIENT_SECRET')
+    SIGNING_KEY_ID = config('SIGNING_KEY_ID')
+    SIGNING_SECRET = config('SIGNING_SECRET')
+    TOKEN_URL = config('TOKEN_URL')
+    REDIRECT_URI = config('REDIRECT_URI')
+    JWT_LIFE_SPAN = config('JWT_LIFE_SPAN', default=120, cast=int)
+else:
+    priv_key = os.getenv('PRIV_KEY_B64')
+    pub_key = os.getenv('PUB_KEY_B64')
+    SELF_ID = os.getenv('SELF_ID')
+    CLIENT_ID = os.getenv('CLIENT_ID')
+    CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+    SIGNING_KEY_ID = os.getenv('SIGNING_KEY_ID')
+    SIGNING_SECRET = os.getenv('SIGNING_SECRET')
+    TOKEN_URL = os.getenv('TOKEN_URL')
+    REDIRECT_URI = os.getenv('REDIRECT_URI')
+    JWT_LIFE_SPAN = os.getenv('JWT_LIFE_SPAN', default=120)
+
+# load private key
+if isinstance(priv_key, pathlib.PosixPath) and priv_key.exists():
     with open(priv_key, 'rb') as f:
         private_key = serialization.load_pem_private_key(
             data=f.read(),
@@ -41,38 +58,29 @@ if Path(priv_key).exists():
             backend=default_backend()
         )
 else:
+    # decode base64
+    private_key = base64.b64decode(priv_key)
     # load private key from env
-    private_key = config('PRIVATE_KEY')
-    # insert line breaks at \n with os.linesep
-    private_key = os.linesep.join(private_key.split('\\n'))
-    # convert to bytes
-    private_key = private_key.encode('utf-8')
-    # load private key
     private_key = serialization.load_pem_private_key(
         data=private_key,
         password=None,
         backend=default_backend()
     )
 
-if Path(pub_key).exists():
+if isinstance(pub_key, pathlib.PosixPath) and pub_key.exists():
     with open(pub_key, 'rb') as f:
         public_key = serialization.load_pem_public_key(
             data=f.read(),
             backend=default_backend()
         )
 else:
-    # load public key from env
-    public_key = config('PUBLIC_KEY')
-    # insert line breaks at \n with os.linesep
-    public_key = os.linesep.join(public_key.split('\\n'))
-    # convert to bytes
-    public_key = public_key.encode('utf-8')
+    # decode base64
+    public_key = base64.b64decode(pub_key)
     # load public key
     public_key = serialization.load_pem_public_key(
         data=public_key,
         backend=default_backend()
     )
-
 
 headers = {
     "alg": 'RS256',
@@ -86,7 +94,7 @@ payload_data = {
     "kid": SIGNING_KEY_ID,
     "sub": SELF_ID,
     "iss": CLIENT_SECRET,
-    "exp": time.time() + JWT_LIFE_SPAN
+    "exp": time.time() + int(JWT_LIFE_SPAN)
 }
 
 
@@ -140,7 +148,7 @@ def get_access_token(token):
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
         "audience": 'api.meetup.com',
-        "exp": time.time() + JWT_LIFE_SPAN
+        "exp": time.time() + int(JWT_LIFE_SPAN)
     }
     payload = urlencode(payload)
 
