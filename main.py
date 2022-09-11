@@ -9,10 +9,10 @@ import uvicorn
 from colorama import Fore
 from datetime import datetime, timedelta
 from decouple import config
-from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
