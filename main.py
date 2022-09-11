@@ -136,7 +136,8 @@ class UserInfo(db.Entity):
 
 
 # sqlite db
-db.bind(provider='sqlite', filename='meetup.sqlite', create_db=True)
+# db.bind(provider='sqlite', filename='meetup.sqlite', create_db=True)      # local db
+db.bind(provider='sqlite', filename=':memory:')                             # in-memory db
 
 # generate mapping
 db.generate_mapping(create_tables=True)

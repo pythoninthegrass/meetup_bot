@@ -101,7 +101,7 @@ ENV PYTHONUNBUFFERED=1
 RUN python -m venv $VIRTUAL_ENV
 
 # create empty database
-RUN sqlite3 $HOME/app/meetup.sqlite
+# RUN sqlite3 $HOME/app/meetup.sqlite
 
 USER appuser
 
