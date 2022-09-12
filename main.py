@@ -62,6 +62,7 @@ templates = Jinja2Templates(directory=Path("resources/templates"))
 
 # scheduler
 sched = BackgroundScheduler()
+sched.configure(timezone=TZ)
 
 # creds
 if env.exists():
