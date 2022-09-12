@@ -26,8 +26,8 @@ pd.set_option('display.max_colwidth', None)
 home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
-csv_fn = Path('raw/output.csv')
-json_fn = Path('raw/output.json')
+csv_fn = Path('/tmp/output.csv')
+json_fn = Path('/tmp/output.json')
 groups_csv = Path('groups.csv')
 TZ = config('TZ', default='America/Chicago')
 loc_time = arrow.now().to(TZ)
@@ -57,7 +57,7 @@ else:
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
 
-# read manually entered 'raw/channels.csv'
+# read manually entered '/tmp/channels.csv'
 chan = pd.read_csv('channels.csv', header=0)
 
 # TODO: debug out of range error in linux

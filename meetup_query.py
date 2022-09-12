@@ -39,8 +39,8 @@ home = Path.home()
 env = Path('.env')
 cwd = Path.cwd()
 format = 'json'
-csv_fn = Path('raw/output.csv')
-json_fn = Path('raw/output.json')
+csv_fn = Path('/tmp/output.csv')
+json_fn = Path('/tmp/output.json')
 groups_csv = Path('groups.csv')
 
 # read groups from file via pandas
