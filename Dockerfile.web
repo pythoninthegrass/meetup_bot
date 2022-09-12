@@ -60,6 +60,12 @@ WORKDIR $$HOME/app
 COPY pyproject.toml poetry.lock ./
 RUN python3.10 -m venv /opt/venv
 
+# create empty database
+# RUN sqlite3 $HOME/app/meetup.sqlite
+
+# create empty raw directory
+RUN mkdir -p $HOME/app/raw
+
 # Install pip requirements
 RUN . /opt/venv/bin/activate && poetry install
 
@@ -99,12 +105,6 @@ ENV PYTHONUNBUFFERED=1
 
 # activate virtual environment
 RUN python -m venv $VIRTUAL_ENV
-
-# create empty database
-# RUN sqlite3 $HOME/app/meetup.sqlite
-
-# create empty raw directory
-RUN mkdir $HOME/app/raw
 
 USER appuser
 
