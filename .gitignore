@@ -5,6 +5,7 @@ redis*
 *.pem
 *.key
 raw/
+!raw/.gitkeep
 !groups.csv
 !channels.csv
 gen_token.py
