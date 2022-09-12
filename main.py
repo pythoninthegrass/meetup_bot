@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import arrow
+import atexit
 import os
 import pandas as pd
 import sys
 import time
 import uvicorn
+# from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from colorama import Fore
 from datetime import datetime, timedelta
 from decouple import config
@@ -56,6 +59,9 @@ pd.set_option('display.max_colwidth', None)
 
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
+
+# scheduler
+sched = BackgroundScheduler()
 
 # creds
 if env.exists():
@@ -110,13 +116,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-"""
-Scheduler
-"""
-
-# TODO: rocketry or wakaq
 
 
 """
@@ -289,8 +288,6 @@ def startup_event():
     Run startup event
     """
 
-    # TODO: background tasks: generate access and refresh tokens every 55 minutes(fastapi/rocketry); post to slack every 24 hours
-
     # create user
     with db_session:
         if not UserInfo.exists(username=DB_USER):
@@ -322,6 +319,8 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         return RedirectResponse(url="/docs", status_code=303)
 
 
+# TODO: use refresh token to get new access token
+# @sched.scheduled_job('interval', minutes=55, id='gen_token')
 @api_router.get("/token")
 def generate_token(current_user: User = Depends(get_current_active_user)):
     """
@@ -337,13 +336,18 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
     # generate access and refresh tokens
     tokens = gen_token()
+
+    global access_token
     access_token = tokens['access_token']
+
+    global refresh_token
     refresh_token = tokens['refresh_token']
 
     return access_token, refresh_token
 
 
 # TODO: decouple export from formatted response
+# @sched.scheduled_job(trigger='cron', minute='*/2', id='get_events')
 @api_router.get("/events")
 def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
@@ -359,7 +363,12 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     else:
         exclusions = []
 
-    response = send_request(access_token, query, vars)
+    # TODO: startup doesn't pass `access_token` to `get_events` function (move to main?)
+    try:
+        response = send_request(access_token, query, vars)
+    except NameError:
+        access_token, refresh_token = generate_token()
+        response = send_request(access_token, query, vars)
 
     export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
@@ -386,6 +395,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
         return pd.read_json(json_fn)
 
 
+@sched.scheduled_job(trigger='cron', hour='9,16,23', id='post_slack')
 @api_router.post("/slack")
 def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
@@ -408,10 +418,14 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
 app.include_router(api_router)
 
 
+# TODO: background tasks: generate access and refresh tokens every 55 minutes; post to slack every 24 hours
 def main():
     """
     Run app
     """
+
+    sched.start()
+    atexit.register(lambda: sched.shutdown())
 
     try:
         uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
