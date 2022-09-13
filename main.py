@@ -396,7 +396,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
         return pd.read_json(json_fn)
 
 
-@sched.scheduled_job(trigger='cron', hour='9,16,23', id='post_slack')
+@sched.scheduled_job(trigger='cron', hour='9,17,23', id='post_slack')
 @api_router.post("/slack")
 def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """

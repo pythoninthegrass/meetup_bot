@@ -52,6 +52,7 @@ RUN asdf plugin-add python \
     && asdf install python 3.10.7 \
     && asdf global python 3.10.7
 
+# TODO: test poetry via asdf
 ENV POETRY_HOME="$HOME/.poetry"
 RUN curl -sSL https://install.python-poetry.org | python3.10 -
 ENV PATH "${POETRY_HOME}/bin:$PATH"
