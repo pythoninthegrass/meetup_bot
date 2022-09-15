@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 
 import arrow
-import atexit
 import os
 import pandas as pd
 import sys
 import time
-import uvicorn
-# from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
 from colorama import Fore
 from datetime import datetime, timedelta
 from decouple import config
@@ -59,10 +55,6 @@ pd.set_option('display.max_colwidth', None)
 
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
-
-# scheduler
-sched = BackgroundScheduler()
-sched.configure(timezone=TZ)
 
 # creds
 if env.exists():
@@ -321,7 +313,6 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
 
 
 # TODO: use refresh token to get new access token
-# @sched.scheduled_job('interval', minutes=55, id='gen_token')
 @api_router.get("/token")
 def generate_token(current_user: User = Depends(get_current_active_user)):
     """
@@ -348,7 +339,6 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
 
 # TODO: decouple export from formatted response
-# @sched.scheduled_job(trigger='cron', minute='*/2', id='get_events')
 @api_router.get("/events")
 def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
@@ -396,7 +386,6 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
         return pd.read_json(json_fn)
 
 
-@sched.scheduled_job(trigger='cron', hour='9,17,23', id='post_slack')
 @api_router.post("/slack")
 def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
@@ -425,8 +414,7 @@ def main():
     Run app
     """
 
-    sched.start()
-    atexit.register(lambda: sched.shutdown())
+    import uvicorn
 
     try:
         uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
