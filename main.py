@@ -357,7 +357,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     # TODO: startup doesn't pass `access_token` to `get_events` function (move to main?)
     try:
         response = send_request(access_token, query, vars)
-    except NameError:
+    except (NameError, UnboundLocalError):
         access_token, refresh_token = generate_token()
         response = send_request(access_token, query, vars)
 

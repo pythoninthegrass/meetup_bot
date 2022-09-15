@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 
+from distutils.log import warn
 import arrow
 import atexit
 import os
 import requests
+# import socket
 import sys
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
+from colorama import Fore
 from decouple import config
 from pathlib import Path
 from urllib.parse import urlencode
+
+# logging prefixes
+info = "INFO:"
+error = "ERROR:"
+warning = "WARNING:"
 
 env = Path('.env')
 
@@ -33,7 +41,7 @@ sched = BackgroundScheduler()
 sched.configure(timezone=TZ)
 
 
-@sched.scheduled_job('interval', minutes=55, id='gen_token')
+@sched.scheduled_job('interval', minutes=30, id='gen_token')
 def get_token():
     """Get token from db"""
 
@@ -45,16 +53,19 @@ def get_token():
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    res = requests.request("POST", url, headers=headers, data=payload)
+    try:
+        res = requests.request("POST", url, headers=headers, data=payload)
+        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}[{loc_time.format('YYYY-MM-DD HH:mm:ss')}] Generating a new token")
+        raw = res.json()
+        return raw['access_token']
+    except requests.exceptions.RequestException as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}[{loc_time.format('YYYY-MM-DD HH:mm:ss')}] {e}")
+        sys.exit(1)
 
-    raw = res.json()
 
-    return raw['access_token']
-
-
-# @sched.scheduled_job(trigger='cron', hour='9,17,20,23', id='post_slack')  # 9am, 5pm, 8pm, 11pm
-# @sched.scheduled_job(trigger='cron', hour='*', id='post_slack')           # every hour
-@sched.scheduled_job(trigger='cron', minute=30, id='post_slack')            # every 30 minutes
+# @sched.scheduled_job(trigger='cron', hour='9,17,20,23', id='post_slack')      # 9am, 5pm, 8pm, 11pm
+@sched.scheduled_job(trigger='cron', hour='*', id='post_slack')                 # every hour
+# @sched.scheduled_job(trigger='cron', minute='*/30', id='post_slack')          # every n minutes
 def post_to_slack():
     """Post to Slack"""
 
@@ -72,9 +83,26 @@ def post_to_slack():
         'accept': 'application/json'
     }
 
-    res = requests.request("POST", url, headers=headers, data=payload)
+    try:
+        res = requests.request("POST", url, headers=headers, data=payload)
+        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}[{loc_time.format('YYYY-MM-DD HH:mm:ss')}] Posting to Slack")
+        return res.json()
+    except requests.exceptions.RequestException as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}[{loc_time.format('YYYY-MM-DD HH:mm:ss')}] {e}")
+        sys.exit(1)
 
-    return res.json()
+
+# TODO: debug available ports (Errno 48)
+# def next_free_port(port=3001, max_port=65535):
+#     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     while port <= max_port:
+#         try:
+#             sock.bind((HOST, port))
+#             sock.close()
+#             return port
+#         except OSError:
+#             port += 1
+#     raise IOError('No free ports')
 
 
 def main():
@@ -85,8 +113,10 @@ def main():
     sched.start()
     atexit.register(lambda: sched.shutdown())
 
+    # port = next_free_port()
+
     try:
-        uvicorn.run("main:app", host="0.0.0.0", port=3001, reload=True)
+        uvicorn.run("scheduler:main", host="0.0.0.0", port=3001, log_level="debug", reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
