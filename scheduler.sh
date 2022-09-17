@@ -1,21 +1,31 @@
 #!/usr/bin/env bash
 
+# TODO: build docker image and run from heroku scheduler
+
+# ENV
+# URL="localhost:3000"
+[[ -n "${URL}" ]] || URL="https://meetup-bot-bot.herokuapp.com"
+[[ -n "${DB_USER}" ]] || read -p "DB_USER: " DB_USER
+[[ -n "${DB_PASS}" ]] || read -sp "DB_PASS: " DB_PASS
+
 # index
 # curl -X 'GET' \
-#   'https://meetup-bot-bot.herokuapp.com/' \
+#   "${URL}/" \
 #   -H 'accept: text/html'
 
 # get_token
-raw=$(curl --location --request POST 'https://meetup-bot-bot.herokuapp.com/token' \
---header 'Content-Type: application/x-www-form-urlencoded' \
---data-urlencode "username=${DB_USER}" \
---data-urlencode "password=${DB_PASS}")
+raw=$(curl --no-progress-meter --location --request POST "${URL}/token" \
+	--header 'Content-Type: application/x-www-form-urlencoded' \
+	--data-urlencode "username=${DB_USER}" \
+	--data-urlencode "password=${DB_PASS}")
 
 # split access_token from {"access_token":"TOKEN","token_type":"bearer"}
-access_token=$(echo $token | cut -d '"' -f 4)
+access_token=$(echo "${raw}" | cut -d '"' -f 4)
 
 # post_slack
-curl -X 'POST' \
-  'https://meetup-bot-bot.herokuapp.com/api/slack?location=Oklahoma%20City&exclusions=Tulsa' \
-  -H "accept: application/json" \
-  -H "Authorization: Bearer ${access_token}"'
+curl --no-progress-meter --location --request POST \
+	"${URL}/api/slack" \
+	--header "accept: application/json" \
+	--header "Authorization: Bearer ${access_token}" \
+	--data-urlencode "location=Oklahoma City" \
+	--data-urlencode "exclusions=Tulsa"
