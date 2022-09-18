@@ -287,16 +287,19 @@ def startup_event():
             hashed_password = get_password_hash(DB_PASS)
             UserInfo(username=DB_USER, hashed_password=hashed_password)
 
-    # generate access and refresh tokens
-    tokens = gen_token()
+    # print script name
+    # print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Script: {__file__}")
 
-    global access_token
-    access_token = tokens['access_token']
+    # # generate access and refresh tokens
+    # tokens = gen_token()
 
-    global refresh_token
-    refresh_token = tokens['refresh_token']
+    # global access_token
+    # access_token = tokens['access_token']
 
-    return access_token, refresh_token
+    # global refresh_token
+    # refresh_token = tokens['refresh_token']
+
+    # return access_token, refresh_token
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -340,9 +343,16 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
+def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days: int = 7, current_user: User = Depends(get_current_active_user)):
     """
     Query upcoming Meetup events
+
+    Args:
+        location (str): location to search for events
+        exclusions (str): location to exclude from search
+        days (int): number of days to search for events
+        access_token (str): hard-coded access_token
+        refresh_token (str): hard-coded refresh_token
     """
 
     if not current_user:
@@ -369,7 +379,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     for url in url_vars:
         response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusions)) > 0:
+        if len(format_response(response, exclusions=exclusions, days=days)) > 0:
             output.append(response)
         else:
             print(f"{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found")

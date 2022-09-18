@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# TODO: build docker image and run from heroku scheduler
-
 # ENV
 # URL="localhost:3000"
 [[ -n "${URL}" ]] || URL="https://meetup-bot-bot.herokuapp.com"
@@ -13,7 +11,7 @@
 #   "${URL}/" \
 #   -H 'accept: text/html'
 
-# get_token
+# generate_token
 raw=$(curl --no-progress-meter --location --request POST "${URL}/token" \
 	--header 'Content-Type: application/x-www-form-urlencoded' \
 	--data-urlencode "username=${DB_USER}" \

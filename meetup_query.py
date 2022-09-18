@@ -8,8 +8,10 @@ import re
 import requests
 # import requests_cache
 import sys
+import time
 from arrow import ParserError
 from colorama import Fore
+from decouple import config
 from sign_jwt import main as gen_token
 # from icecream import ic
 from pathlib import Path
@@ -42,6 +44,9 @@ format = 'json'
 csv_fn = Path('/tmp/output.csv')
 json_fn = Path('/tmp/output.json')
 groups_csv = Path('groups.csv')
+TZ = config('TZ', default='America/Chicago')
+loc_time = arrow.now().to(TZ)
+time.tzset()
 
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
@@ -164,8 +169,8 @@ def send_request(token, query, vars):
 
     return pretty_response
 
-# optional exclusion string parameter
-def format_response(response, location='Oklahoma City', exclusions=''):
+
+def format_response(response, location='Oklahoma City', exclusions='', days: int = 7):
     """
     Format response for Slack
     """
@@ -207,9 +212,8 @@ def format_response(response, location='Oklahoma City', exclusions=''):
         df = df[~df['name'].str.contains('|'.join(exclusions))]
         df = df[~df['title'].str.contains('|'.join(exclusions))]
 
-    # TODO: cutoff time by day _and_ hour (currently only day)
-    # filter rows that aren't within the next 7 days
-    time_span = arrow.now().shift(days=7)
+    # filter rows that aren't within the next n days
+    time_span = arrow.now().shift(days=days)
     df = df[df['date'] <= time_span.isoformat()]
 
     return df
@@ -258,7 +262,6 @@ def sort_json(filename):
     else:
         year = str(arrow.now().shift(days=7).year)
 
-    # TODO: log decorator
     # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
     try:
         df['date'] = df['date'].apply(lambda x: arrow.get(x, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss'))
@@ -275,7 +278,6 @@ def sort_json(filename):
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
-    # TODO: store json output in redis
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
     with open(json_fn, 'w', encoding='utf-8') as f:
@@ -323,42 +325,43 @@ def export_to_file(response, type='json', exclusions=''):
 
 
 # TODO: disable in prod (use `main.py`)
-def main():
-    tokens = gen_token()
-    access_token = tokens['access_token']
-    refresh_token = tokens['refresh_token']
+# def main():
 
-    # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
-    # exclude keywords in event name and title (will miss events with keyword in description)
-    exclusions = ['36\u00b0N', 'Tulsa']
+#     tokens = gen_token()
+#     access_token = tokens['access_token']
+#     refresh_token = tokens['refresh_token']
 
-    # TODO: reduce `format_response` calls to 1
-    # first-party query
-    response = send_request(access_token, query, vars)
-    # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
-    export_to_file(response, format, exclusions=exclusions)                  # csv/json
+#     # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
+#     # exclude keywords in event name and title (will miss events with keyword in description)
+#     exclusions = ['36\u00b0N', 'Tulsa']
 
-    # third-party query
-    output = []
-    for url in url_vars:
-        response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
-        # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusions)) > 0:
-            output.append(response)
-        else:
-            print(f'[INFO] No upcoming events for {url} found')
-    # loop through output and append to file
-    for i in range(len(output)):
-        export_to_file(output[i], format)
+#     # TODO: reduce `format_response` calls to 1
+#     # first-party query
+#     response = send_request(access_token, query, vars)
+#     # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
+#     export_to_file(response, format, exclusions=exclusions)                  # csv/json
 
-    # cleanup output file
-    if format == 'csv':
-        sort_csv(csv_fn)
-    elif format == 'json':
-        sort_json(json_fn)
+#     # third-party query
+#     output = []
+#     for url in url_vars:
+#         response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
+#         # append to output dict if the response is not empty
+#         if len(format_response(response, exclusions=exclusions)) > 0:
+#             output.append(response)
+#         else:
+#             print(f'[INFO] No upcoming events for {url} found')
+#     # loop through output and append to file
+#     for i in range(len(output)):
+#         export_to_file(output[i], format)
 
-    return response
+#     # cleanup output file
+#     if format == 'csv':
+#         sort_csv(csv_fn)
+#     elif format == 'json':
+#         sort_json(json_fn)
+
+#     return response
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
