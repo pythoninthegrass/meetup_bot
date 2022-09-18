@@ -35,8 +35,12 @@ warning = "WARNING:"
 # pony.options.CUT_TRACEBACK = False
 # logging.basicConfig(level=logging.DEBUG)
 
-# cache
-# requests_cache.install_cache("api_cache", expire_after=3600)
+# time span (e.g., 3600 = 1 hour)
+# sec = int(60)           # n seconds
+# age = int(sec * 1)      # n minutes -> hours
+
+# cache the requests as script basename, expire after 1 hour
+# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
 
 # env
 home = Path.home()
@@ -290,17 +294,6 @@ def startup_event():
     # print script name
     # print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Script: {__file__}")
 
-    # # generate access and refresh tokens
-    # tokens = gen_token()
-
-    # global access_token
-    # access_token = tokens['access_token']
-
-    # global refresh_token
-    # refresh_token = tokens['refresh_token']
-
-    # return access_token, refresh_token
-
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
@@ -351,8 +344,6 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
         location (str): location to search for events
         exclusions (str): location to exclude from search
         days (int): number of days to search for events
-        access_token (str): hard-coded access_token
-        refresh_token (str): hard-coded refresh_token
     """
 
     if not current_user:
@@ -364,16 +355,14 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
     else:
         exclusions = []
 
-    # TODO: startup doesn't pass `access_token` to `get_events` function (move to main?)
     try:
         response = send_request(access_token, query, vars)
     except (NameError, UnboundLocalError):
         access_token, refresh_token = generate_token()
         response = send_request(access_token, query, vars)
 
-    export_to_file(response, format, exclusions=exclusions)                  # csv/json
+    export_to_file(response, format, exclusions=exclusions)
 
-    # TODO: log decorator
     # third-party query
     output = []
     for url in url_vars:
@@ -388,16 +377,13 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
         export_to_file(output[i], format)
 
     # cleanup output file
-    if format == 'csv':
-        sort_csv(csv_fn)
-        return pd.read_csv(csv_fn)
-    elif format == 'json':
-        sort_json(json_fn)
-        return pd.read_json(json_fn)
+    sort_json(json_fn)
+
+    return pd.read_json(json_fn)
 
 
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
+def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", days: int = 7, current_user: User = Depends(get_current_active_user)):
     """
     Post to slack
 
@@ -407,7 +393,7 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    get_events(location, exclusions)
+    get_events(location, exclusions, days)
     msg = fmt_json(json_fn)
     send_message('\n'.join(msg))
 
@@ -418,7 +404,6 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
 app.include_router(api_router)
 
 
-# TODO: background tasks: generate access and refresh tokens every 55 minutes; post to slack every 24 hours
 def main():
     """
     Run app

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: generate access and refresh tokens every 55 minutes
+
 # ENV
 # URL="localhost:3000"
 [[ -n "${URL}" ]] || URL="https://meetup-bot-bot.herokuapp.com"
