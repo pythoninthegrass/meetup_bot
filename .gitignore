@@ -12,6 +12,7 @@ gen_token.py
 gitleaks_report*.json
 db.*
 .bash_history
+tempCodeRunnerFile*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

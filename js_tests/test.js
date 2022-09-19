@@ -1,14 +1,12 @@
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-const privateKey = fs.readFileSync('../jwt_priv.pem');
+const privateKey = fs.readFileSync(`${__dirname}/../jwt_priv.pem`, 'utf8');
 
 // source .env file one directory up
-const envFile = require('dotenv').config({path: '../.env'});
-
-const SELF_ID = process.env.SELF_ID;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const SIGNING_KEY_ID = process.env.SIGNING_KEY_ID;
+const env = require('dotenv').config({path: `${__dirname}/../.env`});
+const SELF_ID = env.parsed.SELF_ID;
+const CLIENT_SECRET = env.parsed.CLIENT_SECRET;
+const SIGNING_KEY_ID = env.parsed.SIGNING_KEY_ID;
 
 const token = jwt.sign(
   {},
