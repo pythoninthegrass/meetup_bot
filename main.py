@@ -208,6 +208,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
+# TODO: store user session in cookie
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Get current user"""
     credentials_exception = HTTPException(
@@ -336,14 +337,13 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days: int = 7, current_user: User = Depends(get_current_active_user)):
+def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
     Query upcoming Meetup events
 
     Args:
         location (str): location to search for events
         exclusions (str): location to exclude from search
-        days (int): number of days to search for events
     """
 
     if not current_user:
@@ -368,7 +368,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
     for url in url_vars:
         response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusions, days=days)) > 0:
+        if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
         else:
             print(f"{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found")
@@ -383,7 +383,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
 
 
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", days: int = 7, current_user: User = Depends(get_current_active_user)):
+def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
     """
     Post to slack
 
@@ -393,7 +393,7 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", days:
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    get_events(location, exclusions, days)
+    get_events(location, exclusions)
     msg = fmt_json(json_fn)
     send_message('\n'.join(msg))
 
