@@ -8,6 +8,10 @@
 [[ -n "${DB_USER}" ]] || read -p "DB_USER: " DB_USER
 [[ -n "${DB_PASS}" ]] || read -sp "DB_PASS: " DB_PASS
 
+# strip double quotes from env vars if they exist
+DB_USER=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_USER")
+DB_PASS=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_PASS")
+
 # index
 # curl -X 'GET' \
 #   "${URL}/" \
