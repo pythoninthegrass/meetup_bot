@@ -2,15 +2,19 @@
 
 # TODO: generate access and refresh tokens every 55 minutes
 
-# ENV
-# URL="localhost:3000"
-[[ -n "${URL}" ]] || URL="https://meetup-bot-bot.herokuapp.com"
+# env
+[[ -f ".env" ]] && set -a; source .env; set +a
 [[ -n "${DB_USER}" ]] || read -p "DB_USER: " DB_USER
 [[ -n "${DB_PASS}" ]] || read -sp "DB_PASS: " DB_PASS
 
 # strip double quotes from env vars if they exist
 DB_USER=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_USER")
 DB_PASS=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_PASS")
+
+# rewrite dev url
+if [[ $(uname) == "Darwin" ]]; then
+  URL="${HOST}:${PORT:-3000}"
+fi
 
 # index
 # curl -X 'GET' \
