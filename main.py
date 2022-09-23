@@ -71,6 +71,7 @@ if env.exists():
     DB_NAME = config('DB_NAME')
     DB_USER = config('DB_USER')
     DB_PASS = config('DB_PASS')
+    DB_HOST = config('DB_HOST')
     DB_PORT = config('DB_PORT', default=5432, cast=int)
 
 else:
@@ -83,6 +84,7 @@ else:
     DB_NAME = os.getenv('DB_NAME')
     DB_USER = os.getenv('DB_USER')
     DB_PASS = os.getenv('DB_PASS')
+    DB_HOST = os.getenv('DB_HOST')
     DB_PORT = int(os.getenv('DB_PORT', default=5432))
 
 
@@ -132,8 +134,11 @@ class UserInfo(db.Entity):
 
 
 # sqlite db
-# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)              # local db
-db.bind(provider='sqlite', filename=':memory:')                             # in-memory db
+# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)                  # local db
+# db.bind(provider='sqlite', filename=':memory:')                               # in-memory db
+
+# postgres db
+db.bind(provider='postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME, port=DB_PORT)
 
 # generate mapping
 db.generate_mapping(create_tables=True)
@@ -291,9 +296,6 @@ def startup_event():
         if not UserInfo.exists(username=DB_USER):
             hashed_password = get_password_hash(DB_PASS)
             UserInfo(username=DB_USER, hashed_password=hashed_password)
-
-    # print script name
-    # print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Script: {__file__}")
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -2,6 +2,8 @@ setup:
   addons:
     - plan: scheduler
       as: SCHEDULER
+    - plan: heroku-postgresql
+      as: DATABASE
   config:
     APP_NAME: meetup-bot-bot
 build:
