@@ -73,7 +73,6 @@ if env.exists():
     DB_PASS = config('DB_PASS')
     DB_HOST = config('DB_HOST')
     DB_PORT = config('DB_PORT', default=5432, cast=int)
-
 else:
     TTL = int(os.getenv('TTL', default=3600))
     HOST = os.getenv('HOST')
@@ -134,11 +133,21 @@ class UserInfo(db.Entity):
 
 
 # sqlite db
-# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)                  # local db
-# db.bind(provider='sqlite', filename=':memory:')                               # in-memory db
+# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)      # local db
+# db.bind(provider='sqlite', filename=':memory:')                   # in-memory db
+
+# strip double quotes from string
+# DB_PASS = DB_PASS.strip('"')                                      # local image
 
 # postgres db
-db.bind(provider='postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME, port=DB_PORT)
+db.bind(provider='postgres',
+        user=DB_USER,
+        password=DB_PASS,
+        host=DB_HOST,
+        database=DB_NAME,
+        port=DB_PORT,
+        sslmode='require'
+)
 
 # generate mapping
 db.generate_mapping(create_tables=True)
