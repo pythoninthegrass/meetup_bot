@@ -4,6 +4,7 @@ FROM ubuntu:22.04 AS builder-image
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
+# TODO: debug psycopg2-binary install
 RUN apt-get -qq update \
     && apt-get -qq install \
     --no-install-recommends -y \
@@ -13,17 +14,19 @@ RUN apt-get -qq update \
     build-essential \
     ca-certificates \
     curl \
+    gcc \
     git \
-    locales \
     libbz2-dev \
     libffi-dev \
     libncurses-dev \
     libreadline-dev \
+    libpq-dev \
     libsqlite3-dev \
     libssl-dev \
     libtool \
     libxslt-dev \
     libyaml-dev \
+    locales \
     python3 \
     python3-dev \
     python3-pip \
@@ -87,7 +90,9 @@ RUN apt-get -qq update \
     --no-install-recommends -y \
     ca-certificates \
     curl \
+    gcc \
     git \
+    libpq-dev \
     libsqlite3-dev \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*

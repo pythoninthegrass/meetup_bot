@@ -31,7 +31,8 @@ jose = "^1.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 APScheduler = "^3.9.1"
-psycopg2-binary = {version = "^2.9.3", source = "test-pypi"}
+# psycopg2-binary = {version = "^2.9.3", source = "test-pypi"}  # M1
+psycopg2-binary = "^2.9.3"
 
 [tool.poetry.dev-dependencies]
 icecream = "^2.1.3"
