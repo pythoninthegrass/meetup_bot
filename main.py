@@ -73,7 +73,6 @@ if env.exists():
     DB_PASS = config('DB_PASS')
     DB_HOST = config('DB_HOST')
     DB_PORT = config('DB_PORT', default=5432, cast=int)
-
 else:
     TTL = int(os.getenv('TTL', default=3600))
     HOST = os.getenv('HOST')
