@@ -3,7 +3,7 @@
 # TODO: generate access and refresh tokens every 55 minutes
 
 # env
-[[ -f ".env" ]] && set -a; source .env; set +a
+[[ -f ".env" ]] && set -a; source .env >/dev/null 2>&1; set +a
 [[ -n "${DB_USER}" ]] || read -p "DB_USER: " DB_USER
 [[ -n "${DB_PASS}" ]] || read -sp "DB_PASS: " DB_PASS
 
