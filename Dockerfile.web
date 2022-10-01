@@ -45,6 +45,9 @@ ENV PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
 
 RUN useradd --create-home $USERNAME
 
+WORKDIR $HOME/app
+COPY .tool-versions pyproject.toml poetry.lock ./
+
 # install asdf then python latest
 RUN bash -c "git clone --depth 1 https://github.com/asdf-vm/asdf.git $HOME/.asdf \
     && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.bashrc  \
@@ -58,8 +61,7 @@ ENV POETRY_HOME="$HOME/.poetry"
 RUN curl -sSL https://install.python-poetry.org | python3.10 -
 ENV PATH "${POETRY_HOME}/bin:$PATH"
 
-WORKDIR $$HOME/app
-COPY pyproject.toml poetry.lock ./
+# create virtual environment
 RUN python3.10 -m venv /opt/venv
 
 # Install pip requirements
