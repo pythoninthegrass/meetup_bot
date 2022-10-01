@@ -44,7 +44,7 @@ if [[ $(date -u +%H%M) -eq "1500" ]]; then
 elif [[ $(date -u +%H%M) -eq "2300" ]]; then
   HEALTHCHECKS_ID="9f0093c0-6519-4989-b7e8-a12b250c58dd"
 else
-  echo -e "Time is $(date -u +%H%M). Not running healthchecks.io ping"
+  echo -e "\nTime is $(date -u +%H%M). Not running healthchecks.io ping"
   exit 0
 fi
 
