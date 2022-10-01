@@ -18,6 +18,7 @@ RUN apt-get -qq update \
     git \
     libbz2-dev \
     libffi-dev \
+    liblzma-dev \
     libncurses-dev \
     libreadline-dev \
     libpq-dev \
@@ -49,6 +50,7 @@ ENV PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
 RUN useradd --create-home $USERNAME
 
 WORKDIR $HOME/app
+COPY .tool-versions $HOME/
 COPY .tool-versions pyproject.toml poetry.lock ./
 
 # install asdf then python latest
