@@ -37,3 +37,16 @@ curl --no-progress-meter --location --request POST \
 	--header "Authorization: Bearer ${access_token}" \
 	--data-urlencode "location=Oklahoma City" \
 	--data-urlencode "exclusions=Tulsa"
+
+# healthchecks ID: 1500 and 2300 UTC
+if [[ $(date -u +%H%M) -eq "1500" ]]; then
+  HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+elif [[ $(date -u +%H%M) -eq "2300" ]]; then
+  HEALTHCHECKS_ID="9f0093c0-6519-4989-b7e8-a12b250c58dd"
+else
+  echo -e "Time is $(date -u +%H%M). Not running healthchecks.io ping"
+  exit 0
+fi
+
+# ping healthchecks
+curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
