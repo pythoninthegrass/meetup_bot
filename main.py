@@ -366,11 +366,9 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     else:
         exclusions = []
 
-    try:
-        response = send_request(access_token, query, vars)
-    except (NameError, UnboundLocalError):
-        access_token, refresh_token = generate_token()
-        response = send_request(access_token, query, vars)
+    access_token, refresh_token = generate_token()
+
+    response = send_request(access_token, query, vars)
 
     export_to_file(response, format, exclusions=exclusions)
 

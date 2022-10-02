@@ -173,7 +173,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     # convert response to json
     response_json = json.loads(response)
 
-    # TODO: print skipped events
+    # TODO: add arg for `self` or `groupByUrlname`
     # extract data from json
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
@@ -275,7 +275,6 @@ def sort_json(filename):
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
-    # TODO: store json output in redis
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
     with open(json_fn, 'w', encoding='utf-8') as f:
