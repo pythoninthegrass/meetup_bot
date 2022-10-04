@@ -10,11 +10,11 @@ build-clean:
     docker-compose build --pull --no-cache
 
 buildx:
-    export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
+    export TAG="registry.heroku.com/${HEROKU_APP}/web:latest"
     docker buildx build -f Dockerfile.web --progress=plain -t $TAG --load .
 
 pull:
-    docker pull registry.heroku.com/meetup-bot-bot/web
+    docker pull registry.heroku.com/${HEROKU_APP}/web
 
 build:
     docker-compose build --pull
