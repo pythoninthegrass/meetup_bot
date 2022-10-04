@@ -254,8 +254,8 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Login for access token"""
+async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Login for oauth access token"""
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -263,12 +263,12 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=TOKEN_EXPIRE)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    oauth_token_expires = timedelta(minutes=TOKEN_EXPIRE)
+    oauth_token = create_access_token(
+        data={"sub": user.username}, expires_delta=oauth_token_expires
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": oauth_token, "token_type": "bearer"}
 
 
 # @app.get("/users/me")
@@ -337,10 +337,8 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     # generate access and refresh tokens
     tokens = gen_token()
 
-    global access_token
+    global access_token, refresh_token
     access_token = tokens['access_token']
-
-    global refresh_token
     refresh_token = tokens['refresh_token']
 
     return access_token, refresh_token

@@ -5,6 +5,7 @@ import jwt
 import os
 import pathlib
 import requests
+import sys
 import time
 from colorama import Fore
 from cryptography.hazmat.primitives import serialization
@@ -114,7 +115,7 @@ def sign_token():
 def verify_token(token):
     """Verify signed JWT against public key"""
 
-    # TODO: log decorator
+    # TODO: Fix `Signature has expired\n[ERROR] Exception in ASGI application`; scheduler.sh only works for ~7 tries / 1 hour
     try:
         decoded_token = jwt.decode(
             jwt=token,
@@ -123,19 +124,18 @@ def verify_token(token):
             verify=True,
             algorithms=['RS256']
         )
-        # print(f"[decoded_token]: {decoded_token}")
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Success! Token verified.")
-
         return True
+    except jwt.exceptions.ExpiredSignatureError as e:
+        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Token has expired: {e}")
+        return False
     except (
         jwt.exceptions.InvalidTokenError,
         jwt.exceptions.InvalidSignatureError,
         jwt.exceptions.InvalidIssuerError,
-        jwt.exceptions.ExpiredSignatureError
         ) as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
-
-        return False
+        sys.exit(1)
 
 
 def get_access_token(token):
@@ -155,12 +155,17 @@ def get_access_token(token):
     return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
-# TODO: skip get_access_token() if access_token is not expired
 def main():
     """Generate signed JWT, verify, and get access token"""
 
+    # sign JWT
     token = sign_token()
-    verify_token(token)
+
+    # generate new signed JWT if expired
+    if not verify_token(token):
+        token = sign_token()
+
+    # get access and refresh tokens
     res = get_access_token(token)
 
     return res.json()
