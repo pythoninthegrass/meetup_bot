@@ -137,7 +137,7 @@ class UserInfo(db.Entity):
 # db.bind(provider='sqlite', filename=':memory:')                   # in-memory db
 
 # strip double quotes from string
-# DB_PASS = DB_PASS.strip('"')                                      # local image
+DB_PASS = DB_PASS.strip('"')                                        # local image
 
 # postgres db
 db.bind(provider='postgres',
