@@ -334,20 +334,17 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # generate access and refresh tokens
-    tokens = gen_token()
-    ic(tokens)
-
+    # TODO: KeyError: 'access_token' in heroku image (cf. sign_jwt.py)
     global access_token, refresh_token
-    # TODO: KeyError: 'access_token' in heroku image
+
     try:
+        # generate access and refresh tokens
+        tokens = gen_token()
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
     except KeyError as e:
         ic(e)
-        ic(tokens)
-        ic(tokens['access_token'])
-        ic(tokens['refresh_token'])
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
     return access_token, refresh_token
 

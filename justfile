@@ -1,7 +1,7 @@
 # See https://just.systems/man/en
 
 set dotenv-load := true
-set host := `uname -n`
+host := `uname -n`
 
 default:
     just --list

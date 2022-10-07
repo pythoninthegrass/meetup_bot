@@ -90,17 +90,30 @@ headers = {
     "Content-Type": 'application/x-www-form-urlencoded'
 }
 
-payload_data = {
-    "audience": 'api.meetup.com',
-    "kid": SIGNING_KEY_ID,
-    "sub": SELF_ID,
-    "iss": CLIENT_SECRET,
-    "exp": time.time() + int(JWT_LIFE_SPAN)
-}
+
+# TODO: Fix `Signature has expired\n[ERROR] Exception in ASGI application`; scheduler.sh only works for ~7 tries / 1 hour
+def gen_payload_data():
+    """
+    Generate payload data for JWT
+
+    Avoids `invalid_grant` by getting a new `exp` value during signing
+    """
+
+    payload_data = {
+        "audience": 'api.meetup.com',
+        "kid": SIGNING_KEY_ID,
+        "sub": SELF_ID,
+        "iss": CLIENT_SECRET,
+        "exp": time.time() + int(JWT_LIFE_SPAN)
+    }
+
+    return payload_data
 
 
 def sign_token():
     """Generate signed JWT"""
+
+    payload_data = gen_payload_data()
 
     payload = jwt.encode(
         headers=headers,
@@ -115,7 +128,6 @@ def sign_token():
 def verify_token(token):
     """Verify signed JWT against public key"""
 
-    # TODO: Fix `Signature has expired\n[ERROR] Exception in ASGI application`; scheduler.sh only works for ~7 tries / 1 hour
     try:
         decoded_token = jwt.decode(
             jwt=token,
@@ -161,9 +173,8 @@ def main():
     # sign JWT
     token = sign_token()
 
-    # generate new signed JWT if expired
-    if not verify_token(token):
-        token = sign_token()
+    # verify JWT
+    verify_token(token)
 
     # get access and refresh tokens
     res = get_access_token(token)
