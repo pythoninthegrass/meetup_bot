@@ -336,10 +336,18 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
     # generate access and refresh tokens
     tokens = gen_token()
+    ic(tokens)
 
     global access_token, refresh_token
-    access_token = tokens['access_token']
-    refresh_token = tokens['refresh_token']
+    # TODO: KeyError: 'access_token' in heroku image
+    try:
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+    except KeyError as e:
+        ic(e)
+        ic(tokens)
+        ic(tokens['access_token'])
+        ic(tokens['refresh_token'])
 
     return access_token, refresh_token
 
@@ -419,7 +427,7 @@ def main():
     import uvicorn
 
     try:
-        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="warning", reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
