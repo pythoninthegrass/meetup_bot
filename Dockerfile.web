@@ -86,6 +86,7 @@ COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libbz2.so /usr/lib/${CHIPSET_
 COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libffi.so.7 /usr/lib/${CHIPSET_ARCH}/
 COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libcurl.so.4 /usr/lib/${CHIPSET_ARCH}/
 COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libnghttp2.so.14 /usr/lib/${CHIPSET_ARCH}/
+COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libidn2.so.0 /usr/lib/${CHIPSET_ARCH}/
 
 # non-root user setup
 ARG USERNAME=appuser
