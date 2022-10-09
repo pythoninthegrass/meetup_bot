@@ -228,7 +228,7 @@ Use Meetup Pro API to send Slack messages before events occur.
 * ~~Docker/Docker-Compose~~
   * ~~Mitigates pain of Poetry virtual environments~~
   * ~~Can migrate to prod VPS and/or k8s~~
-* Lock down endpoints in prod / general hardening
+* ~~Lock down endpoints in prod~~ / general hardening
 * Documentation
 
 ## Stretch Goals
@@ -254,3 +254,5 @@ Use Meetup Pro API to send Slack messages before events occur.
 [MushroomMaula/fastapi_login](https://github.com/MushroomMaula/fastapi_login)
 
 [FastAPI Auth + Login Page](https://dev.to/athulcajay/fastapi-auth-login-page-48po)
+
+[checkbashisms](https://command-not-found.com/checkbashisms)

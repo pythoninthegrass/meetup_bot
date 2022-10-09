@@ -1,18 +1,18 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # TODO: generate access and refresh tokens every 55 minutes
 
 # env
-[[ -f ".env" ]] && set -a; source .env >/dev/null 2>&1; set +a
-[[ -n "${DB_USER}" ]] || read -p "DB_USER: " DB_USER
-[[ -n "${DB_PASS}" ]] || read -sp "DB_PASS: " DB_PASS
+test -f ".env" && set -a; . .env >/dev/null 2>&1; set +a
+test -n "${DB_USER}" || read -p "DB_USER: " DB_USER
+test -n "${DB_PASS}" || read -sp "DB_PASS: " DB_PASS
 
 # strip double quotes from env vars if they exist
 DB_USER=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_USER")
 DB_PASS=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_PASS")
 
 # rewrite dev url
-if [[ $(uname) == "Darwin" ]]; then
+if [ $(uname) = "Darwin" ]; then
   URL="${HOST}:${PORT:-3000}"
 fi
 
@@ -39,9 +39,9 @@ curl --no-progress-meter --location --request POST \
 	--data-urlencode "exclusions=Tulsa"
 
 # healthchecks ID: 1500 and 2300 UTC
-if [[ $(date -u +%H%M) -eq "1500" ]]; then
+if [ $(date -u +%H%M) -eq "1500" ]; then
   HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
-elif [[ $(date -u +%H%M) -eq "2300" ]]; then
+elif [ $(date -u +%H%M) -eq "2300" ]; then
   HEALTHCHECKS_ID="9f0093c0-6519-4989-b7e8-a12b250c58dd"
 else
   echo -e "\nTime is $(date -u +%H%M). Not running healthchecks.io ping"
