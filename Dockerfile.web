@@ -46,23 +46,24 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 # setup standard non-root user for use downstream
-ARG USERNAME="appuser"
-ARG USER_GROUP=${USERNAME}
-ARG HOME="/home/${USERNAME}"
+ENV USERNAME="appuser"
+ENV USER_GROUP=${USERNAME}
+ENV HOME="/home/${USERNAME}"
 
 RUN groupadd ${USER_GROUP}
 RUN useradd -m ${USERNAME} -g ${USER_GROUP}
 
 # setup user environment
-USER ${USERNAME}
-WORKDIR ${HOME}
 ENV PATH="$HOME/.local/bin:$PATH"
 
-# poetry for use elsewhere as builder image
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir --upgrade virtualenv poetry
+WORKDIR ${HOME}
+USER ${USERNAME}
 
-COPY pyproject.toml poetry.lock ./
+# poetry for use elsewhere as builder image
+RUN pip install --user --upgrade pip \
+    && pip install --user --no-cache-dir --upgrade virtualenv poetry
+
+COPY --chown=${USERNAME} pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.in-project true \
     && poetry config virtualenvs.options.always-copy true \
     && poetry install
