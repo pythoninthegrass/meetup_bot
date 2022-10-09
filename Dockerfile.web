@@ -45,25 +45,26 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
+# TODO: debug heroku var interpolation (intermediate containers per ENV??)
 # setup standard non-root user for use downstream
-ENV USERNAME="appuser"
-ENV USER_GROUP=${USERNAME}
-ENV HOME="/home/${USERNAME}"
+ENV USERNAME=appuser
+ENV USER_GROUP=appuser
+ENV HOME=/home/appuser
 
-RUN groupadd ${USER_GROUP}
-RUN useradd -m ${USERNAME} -g ${USER_GROUP}
+RUN groupadd appuser
+RUN useradd -m appuser -g appuser
 
 # setup user environment
 ENV PATH="$HOME/.local/bin:$PATH"
 
-WORKDIR ${HOME}
-USER ${USERNAME}
+WORKDIR /home/appuser
+USER appuser
 
 # poetry for use elsewhere as builder image
 RUN pip install --user --upgrade pip \
     && pip install --user --no-cache-dir --upgrade virtualenv poetry
 
-COPY --chown=${USERNAME} pyproject.toml poetry.lock ./
+COPY --chown=appuser pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.in-project true \
     && poetry config virtualenvs.options.always-copy true \
     && poetry install
@@ -84,9 +85,9 @@ COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libbz2.so /usr/lib/${CHIPSET_
 COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libffi.so.7 /usr/lib/${CHIPSET_ARCH}/
 
 # non-root user setup
-ARG USERNAME="appuser"
+ARG USERNAME=appuser
 ARG PYTHON_VERSION=3.10
-ENV HOME="/home/${USERNAME}"
+ENV HOME=/home/appuser
 ENV VENV="${HOME}/.venv"
 
 # import useful bins from busybox image
@@ -99,17 +100,26 @@ COPY --from=busybox:uclibc /bin/find /bin/find
 COPY --from=busybox:uclibc /bin/which /bin/which
 COPY --from=busybox:uclibc /bin/env /usr/bin/env
 
+# setup standard non-root user for use downstream
+ENV USERNAME=appuser
+ENV USER_GROUP=appuser
+ENV HOME=/home/appuser
+
+RUN echo "appuser:x:1000:appuser" >> /etc/group
+RUN echo "appuser:x:1001:" >> /etc/group
+RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
+
 # copy app and virtual environment
-COPY --chown=${USERNAME} . /app
-COPY --from=builder-image --chown=${USERNAME} "$VENV" "$VENV"
+COPY --chown=appuser . /app
+COPY --from=builder-image --chown=appuser "$VENV" "$VENV"
 COPY --from=builder-image /usr/local/lib/ /usr/local/lib/
 COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
 
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
 
-RUN echo "${USERNAME}:x:1000:${USERNAME}" >> /etc/group
-RUN echo "${USERNAME}:x:1001:" >> /etc/group
-RUN echo "${USERNAME}:x:1000:1001::/home/${USERNAME}:" >> /etc/passwd
+RUN echo "appuser:x:1000:appuser" >> /etc/group
+RUN echo "appuser:x:1001:" >> /etc/group
+RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
 
 # remove dev bins (need sh to run `startup.sh`)
 RUN rm /bin/cat /bin/find /bin/ls /bin/rm /bin/vi /bin/which
@@ -120,7 +130,7 @@ FROM distroless AS runner-image
 
 ARG PYTHON_VERSION=3.10
 ARG USERNAME=appuser
-ENV HOME="/home/${USERNAME}"
+ENV HOME=/home/appuser
 ENV VENV="${HOME}/.venv"
 
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
@@ -137,13 +147,13 @@ ENV WEB_CONCURRENCY=1
 COPY --from=busybox:uclibc /bin/chown /bin/chown
 COPY --from=busybox:uclibc /bin/rm /bin/rm
 
-RUN chown -R ${USERNAME}:${USERNAME} /app \
-    && chown -R ${USERNAME}:${USERNAME} ${VENV} \
+RUN chown -R appuser:appuser /app \
+    && chown -R appuser:appuser ${VENV} \
     && rm /bin/chown /bin/rm
 
 WORKDIR /app
 
-USER ${USERNAME}
+USER appuser
 
 # ENTRYPOINT ["python", "main.py"]
 # CMD ["gunicorn", "-c", "config/gunicorn.conf.py", "main:app"]
