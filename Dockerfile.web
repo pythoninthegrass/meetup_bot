@@ -97,6 +97,7 @@ COPY --from=busybox:uclibc /bin/sh /bin/sh
 COPY --from=busybox:uclibc /bin/vi /bin/vi
 COPY --from=busybox:uclibc /bin/cat /bin/cat
 COPY --from=busybox:uclibc /bin/find /bin/find
+COPY --from=busybox:uclibc /bin/sed /bin/sed
 COPY --from=busybox:uclibc /bin/which /bin/which
 COPY --from=busybox:uclibc /bin/env /usr/bin/env
 

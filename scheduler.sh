@@ -3,13 +3,15 @@
 # TODO: generate access and refresh tokens every 55 minutes
 
 # env
-test -f ".env" && set -a; . .env >/dev/null 2>&1; set +a
+if test -f ".env"; then
+	set -a; . .env >/dev/null 2>&1; set +a
+fi
 test -n "${DB_USER}" || read -p "DB_USER: " DB_USER
 test -n "${DB_PASS}" || read -sp "DB_PASS: " DB_PASS
 
 # strip double quotes from env vars if they exist
-DB_USER=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_USER")
-DB_PASS=$(sed -e 's/^"//' -e 's/"$//' <<<"$DB_PASS")
+DB_USER=$(echo "$DB_USER" | sed -e 's/^"//' -e 's/"$//')
+DB_PASS=$(echo "$DB_PASS" | sed -e 's/^"//' -e 's/"$//')
 
 # rewrite dev url
 if [ $(uname) = "Darwin" ]; then
