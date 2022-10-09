@@ -19,6 +19,7 @@ RUN apt -qq update \
     automake \
     build-essential \
     ca-certificates \
+    curl \
     gcc \
     libbz2-dev \
     libffi7 \
@@ -94,7 +95,6 @@ ENV VENV="${HOME}/.venv"
 # uname, curl, cut, date
 COPY --from=busybox:latest \
     /bin/cat \
-    /bin/curl \
     /bin/cut \
     /bin/date  \
     /bin/find \
@@ -107,6 +107,7 @@ COPY --from=busybox:latest \
     /bin/which \
     /bin/
 COPY --from=busybox:uclibc /bin/env /usr/bin/env
+COPY --from=builder-image /usr/bin/curl /bin/curl
 
 # setup standard non-root user for use downstream
 ENV USERNAME=appuser
