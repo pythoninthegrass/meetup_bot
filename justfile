@@ -41,6 +41,10 @@ build-clean:
 pull:
     docker pull registry.heroku.com/${HEROKU_APP}/web
 
+# push image to heroku
+push:
+    git push heroku main
+
 # start docker-compose container
 start:
     docker-compose up -d
