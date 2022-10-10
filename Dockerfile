@@ -19,6 +19,7 @@ RUN apt -qq update \
     automake \
     build-essential \
     ca-certificates \
+    curl \
     gcc \
     libbz2-dev \
     libffi7 \
@@ -78,11 +79,13 @@ FROM gcr.io/distroless/cc AS distroless
 ARG CHIPSET_ARCH=x86_64-linux-gnu
 
 # required by lots of packages - e.g. six, numpy, asgi, wsgi, gunicorn
+# libz.so.1, libexpat.so.1, libbz2.so, libffi.so.7
 COPY --from=builder-image /etc/ld.so.cache /etc/
-COPY --from=builder-image /lib/${CHIPSET_ARCH}/libz.so.1 /lib/${CHIPSET_ARCH}/
-COPY --from=builder-image /lib/${CHIPSET_ARCH}/libexpat.so.1 /lib/${CHIPSET_ARCH}/
-COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libbz2.so /usr/lib/${CHIPSET_ARCH}/libbz2.so.1.0
-COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/libffi.so.7 /usr/lib/${CHIPSET_ARCH}/
+
+# TODO: curl-specific libs (copying whole /lib and /usr/lib adds ~50MB to image)
+# libcurl.so.4, libnghttp2.so.14, libidn2.so.0, librtmp.so.1, libssh2.so.1, libpsl.so.5
+COPY --from=builder-image /lib/${CHIPSET_ARCH}/ /lib/${CHIPSET_ARCH}/
+COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/ /lib/${CHIPSET_ARCH}/
 
 # non-root user setup
 ARG USERNAME=appuser
@@ -91,14 +94,22 @@ ENV HOME=/home/appuser
 ENV VENV="${HOME}/.venv"
 
 # import useful bins from busybox image
-COPY --from=busybox:uclibc /bin/ls /bin/ls
-COPY --from=busybox:uclibc /bin/rm /bin/rm
-COPY --from=busybox:uclibc /bin/sh /bin/sh
-COPY --from=busybox:uclibc /bin/vi /bin/vi
-COPY --from=busybox:uclibc /bin/cat /bin/cat
-COPY --from=busybox:uclibc /bin/find /bin/find
-COPY --from=busybox:uclibc /bin/which /bin/which
+# uname, curl, cut, date
+COPY --from=busybox:latest \
+    /bin/cat \
+    /bin/cut \
+    /bin/date  \
+    /bin/find \
+    /bin/ls \
+    /bin/rm \
+    /bin/sed \
+    /bin/sh \
+    /bin/uname \
+    /bin/vi \
+    /bin/which \
+    /bin/
 COPY --from=busybox:uclibc /bin/env /usr/bin/env
+COPY --from=builder-image /usr/bin/curl /bin/curl
 
 # setup standard non-root user for use downstream
 ENV USERNAME=appuser
@@ -116,10 +127,6 @@ COPY --from=builder-image /usr/local/lib/ /usr/local/lib/
 COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
 
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
-
-RUN echo "appuser:x:1000:appuser" >> /etc/group
-RUN echo "appuser:x:1001:" >> /etc/group
-RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
 
 # remove dev bins (need sh to run `startup.sh`)
 RUN rm /bin/cat /bin/find /bin/ls /bin/rm /bin/vi /bin/which
