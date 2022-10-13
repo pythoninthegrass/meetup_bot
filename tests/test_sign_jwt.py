@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pytest
+# import pytest
 import sys
 import time
 # from icecream import ic
@@ -33,6 +33,7 @@ def test_gen_payload_data():
     because they are generated at runtime.
     """
     payload_data = gen_payload_data()
+
     assert payload_data['audience'] == "api.meetup.com"
     assert payload_data['kid'] == SIGNING_KEY_ID
     assert payload_data['sub'] == SELF_ID
@@ -43,12 +44,14 @@ def test_gen_payload_data():
 def test_sign_token():
     """Test sign_token()"""
     token = sign_token()
+
     assert (type(token) is str) and len(token) >= 1030
 
 
 def test_verify_token():
     """Test verify_token()"""
     token = sign_token()
+
     assert verify_token(token) == True
 
 
@@ -57,6 +60,7 @@ def test_get_access_token():
     """Test get_access_token()"""
     token = sign_token()
     res = get_access_token(token)
+
     assert res.status_code == 200
     assert res.text.find('access_token') != -1
     assert res.text.find('refresh_token') != -1
