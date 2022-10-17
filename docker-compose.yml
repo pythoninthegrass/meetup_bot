@@ -4,10 +4,12 @@ services:
   meetupbot:
     container_name: meetup_bot-cont
     image: meetup_bot
-    tty: false               # false for `entrypoint` in Dockerfile
-    stdin_open: false        # false for `entrypoint` in Dockerfile
+    tty: false                                              # false for `entrypoint` in Dockerfile
+    stdin_open: false                                       # false for `entrypoint` in Dockerfile
     env_file:
       - ./.env
+    environment:
+      - CHIPSET_ARCH=${CHIPSET_ARCH:-x86_64-linux-gnu}      # x86_64-linux-gnu / aarch64-linux-gnu
     volumes:
       - .:/home/appuser/app
     ports:

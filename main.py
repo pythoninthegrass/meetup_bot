@@ -137,7 +137,7 @@ class UserInfo(db.Entity):
 # db.bind(provider='sqlite', filename=':memory:')                   # in-memory db
 
 # strip double quotes from string
-# DB_PASS = DB_PASS.strip('"')                                      # local image
+DB_PASS = DB_PASS.strip('"')                                        # local image
 
 # postgres db
 db.bind(provider='postgres',
@@ -254,8 +254,8 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Login for access token"""
+async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Login for oauth access token"""
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -263,12 +263,12 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=TOKEN_EXPIRE)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    oauth_token_expires = timedelta(minutes=TOKEN_EXPIRE)
+    oauth_token = create_access_token(
+        data={"sub": user.username}, expires_delta=oauth_token_expires
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": oauth_token, "token_type": "bearer"}
 
 
 # @app.get("/users/me")
@@ -334,14 +334,15 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    global access_token, refresh_token
+
     # generate access and refresh tokens
-    tokens = gen_token()
-
-    global access_token
-    access_token = tokens['access_token']
-
-    global refresh_token
-    refresh_token = tokens['refresh_token']
+    try:
+        tokens = gen_token()
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
     return access_token, refresh_token
 
@@ -421,7 +422,7 @@ def main():
     import uvicorn
 
     try:
-        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="debug", reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="warning", reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)

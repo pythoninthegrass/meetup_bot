@@ -5,6 +5,7 @@ import jwt
 import os
 import pathlib
 import requests
+import sys
 import time
 from colorama import Fore
 from cryptography.hazmat.primitives import serialization
@@ -89,17 +90,30 @@ headers = {
     "Content-Type": 'application/x-www-form-urlencoded'
 }
 
-payload_data = {
-    "audience": 'api.meetup.com',
-    "kid": SIGNING_KEY_ID,
-    "sub": SELF_ID,
-    "iss": CLIENT_SECRET,
-    "exp": time.time() + int(JWT_LIFE_SPAN)
-}
+
+# TODO: Fix `Signature has expired\n[ERROR] Exception in ASGI application`; scheduler.sh only works for ~7 tries / 1 hour
+def gen_payload_data():
+    """
+    Generate payload data for JWT
+
+    Avoids `invalid_grant` by getting a new `exp` value during signing
+    """
+
+    payload_data = {
+        "audience": 'api.meetup.com',
+        "kid": SIGNING_KEY_ID,
+        "sub": SELF_ID,
+        "iss": CLIENT_SECRET,
+        "exp": time.time() + int(JWT_LIFE_SPAN)
+    }
+
+    return payload_data
 
 
 def sign_token():
     """Generate signed JWT"""
+
+    payload_data = gen_payload_data()
 
     payload = jwt.encode(
         headers=headers,
@@ -114,7 +128,6 @@ def sign_token():
 def verify_token(token):
     """Verify signed JWT against public key"""
 
-    # TODO: log decorator
     try:
         decoded_token = jwt.decode(
             jwt=token,
@@ -123,19 +136,18 @@ def verify_token(token):
             verify=True,
             algorithms=['RS256']
         )
-        # print(f"[decoded_token]: {decoded_token}")
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Success! Token verified.")
-
         return True
+    except jwt.exceptions.ExpiredSignatureError as e:
+        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Token has expired: {e}")
+        return False
     except (
         jwt.exceptions.InvalidTokenError,
         jwt.exceptions.InvalidSignatureError,
         jwt.exceptions.InvalidIssuerError,
-        jwt.exceptions.ExpiredSignatureError
         ) as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
-
-        return False
+        sys.exit(1)
 
 
 def get_access_token(token):
@@ -155,12 +167,16 @@ def get_access_token(token):
     return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
 
 
-# TODO: skip get_access_token() if access_token is not expired
 def main():
     """Generate signed JWT, verify, and get access token"""
 
+    # sign JWT
     token = sign_token()
+
+    # verify JWT
     verify_token(token)
+
+    # get access and refresh tokens
     res = get_access_token(token)
 
     return res.json()

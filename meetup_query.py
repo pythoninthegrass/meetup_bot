@@ -164,6 +164,7 @@ def send_request(token, query, vars):
 
     return pretty_response
 
+
 # optional exclusion string parameter
 def format_response(response, location='Oklahoma City', exclusions=''):
     """

@@ -1,33 +1,43 @@
-# using ubuntu LTS version
-FROM ubuntu:22.04 AS builder-image
+# SOURCES
+# https://github.com/alexdmoss/distroless-python
+# https://gitlab.com/n.ragav/python-images/-/tree/master/distroless
+
+# full semver just for python base image
+ARG PYTHON_VERSION=3.10.7
+
+# several optimisations in python-slim images already, benefit from these
+FROM python:${PYTHON_VERSION}-slim-bullseye AS builder-image
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get -qq update \
-    && apt-get -qq install \
+# install dependencies
+RUN apt -qq update \
+    && apt -qq install \
     --no-install-recommends -y \
-    aptitude \
     autoconf \
     automake \
     build-essential \
     ca-certificates \
     curl \
-    git \
-    locales \
+    gcc \
     libbz2-dev \
+    libffi7 \
     libffi-dev \
+    liblzma-dev \
     libncurses-dev \
+    libpq-dev \
     libreadline-dev \
+    libsqlite3-dev \
     libssl-dev \
     libtool \
     libxslt-dev \
     libyaml-dev \
-    python3 \
-    python3-dev \
-    python3-pip \
+    locales \
+    lzma \
+    sqlite3 \
     unixodbc-dev \
-    unzip \
+    zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 # Set locale
@@ -36,78 +46,123 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
+# TODO: debug heroku var interpolation (intermediate containers per ENV??)
+# setup standard non-root user for use downstream
+ENV USERNAME=appuser
+ENV USER_GROUP=appuser
+ENV HOME=/home/appuser
+
+RUN groupadd appuser
+RUN useradd -m appuser -g appuser
+
+# setup user environment
+ENV PATH="$HOME/.local/bin:$PATH"
+
+WORKDIR /home/appuser
+USER appuser
+
+# poetry for use elsewhere as builder image
+RUN pip install --user --upgrade pip \
+    && pip install --user --no-cache-dir --upgrade virtualenv poetry
+
+COPY --chown=appuser pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.in-project true \
+    && poetry config virtualenvs.options.always-copy true \
+    && poetry install
+
+# # CMD ["/bin/bash"]
+
+# build from distroless C or cc:debug, because lots of Python depends on C
+FROM gcr.io/distroless/cc AS distroless
+
+# arch: x86_64-linux-gnu / aarch64-linux-gnu
+ARG CHIPSET_ARCH=x86_64-linux-gnu
+
+# required by lots of packages - e.g. six, numpy, asgi, wsgi, gunicorn
+# libz.so.1, libexpat.so.1, libbz2.so, libffi.so.7
+COPY --from=builder-image /etc/ld.so.cache /etc/
+
+# TODO: curl-specific libs (copying whole /lib and /usr/lib adds ~50MB to image)
+# libcurl.so.4, libnghttp2.so.14, libidn2.so.0, librtmp.so.1, libssh2.so.1, libpsl.so.5
+COPY --from=builder-image /lib/${CHIPSET_ARCH}/ /lib/${CHIPSET_ARCH}/
+COPY --from=builder-image /usr/lib/${CHIPSET_ARCH}/ /lib/${CHIPSET_ARCH}/
+
+# non-root user setup
 ARG USERNAME=appuser
-ENV HOME="/home/${USERNAME}"
-ENV PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+ARG PYTHON_VERSION=3.10
+ENV HOME=/home/appuser
+ENV VENV="${HOME}/.venv"
 
-RUN useradd --create-home $USERNAME
+# import useful bins from busybox image
+# uname, curl, cut, date
+COPY --from=busybox:latest \
+    /bin/cat \
+    /bin/cut \
+    /bin/date  \
+    /bin/find \
+    /bin/ls \
+    /bin/rm \
+    /bin/sed \
+    /bin/sh \
+    /bin/uname \
+    /bin/vi \
+    /bin/which \
+    /bin/
+COPY --from=busybox:uclibc /bin/env /usr/bin/env
+COPY --from=builder-image /usr/bin/curl /bin/curl
 
-# install asdf then python latest
-RUN bash -c "git clone --depth 1 https://github.com/asdf-vm/asdf.git $HOME/.asdf \
-    && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.bashrc  \
-    && echo '. $HOME/.asdf/asdf.sh' >> $HOME/.profile"
-RUN asdf plugin-add python \
-    && asdf install python 3.10.6 \
-    && asdf global python 3.10.6
+# setup standard non-root user for use downstream
+ENV USERNAME=appuser
+ENV USER_GROUP=appuser
+ENV HOME=/home/appuser
 
-ENV POETRY_HOME="$HOME/.poetry"
-RUN curl -sSL https://install.python-poetry.org | python3.10 -
-ENV PATH "${POETRY_HOME}/bin:$PATH"
+RUN echo "appuser:x:1000:appuser" >> /etc/group
+RUN echo "appuser:x:1001:" >> /etc/group
+RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
+
+# copy app and virtual environment
+COPY --chown=appuser . /app
+COPY --from=builder-image --chown=appuser "$VENV" "$VENV"
+COPY --from=builder-image /usr/local/lib/ /usr/local/lib/
+COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
+
+ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
+
+# remove dev bins (need sh to run `startup.sh`)
+RUN rm /bin/cat /bin/find /bin/ls /bin/rm /bin/vi /bin/which
+
+# CMD ["/bin/sh"]
+
+FROM distroless AS runner-image
+
+ARG PYTHON_VERSION=3.10
+ARG USERNAME=appuser
+ENV HOME=/home/appuser
+ENV VENV="${HOME}/.venv"
+
+ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
+
+# standardise on locale, don't generate .pyc, enable tracebacks on seg faults
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
+
+# workers per core (https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency)
+ENV WEB_CONCURRENCY=1
+
+COPY --from=busybox:uclibc /bin/chown /bin/chown
+COPY --from=busybox:uclibc /bin/rm /bin/rm
+
+RUN chown -R appuser:appuser /app \
+    && chown -R appuser:appuser ${VENV} \
+    && rm /bin/chown /bin/rm
 
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
-RUN python3.10 -m venv /opt/venv
-
-# Install pip requirements
-RUN . /opt/venv/bin/activate && poetry install
-
-# TODO: dive + docker-slim
-FROM ubuntu:22.04 AS runner-image
-
-ARG USERNAME=appuser
-ENV HOME="/home/${USERNAME}"
-ENV VIRTUAL_ENV="/opt/venv"
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV PATH="${VIRTUAL_ENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:/ms-playwright:$PATH"
-
-RUN useradd --create-home $USERNAME \
-    && mkdir -p /home/${USERNAME}/app \
-    && mkdir -p $PLAYWRIGHT_BROWSERS_PATH
-
-COPY --chown=${USERNAME}:${USERNAME} . $HOME/app
-COPY --from=builder-image --chown=${USERNAME}:${USERNAME} /opt/venv /opt/venv
-COPY --from=builder-image --chown=${USERNAME}:${USERNAME} $HOME/.asdf $HOME/.asdf
-
-# avoid stuck build due to user prompt
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get -qq update \
-    && apt-get -qq install \
-    --no-install-recommends -y \
-    ca-certificates \
-    curl \
-    git \
-    iputils-ping \
-    && rm -rf /var/lib/apt/lists/*
-
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
-
-# activate virtual environment
-RUN python -m venv $VIRTUAL_ENV
-
-# Install playwright
-RUN playwright install --with-deps firefox \
-    && rm -rf /var/lib/apt/lists/*
 
 USER appuser
 
-WORKDIR $HOME/app
-
 # ENTRYPOINT ["python", "main.py"]
 # CMD ["gunicorn", "-c", "config/gunicorn.conf.py", "main:app"]
-# CMD ["/bin/bash", "startup.sh"]
-CMD ["/bin/bash"]
+# CMD ["/bin/sh", "startup.sh"]
+CMD ["/bin/sh"]
