@@ -5,13 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Node: Current File",
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "program": "${file}",
+            "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/js_tests/${fileBasenameNoExtension}.js"
+            // "runtimeExecutable": "${env:HOME}/.n/bin/node"
         }
     ]
 }
