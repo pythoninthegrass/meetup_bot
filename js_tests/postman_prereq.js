@@ -1,4 +1,4 @@
-// Postman Pre-Requst Script
+// Postman Pre-Request Script
 
 // source .env file one directory up
 const env = require('dotenv').config({path: `${__dirname}/../.env`});
