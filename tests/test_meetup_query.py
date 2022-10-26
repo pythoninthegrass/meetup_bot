@@ -50,16 +50,26 @@ def test_format_response():
     assert df.empty == False
 
 
-# def test_():
-#     """Test _()"""
+# TODO: not in use currently -- can skip for meow
+# def test_sort_csv():
+#     """Test sort_csv()"""
 #     var = func()
 #     assert func(var) == bool
 
 
-# def test_():
-#     """Test _()"""
-#     var = func()
-#     assert func(var) == bool
+def test_sort_json():
+    """Test sort_json()"""
+    res = send_request(access_token, query, vars)
+    exclusions = ['36\u00b0N', 'Tulsa']
+    df = format_response(res, exclusions=exclusions)
+    df.to_json("/tmp/test.json", orient='records', force_ascii=False)
+    fn = "/tmp/test.json"
+    sort_json(fn)
+
+    assert Path(fn).exists() == True
+    assert Path(fn).stat().st_size >= 1000
+    # TODO: verify first date is sooner than last date
+    # "date":"2022-10-13T12:00-05:00" vs. "date":"2022-10-15T14:00-05:00"
 
 
 # def test_():
