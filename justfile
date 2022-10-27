@@ -39,6 +39,13 @@ build-clean:
 
 # pull latest heroku image
 pull:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    if [[ $(heroku auth:whoami 2>&1 | awk '/Error/ {$1=""; print $0}' | xargs) = "Error: not logged in" ]]; then
+        echo 'Not logged into Heroku. Logging in now...'
+        heroku auth:login
+        heroku container:login
+    fi
     docker pull registry.heroku.com/${HEROKU_APP}/web
 
 # push image to heroku
