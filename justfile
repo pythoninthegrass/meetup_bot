@@ -31,7 +31,7 @@ build:
 
 # intel build
 buildx:
-    docker buildx build -f Dockerfile.web --progress=plain -t $TAG --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
+    docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
 
 # arm build w/docker-compose defaults
 build-clean:
