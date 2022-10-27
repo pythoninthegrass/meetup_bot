@@ -37,6 +37,10 @@ buildx:
 build-clean:
     docker-compose build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu
 
+# push local image to heroku
+push:
+    docker push {{TAG}}
+
 # pull latest heroku image
 pull:
     #!/usr/bin/env bash
@@ -46,10 +50,10 @@ pull:
         heroku auth:login
         heroku container:login
     fi
-    docker pull registry.heroku.com/${HEROKU_APP}/web
+    docker pull {{TAG}}
 
-# push image to heroku
-push:
+# kick off a build on heroku from ci
+git-push:
     git push heroku main
 
 # start docker-compose container
