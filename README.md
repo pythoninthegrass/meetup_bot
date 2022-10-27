@@ -154,7 +154,24 @@ Use Meetup Pro API to send Slack messages before events occur.
 
         # docker buildx (arm)
         export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
+
+        # pull buildx image (on remote intel box)
+        docker pull moby/buildkit:buildx-stable-1
+
+        # create builder
+        docker buildx create \
+        --name amd64_builder \
+        --node linux_amd64_builder \
+        --platform linux/amd64 \
+        ssh://USERNAME@IP_ADDRESS_OF_BUILDER
+
+        # select new builder
+        docker buildx use amd64_builder
+
+        # build intel image
         docker buildx build -f Dockerfile.web --progress=plain -t $TAG --load .
+
+        # push to heroku registry
         docker push registry.heroku.com/meetup-bot-bot/web
 
         # release image to app
