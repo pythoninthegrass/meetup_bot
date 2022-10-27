@@ -58,6 +58,7 @@ groups_array = groups['urlname']._values
 # assign to `url_vars` as a list
 url_vars = [group for group in groups_array]
 
+# TODO: use `@skip` directive to skip excluded groups (if possible)
 # search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
 query {
@@ -171,6 +172,9 @@ def format_response(response, location='Oklahoma City', exclusions=''):
     Format response for Slack
     """
 
+    # create dataframe columns
+    df = pd.DataFrame(columns=['name', 'date', 'title', 'description', 'city', 'eventUrl'])
+
     # convert response to json
     response_json = json.loads(response)
 
@@ -181,22 +185,25 @@ def format_response(response, location='Oklahoma City', exclusions=''):
         if data[0]['node']['group']['city'] != location:
             print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping event outside of {location}")
     except KeyError:
-        data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
-        # TODO: handle no upcoming events to fallback on initial response
-        if response_json['data']['groupByUrlname']['city'] != location:
-            raise ValueError(f'No data for {location} found')
-
-    # create dataframe with columns name, data, title, description, event url
-    df = pd.DataFrame(data, columns=['name', 'date', 'title', 'description', 'city', 'eventUrl'])
+        if response_json['data']['groupByUrlname'] is None:
+            data = ""
+            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping group due to empty response")
+            pass
+        else:
+            data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
+            # TODO: handle no upcoming events to fallback on initial response
+            if response_json['data']['groupByUrlname']['city'] != location:
+                raise ValueError(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
 
     # append data to rows
-    for i in range(len(data)):
-        df.loc[i, 'name'] = data[i]['node']['group']['name']
-        df.loc[i, 'date'] = data[i]['node']['dateTime']
-        df.loc[i, 'title'] = data[i]['node']['title']
-        df.loc[i, 'description'] = data[i]['node']['description']
-        df.loc[i, 'city'] = data[i]['node']['group']['city']
-        df.loc[i, 'eventUrl'] = data[i]['node']['eventUrl']
+    if data is not None:
+        for i in range(len(data)):
+            df.loc[i, 'name'] = data[i]['node']['group']['name']
+            df.loc[i, 'date'] = data[i]['node']['dateTime']
+            df.loc[i, 'title'] = data[i]['node']['title']
+            df.loc[i, 'description'] = data[i]['node']['description']
+            df.loc[i, 'city'] = data[i]['node']['group']['city']
+            df.loc[i, 'eventUrl'] = data[i]['node']['eventUrl']
 
     # filter rows by city
     df = df[df['city'] == location]
@@ -328,6 +335,7 @@ def main():
     access_token = tokens['access_token']
     refresh_token = tokens['refresh_token']
 
+    # TODO: debug exclusions not catching group names
     # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
     # exclude keywords in event name and title (will miss events with keyword in description)
     exclusions = ['36\u00b0N', 'Tulsa']
@@ -346,7 +354,7 @@ def main():
         if len(format_response(response, exclusions=exclusions)) > 0:
             output.append(response)
         else:
-            print(f'[INFO] No upcoming events for {url} found')
+            print(f'{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found')
     # loop through output and append to file
     for i in range(len(output)):
         export_to_file(output[i], format)
