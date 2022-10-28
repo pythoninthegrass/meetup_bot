@@ -338,7 +338,7 @@ def main():
     # TODO: debug exclusions not catching group names
     # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
     # exclude keywords in event name and title (will miss events with keyword in description)
-    exclusions = ['36\u00b0N', 'Tulsa']
+    exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
     # TODO: reduce `format_response` calls to 1
     # first-party query
