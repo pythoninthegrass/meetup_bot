@@ -86,6 +86,9 @@ else:
     DB_HOST = os.getenv('DB_HOST')
     DB_PORT = int(os.getenv('DB_PORT', default=5432))
 
+# default exclusions
+exclusion_list = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
+
 
 """
 FastAPI app
@@ -364,9 +367,10 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     # if exclusions, add to list of exclusions
     if exclusions:
         exclusions = exclusions.split(",")
-        exclusions = exclusions + '36\u00b0N', 'Tulsa', 'Nerdy Girls'
+        # extend list of exclusions
+        exclusions = exclusion_list.extend(exclusions)
     else:
-        exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
+        exclusions = exclusion_list
 
     access_token, refresh_token = generate_token()
 
