@@ -364,8 +364,9 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     # if exclusions, add to list of exclusions
     if exclusions:
         exclusions = exclusions.split(",")
+        exclusions = exclusions + '36\u00b0N', 'Tulsa', 'Nerdy Girls'
     else:
-        exclusions = []
+        exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
     access_token, refresh_token = generate_token()
 
