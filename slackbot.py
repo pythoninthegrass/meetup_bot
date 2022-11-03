@@ -2,7 +2,7 @@
 
 import arrow
 import json
-import os
+# import os
 import pandas as pd
 # import sys
 import time
@@ -24,7 +24,6 @@ pd.set_option('display.max_colwidth', None)
 
 # env
 home = Path.home()
-env = Path('.env')
 cwd = Path.cwd()
 csv_fn = Path('/tmp/output.csv')
 json_fn = Path('/tmp/output.json')
@@ -34,25 +33,12 @@ loc_time = arrow.now().to(TZ)
 time.tzset()
 
 # creds
-if env.exists():
-    USER_TOKEN = config('USER_TOKEN')
-    BOT_USER_TOKEN = config('BOT_USER_TOKEN')
-    SLACK_WEBHOOK = config('SLACK_WEBHOOK')
-    CHANNEL = config('CHANNEL')
-    TTL = config('TTL', default=3600, cast=int)
-    HOST = config('HOST', default='localhost')
-else:
-    USER_TOKEN = os.getenv('USER_TOKEN')
-    BOT_USER_TOKEN = os.getenv('BOT_USER_TOKEN')
-    SLACK_WEBHOOK = os.getenv('SLACK_WEBHOOK')
-    CHANNEL = os.getenv('CHANNEL')
-    TTL = os.getenv('TTL', default=3600)
-    HOST = os.getenv('HOST', default='localhost')
-
-
-# # override host env var if system is macos
-# if sys.platform == 'darwin':
-#     HOST = 'localhost'
+USER_TOKEN = config('USER_TOKEN')
+BOT_USER_TOKEN = config('BOT_USER_TOKEN')
+SLACK_WEBHOOK = config('SLACK_WEBHOOK')
+CHANNEL = config('CHANNEL')
+TTL = config('TTL', default=3600, cast=int)
+HOST = config('HOST', default='localhost')
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)

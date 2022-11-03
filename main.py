@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import arrow
-import os
+# import os
 import pandas as pd
 import sys
 import time
@@ -44,7 +44,6 @@ warning = "WARNING:"
 
 # env
 home = Path.home()
-env = Path('.env')
 cwd = Path.cwd()
 csv_fn = Path('/tmp/output.csv')
 json_fn = Path('/tmp/output.json')
@@ -61,31 +60,19 @@ pd.set_option('display.max_colwidth', None)
 templates = Jinja2Templates(directory=Path("resources/templates"))
 
 # creds
-if env.exists():
-    TTL = config('TTL', default=3600, cast=int)
-    HOST = config('HOST')
-    PORT = config('PORT', default=3000, cast=int)
-    SECRET_KEY = config('SECRET_KEY')
-    ALGORITHM = config('ALGORITHM', default='HS256')
-    TOKEN_EXPIRE = config('TOKEN_EXPIRE', default=30, cast=int)
-    DB_NAME = config('DB_NAME')
-    DB_USER = config('DB_USER')
-    DB_PASS = config('DB_PASS')
-    DB_HOST = config('DB_HOST')
-    DB_PORT = config('DB_PORT', default=5432, cast=int)
-else:
-    TTL = int(os.getenv('TTL', default=3600))
-    HOST = os.getenv('HOST')
-    PORT = int(os.getenv('PORT', default=3000))
-    SECRET_KEY = os.getenv('SECRET_KEY')
-    ALGORITHM = os.getenv('ALGORITHM', default='HS256')
-    TOKEN_EXPIRE = int(os.getenv('TOKEN_EXPIRE', default=30))
-    DB_NAME = os.getenv('DB_NAME')
-    DB_USER = os.getenv('DB_USER')
-    DB_PASS = os.getenv('DB_PASS')
-    DB_HOST = os.getenv('DB_HOST')
-    DB_PORT = int(os.getenv('DB_PORT', default=5432))
+TTL = config('TTL', default=3600, cast=int)
+HOST = config('HOST')
+PORT = config('PORT', default=3000, cast=int)
+SECRET_KEY = config('SECRET_KEY')
+ALGORITHM = config('ALGORITHM', default='HS256')
+TOKEN_EXPIRE = config('TOKEN_EXPIRE', default=30, cast=int)
+DB_NAME = config('DB_NAME')
+DB_USER = config('DB_USER')
+DB_PASS = config('DB_PASS')
+DB_HOST = config('DB_HOST')
+DB_PORT = config('DB_PORT', default=5432, cast=int)
 
+# TODO: debug exclusions not carrying over from meetup_query.py / being respected here
 # default exclusions
 exclusion_list = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
