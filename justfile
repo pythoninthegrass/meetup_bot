@@ -1,7 +1,7 @@
 # See https://just.systems/man/en
 
 # load .env (e.g., ${HEROKU_APP})
-set dotenv-load := true
+set dotenv-load
 
 # set env var
 export APP   := "meetupbot"
@@ -24,9 +24,9 @@ build:
     set -euxo pipefail
     # accepts justfile env/vars
     if [[ {{arch}} == "arm64" ]]; then
-        docker build -f Dockerfile.web -t $TAG --build-arg CHIPSET_ARCH=aarch64-linux-gnu .
+        docker build -f Dockerfile.web -t {{TAG}} --build-arg CHIPSET_ARCH=aarch64-linux-gnu .
     else
-        docker buildx build -f Dockerfile.web --progress=plain -t $TAG --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
+        docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
     fi
 
 # intel build
@@ -59,6 +59,10 @@ git-push:
 # start docker-compose container
 start:
     docker-compose up -d
+
+# run container
+run:
+    docker run --rm -it --env-file .env -p 3000:3000 {{TAG}} {{SHELL}}
 
 # ssh into container
 exec:
