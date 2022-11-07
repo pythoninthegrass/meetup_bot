@@ -3,7 +3,7 @@
 # https://gitlab.com/n.ragav/python-images/-/tree/master/distroless
 
 # full semver just for python base image
-ARG PYTHON_VERSION=3.10.7
+ARG PYTHON_VERSION=3.10.8
 
 # several optimisations in python-slim images already, benefit from these
 FROM python:${PYTHON_VERSION}-slim-bullseye AS builder-image
@@ -62,8 +62,8 @@ WORKDIR /home/appuser
 USER appuser
 
 # poetry for use elsewhere as builder image
-RUN pip install --user --upgrade pip \
-    && pip install --user --no-cache-dir --upgrade virtualenv poetry
+RUN python -m pip install --user --upgrade pip \
+    && python -m pip install --user --no-cache-dir --upgrade virtualenv poetry
 
 COPY --chown=appuser pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.in-project true \
@@ -140,7 +140,7 @@ ARG USERNAME=appuser
 ENV HOME=/home/appuser
 ENV VENV="${HOME}/.venv"
 
-ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
+ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
 
 # standardise on locale, don't generate .pyc, enable tracebacks on seg faults
 ENV LANG C.UTF-8
