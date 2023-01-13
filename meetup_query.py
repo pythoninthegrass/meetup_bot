@@ -193,7 +193,8 @@ def format_response(response, location='Oklahoma City', exclusions=''):
             data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
             # TODO: handle no upcoming events to fallback on initial response
             if response_json['data']['groupByUrlname']['city'] != location:
-                raise ValueError(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
+                print(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
+                pass
 
     # append data to rows
     if data is not None:

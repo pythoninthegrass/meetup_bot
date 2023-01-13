@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 
-export VIRTUAL_ENV="/opt/venv"
+if [ "$(uname -s)" = "Darwin" ]; then
+	export VIRTUAL_ENV=".venv"
+else
+	export VIRTUAL_ENV="/opt/venv"
+fi
 export PATH="${VIRTUAL_ENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
 
 # source .venv/bin/activate
