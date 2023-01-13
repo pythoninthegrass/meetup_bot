@@ -24,8 +24,13 @@ error = "ERROR:"
 warning = "WARNING:"
 
 # creds
-priv_key = Path('jwt_priv.pem')
-pub_key = Path('jwt_pub.key')
+if Path('jwt_priv.pem').exists():
+    priv_key = Path('jwt_priv.pem')
+    pub_key = Path('jwt_pub.key')
+else:
+    priv_key = os.getenv('PRIV_KEY_B64')
+    pub_key = os.getenv('PUB_KEY_B64')
+
 SELF_ID = config('SELF_ID')
 CLIENT_ID = config('CLIENT_ID')
 CLIENT_SECRET = config('CLIENT_SECRET')
