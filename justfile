@@ -39,7 +39,7 @@ build-clean:
 
 # push local image to heroku
 push:
-    docker push {{TAG}}
+    git push heroku main
 
 # pull latest heroku image
 pull:
