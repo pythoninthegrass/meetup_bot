@@ -94,12 +94,12 @@ ENV HOME=/home/appuser
 ENV VENV="${HOME}/.venv"
 
 # import useful bins from busybox image
-# uname, curl, cut, date
 COPY --from=busybox:latest \
     /bin/cat \
     /bin/cut \
     /bin/date  \
     /bin/find \
+    /bin/grep \
     /bin/ls \
     /bin/rm \
     /bin/sed \
@@ -129,7 +129,7 @@ COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
 
 # remove dev bins (need sh to run `startup.sh`)
-RUN rm /bin/cat /bin/find /bin/ls /bin/rm /bin/vi /bin/which
+RUN rm /bin/cat /bin/find /bin/grep /bin/ls /bin/rm /bin/vi /bin/which
 
 # CMD ["/bin/sh"]
 
