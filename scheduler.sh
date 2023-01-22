@@ -2,6 +2,8 @@
 
 # TODO: generate access and refresh tokens every 55 minutes
 
+# shellcheck disable=SC1091,SC3037,SC3045,SC2046
+
 # env
 if test -f ".env"; then
 	set -a; . .env >/dev/null 2>&1; set +a
@@ -18,7 +20,7 @@ if [ $(uname) = "Darwin" ]; then
   URL="${HOST}:${PORT:-3000}"
 fi
 
-# index
+# smoke test (i.e., index)
 # curl -X 'GET' \
 #   "${URL}/" \
 #   -H 'accept: text/html'
@@ -33,20 +35,25 @@ raw=$(curl --no-progress-meter --location --request POST "${URL}/token" \
 access_token=$(echo "${raw}" | cut -d '"' -f 4)
 
 # post_slack
-curl --no-progress-meter --location --request POST \
-	"${URL}/api/slack" \
-	--header "accept: application/json" \
-	--header "Authorization: Bearer ${access_token}" \
-	--data-urlencode "location=Oklahoma City" \
-	--data-urlencode "exclusions=Tulsa"
+send_request() {
+	curl --no-progress-meter --location --request POST \
+		"${URL}/api/slack" \
+		--header "accept: application/json" \
+		--header "Authorization: Bearer ${access_token}" \
+		--data-urlencode "location=Oklahoma City" \
+		--data-urlencode "exclusions=36\u00b0N,Tulsa,Nerdy Girls"
+}
 
+# TODO: remove 2300 UTC (i.e., 5pm CST) to only send once per day
 # healthchecks ID: 1500 and 2300 UTC
 if [ $(date -u +%H%M) -eq "1500" ]; then
   HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+  send_request
 elif [ $(date -u +%H%M) -eq "2300" ]; then
   HEALTHCHECKS_ID="9f0093c0-6519-4989-b7e8-a12b250c58dd"
+  send_request
 else
-  echo -e "\nTime is $(date -u +%H%M). Not running healthchecks.io ping"
+  echo -e "\nTime is $(date -u +%H%M). Not time to run."
   exit 0
 fi
 
