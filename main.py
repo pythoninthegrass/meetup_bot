@@ -45,8 +45,8 @@ warning = "WARNING:"
 # env
 home = Path.home()
 cwd = Path.cwd()
-csv_fn = Path('/tmp/output.csv')
-json_fn = Path('/tmp/output.json')
+csv_fn = config('CSV_FN', default='raw/output.csv')
+json_fn = config('JSON_FN', default='raw/output.json')
 TZ = config('TZ', default='America/Chicago')
 loc_time = arrow.now().to(TZ)
 time.tzset()
@@ -71,10 +71,6 @@ DB_USER = config('DB_USER')
 DB_PASS = config('DB_PASS')
 DB_HOST = config('DB_HOST')
 DB_PORT = config('DB_PORT', default=5432, cast=int)
-
-# TODO: debug exclusions not carrying over from meetup_query.py / being respected here
-# default exclusions
-exclusion_list = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
 
 """
@@ -350,6 +346,9 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
 
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    # default exclusions
+    exclusion_list = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
     # if exclusions, add to list of exclusions
     if exclusions:

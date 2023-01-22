@@ -10,6 +10,7 @@ import requests
 import sys
 from arrow import ParserError
 from colorama import Fore
+from decouple import config
 from sign_jwt import main as gen_token
 # from icecream import ic
 from pathlib import Path
@@ -36,11 +37,10 @@ age = int(sec * 1)      # n minutes -> hours
 
 # env
 home = Path.home()
-env = Path('.env')
 cwd = Path.cwd()
 format = 'json'
-csv_fn = Path('/tmp/output.csv')
-json_fn = Path('/tmp/output.json')
+csv_fn = config('CSV_FN', default='raw/output.csv')
+json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
 
 # read groups from file via pandas
@@ -274,12 +274,13 @@ def sort_json(filename):
     except ParserError:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}ParserError: date column is already in correct format")
         pass
-    df['date'] = pd.to_datetime(df['date'])
+
+    # control for timestamp edge case `1-07-21 18:00:00` || `1-01-25 10:00:00` raising OutOfBoundsError
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
 
     # sort by date
     df = df.sort_values(by=['date'])
 
-    # TODO: control for timestamp edge case `1-07-21 18:00:00` raising OutOfBoundsError
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
@@ -339,8 +340,6 @@ def main():
     access_token = tokens['access_token']
     refresh_token = tokens['refresh_token']
 
-    # TODO: debug exclusions not catching group names
-    # TODO: control for descriptions and incorrect city locations (cf. 'Tulsa Techlahoma Night')
     # exclude keywords in event name and title (will miss events with keyword in description)
     exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
 
