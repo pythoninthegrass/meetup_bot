@@ -3,7 +3,7 @@
 # https://gitlab.com/n.ragav/python-images/-/tree/master/distroless
 
 # full semver just for python base image
-ARG PYTHON_VERSION=3.10.7
+ARG PYTHON_VERSION=3.10.9
 
 # several optimisations in python-slim images already, benefit from these
 FROM python:${PYTHON_VERSION}-slim-bullseye AS builder-image
@@ -28,14 +28,14 @@ RUN apt -qq update \
     libncurses-dev \
     libpq-dev \
     libreadline-dev \
-    libsqlite3-dev \
+    # libsqlite3-dev \
     libssl-dev \
     libtool \
     libxslt-dev \
     libyaml-dev \
     locales \
     lzma \
-    sqlite3 \
+    # sqlite3 \
     unixodbc-dev \
     zlib1g \
     && rm -rf /var/lib/apt/lists/*
