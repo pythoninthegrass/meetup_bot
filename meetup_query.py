@@ -58,8 +58,7 @@ groups_array = groups['urlname']._values
 # assign to `url_vars` as a list
 url_vars = [group for group in groups_array]
 
-# TODO: use `@skip` directive to skip excluded groups (if possible)
-# search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
+# Techlahoma: search all affiliate groups for upcoming events (node doesn't expose name of affiliate group)
 query = """
 query {
     self {
@@ -283,6 +282,10 @@ def sort_json(filename):
     # TODO: control for timestamp edge case `1-07-21 18:00:00` raising OutOfBoundsError
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
+
+    # drop events by date when they are older than the current time
+    df = df[df['date'] >= arrow.now().format('ddd M/D h:mm a')]
+    df = df.reset_index(drop=True)
 
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
