@@ -40,18 +40,20 @@ CHANNEL = config('CHANNEL', default='testingchannel')
 TTL = config('TTL', default=3600, cast=int)
 HOST = config('HOST', default='localhost')
 
+# strip double quotes from env strings (local image)
+CHANNEL = CHANNEL.strip('"')
+
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
 
-# read manually entered '/tmp/channels.csv'
+# read channel
 chan = pd.read_csv('channels.csv', header=0)
 
-# TODO: debug out of range error in linux
 # locate id from `CHANNEL` name
 try:
     channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
 except IndexError as e:
-    # temporarily hard-code #testingchannel id
+    # fallback to #testingchannel id
     channel_id = 'C02SS2DKSQH'
 
 
