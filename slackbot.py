@@ -36,7 +36,7 @@ time.tzset()
 USER_TOKEN = config('USER_TOKEN')
 BOT_USER_TOKEN = config('BOT_USER_TOKEN')
 SLACK_WEBHOOK = config('SLACK_WEBHOOK')
-CHANNEL = config('CHANNEL')
+CHANNEL = config('CHANNEL', default='testingchannel')
 TTL = config('TTL', default=3600, cast=int)
 HOST = config('HOST', default='localhost')
 
