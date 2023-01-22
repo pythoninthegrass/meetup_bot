@@ -1,5 +1,6 @@
 # ETC
 *.sqlite
+*.db
 redis*
 !redis.conf.example
 *.pem
@@ -10,7 +11,6 @@ raw/
 !channels.csv
 gen_token.py
 gitleaks_report*.json
-db.*
 .bash_history
 tempCodeRunnerFile*
 
