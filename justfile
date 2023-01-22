@@ -62,11 +62,11 @@ start:
 
 # run container
 run:
-    docker run --rm -it --env-file .env -p 3000:3000 {{TAG}} {{SHELL}}
+    docker run --rm -it --env-file .env -p 3000:3000 --name {{APP}} {{TAG}} {{SHELL}}
 
 # ssh into container
 exec:
-    docker-compose exec {{APP}} {{SHELL}}
+    docker exec -it {{APP}} {{SHELL}}
 
 # stop docker-compose container
 stop:
