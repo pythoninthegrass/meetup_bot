@@ -281,6 +281,7 @@ def sort_json(filename):
     # sort by date
     df = df.sort_values(by=['date'])
 
+    # TODO: `TypeError: Cannot parse single argument of type <class 'pandas.core.indexes.datetimes.DatetimeIndex'>.`
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
