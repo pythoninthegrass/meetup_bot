@@ -6,17 +6,12 @@ import os
 import pandas as pd
 import re
 import requests
-# import requests_cache
 import sys
 from arrow import ParserError
 from colorama import Fore
 from decouple import config
 from sign_jwt import main as gen_token
-# from icecream import ic
 from pathlib import Path
-
-# verbose icecream
-# ic.configureOutput(includeContext=True)
 
 # logging prefixes
 info = "INFO:"
