@@ -2,7 +2,7 @@
 
 # meetup_bot
 **Table of Contents**
-* [meetup_bot](#meetup_bot)
+* [meetup\_bot](#meetup_bot)
   * [Summary](#summary)
   * [Usage](#usage)
   * [TODO](#todo)
@@ -152,9 +152,6 @@ Use Meetup Pro API to send Slack messages before events occur.
         # heroku wrapper build (w/cache)
         heroku container:push web
 
-        # docker buildx (arm)
-        export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
-
         # pull buildx image (on remote intel box)
         docker pull moby/buildkit:buildx-stable-1
 
@@ -167,6 +164,9 @@ Use Meetup Pro API to send Slack messages before events occur.
 
         # select new builder
         docker buildx use amd64_builder
+
+        # docker buildx (arm)
+        export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
 
         # build intel image
         docker buildx build -f Dockerfile.web --progress=plain -t $TAG --load .
@@ -227,10 +227,22 @@ Use Meetup Pro API to send Slack messages before events occur.
     * Slack bot: POST formatted messages to Slack channels `#okc-metro` && `#events`
       * `#testingchannel` is the canary and works swimmingly
 * Schedule event posts in channels
-  * Methods
-    * ~~[scheduler](https://devcenter.heroku.com/articles/scheduler): built-in heroku addon~~
   * Time Frame 
-    * Currently scheduled for 10am/6pm cst (1500/2300 utc)
+    * Currently scheduled for 9am/5pm CST (1500/2300 UTC)
+    * Remove 2300 UTC from `scheduler.sh` to run only once per day
+* checkbashisms
+  * Refactor bashisms from `scheduler.sh`
+  ```bash
+  λ checkbashisms scheduler.sh
+  possible bashism in scheduler.sh line 11 (read with option other than -r):
+  test -n "${DB_USER}" || read -p "DB_USER: " DB_USER
+  possible bashism in scheduler.sh line 12 (read with option other than -r):
+  test -n "${DB_PASS}" || read -sp "DB_PASS: " DB_PASS
+  possible bashism in scheduler.sh line 56 (echo -e):
+    echo -e "\nTime is $(date -u +%H%M). Not time to run."
+  ```
+* Swap `docker buildx` with `kaniko` for building images
+* Add env vars to repo secrets after open-sourcing
 * Documentation
 
 ## Stretch Goals
@@ -261,3 +273,7 @@ Use Meetup Pro API to send Slack messages before events occur.
 [FastAPI Auth + Login Page](https://dev.to/athulcajay/fastapi-auth-login-page-48po)
 
 [checkbashisms](https://command-not-found.com/checkbashisms)
+
+[Building Docker images in Kubernetes | Snyk](https://snyk.io/blog/building-docker-images-kubernetes/)
+
+[Kaniko, How to Build Container Image with SSH | by Yossi Cohn | HiredScore Engineering | Medium](https://medium.com/hiredscore-engineering/kaniko-builds-with-private-repository-634d5e7fa4a5)
