@@ -25,7 +25,7 @@ python-multipart = "^0.0.5"
 requests = "^2.27.1"
 requests-cache = "^0.9.3"
 slack-sdk = "^3.19.1"
-uvicorn = "^0.18.2"
+uvicorn = "^0.20.0"
 
 [tool.poetry.group.dev.dependencies]
 APScheduler = "^3.9.1"
