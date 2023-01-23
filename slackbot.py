@@ -25,8 +25,8 @@ pd.set_option('display.max_colwidth', None)
 # env
 home = Path.home()
 cwd = Path.cwd()
-csv_fn = Path('/tmp/output.csv')
-json_fn = Path('/tmp/output.json')
+csv_fn = config('CSV_FN', default='raw/output.csv')
+json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
 TZ = config('TZ', default='America/Chicago')
 loc_time = arrow.now().to(TZ)
@@ -43,18 +43,32 @@ HOST = config('HOST', default='localhost')
 # strip double quotes from env strings (local image)
 CHANNEL = CHANNEL.strip('"')
 
-# python sdk
-client = WebClient(token=BOT_USER_TOKEN)
-
 # read channel
 chan = pd.read_csv('channels.csv', header=0)
 
-# locate id from `CHANNEL` name
-try:
-    channel_id = chan[chan['name'] == CHANNEL]['id'].values[0]
-except IndexError as e:
-    # fallback to #testingchannel id
-    channel_id = 'C02SS2DKSQH'
+# create dict of channels
+chan_dict = {}
+
+# loop through channels and find id
+for name, id in zip(chan['name'], chan['id']):
+    chan_dict[name] = id
+
+# channel name and id
+channel_name = CHANNEL
+channel_id = chan_dict[CHANNEL]
+
+# hard-coded second channel
+hard_chan = 'events'
+hard_id = chan_dict[hard_chan]
+
+# add hard-coded channel
+channels = {
+    channel_name: channel_id,
+    hard_chan: hard_id
+}
+
+# python sdk
+client = WebClient(token=BOT_USER_TOKEN)
 
 
 def fmt_json(filename):
@@ -76,7 +90,7 @@ def fmt_json(filename):
     return msg
 
 
-def send_message(message):
+def send_message(message, channel_id):
     """
     Send formatted Slack messages to a channel.
 
@@ -108,9 +122,9 @@ def main():
     # open json file and convert to list of strings
     msg = fmt_json(json_fn)
 
-    # TODO: fastapi_login setup slack post
     # send message as one concatenated string
-    send_message('\n'.join(msg))
+    for channel_name, channel_id in channels.items():
+        send_message('\n'.join(msg), channel_id)
 
     return ic(msg)
 

@@ -395,8 +395,13 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     get_events(location, exclusions)
+
+    # open json file and convert to list of strings
     msg = fmt_json(json_fn)
-    send_message('\n'.join(msg))
+
+    # send message as one concatenated string
+    for channel_name, channel_id in channels.items():
+        send_message('\n'.join(msg), channel_id)
 
     return ic(msg)
 
