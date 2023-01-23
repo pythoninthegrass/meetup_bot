@@ -304,7 +304,7 @@ def export_to_file(response, type='json', exclusions=''):
     Export to CSV or JSON
     """
 
-    if exclusions:
+    if exclusions != '':
         df = format_response(response, exclusions=exclusions)
     else:
         df = format_response(response)
