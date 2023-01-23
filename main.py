@@ -347,29 +347,26 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    access_token, refresh_token = generate_token()
+
     # default exclusions
-    exclusion_list = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
+    exclusion_list = ['36\u00b0N', 'Nerdy Girls']
 
     # if exclusions, add to list of exclusions
-    if exclusions:
+    if exclusions is not None:
         exclusions = exclusions.split(",")
-        # extend list of exclusions
-        exclusions = exclusion_list.extend(exclusions)
-    else:
-        exclusions = exclusion_list
-
-    access_token, refresh_token = generate_token()
+        exclusion_list = exclusion_list + exclusions
 
     response = send_request(access_token, query, vars)
 
-    export_to_file(response, format, exclusions=exclusions)
+    export_to_file(response, format, exclusions=exclusion_list)
 
     # third-party query
     output = []
     for url in url_vars:
         response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
         # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusions)) > 0:
+        if len(format_response(response, exclusions=exclusion_list)) > 0:
             output.append(response)
         else:
             print(f"{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found")
@@ -394,7 +391,7 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    get_events(location, exclusions)
+    get_events(location, exclusions=exclusions)
 
     # open json file and convert to list of strings
     msg = fmt_json(json_fn)

@@ -10,8 +10,12 @@ import sys
 from arrow import ParserError
 from colorama import Fore
 from decouple import config
+from icecream import ic
 from sign_jwt import main as gen_token
 from pathlib import Path
+
+# verbose icecream
+ic.configureOutput(includeContext=True)
 
 # logging prefixes
 info = "INFO:"
@@ -37,6 +41,7 @@ format = 'json'
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
+TZ = config('TZ', default='America/Chicago')
 
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
@@ -212,7 +217,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
 
     # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next 7 days
-    time_span = arrow.now().shift(days=7)
+    time_span = arrow.now(tz=TZ).shift(days=7)
     df = df[df['date'] <= time_span.isoformat()]
 
     return df
@@ -257,9 +262,9 @@ def sort_json(filename):
     # TODO: get precise date from event to determine year
     # choose current year if 7 days from now is before EOY
     if arrow.now().year == arrow.now().shift(days=7).year:
-        year = str(arrow.now().year)
+        year = str(arrow.now(TZ).year)
     else:
-        year = str(arrow.now().shift(days=7).year)
+        year = str(arrow.now(TZ).shift(days=7).year)
 
     # TODO: log decorator
     # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
@@ -273,16 +278,20 @@ def sort_json(filename):
     # control for timestamp edge case `1-07-21 18:00:00` || `1-01-25 10:00:00` raising OutOfBoundsError
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
 
+    # replace NaT with epoch time to avoid float TypeError
+    df['date'] = df['date'].apply(lambda x: x.replace(year=1970, month=1, day=1) if pd.isnull(x) else x)
+
     # sort by date
     df = df.sort_values(by=['date'])
 
+    # drop events by date when they are older than the current time
+    df = df[df['date'] >= arrow.now(TZ).format('YYYY-MM-DDTHH:mm:ss')]
+    df = df.reset_index(drop=True)
+
     # TODO: `TypeError: Cannot parse single argument of type <class 'pandas.core.indexes.datetimes.DatetimeIndex'>.`
+    # * Could be related to date = "Sun 1/22 1:00 pm" in json file vs. "2023-01-25T17:30-06:00"
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
-
-    # drop events by date when they are older than the current time
-    df = df[df['date'] >= arrow.now().format('ddd M/D h:mm a')]
-    df = df.reset_index(drop=True)
 
     # export to json (convert escaped unicode to utf-8 encoding first)
     data = json.loads(df.to_json(orient='records', force_ascii=False))
