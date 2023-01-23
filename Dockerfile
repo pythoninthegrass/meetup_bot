@@ -52,8 +52,8 @@ ENV USERNAME=appuser
 ENV USER_GROUP=appuser
 ENV HOME=/home/appuser
 
-RUN groupadd appuser
-RUN useradd -m appuser -g appuser
+RUN groupadd appuser \
+    && useradd -m appuser -g appuser
 
 # setup user environment
 ENV PATH="$HOME/.local/bin:$PATH"
@@ -117,9 +117,9 @@ ENV USERNAME=appuser
 ENV USER_GROUP=appuser
 ENV HOME=/home/appuser
 
-RUN echo "appuser:x:1000:appuser" >> /etc/group
-RUN echo "appuser:x:1001:" >> /etc/group
-RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
+RUN echo "appuser:x:1000:appuser" >> /etc/group \
+    && echo "appuser:x:1001:" >> /etc/group \
+    && echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
 
 # copy app and virtual environment
 COPY --chown=appuser . /app
@@ -129,8 +129,9 @@ COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
 
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
 
+# TODO: remove all bins except those needed for app
 # remove dev bins (need sh to run `startup.sh`)
-RUN rm /bin/cat /bin/find /bin/grep /bin/ls /bin/rm /bin/vi /bin/which
+# RUN rm /bin/cat /bin/find /bin/grep /bin/ls /bin/rm /bin/vi /bin/which
 
 # CMD ["/bin/sh"]
 

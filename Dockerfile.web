@@ -52,8 +52,8 @@ ENV USERNAME=appuser
 ENV USER_GROUP=appuser
 ENV HOME=/home/appuser
 
-RUN groupadd appuser
-RUN useradd -m appuser -g appuser
+RUN groupadd appuser \
+    && useradd -m appuser -g appuser
 
 # setup user environment
 ENV PATH="$HOME/.local/bin:$PATH"
@@ -116,9 +116,9 @@ ENV USERNAME=appuser
 ENV USER_GROUP=appuser
 ENV HOME=/home/appuser
 
-RUN echo "appuser:x:1000:appuser" >> /etc/group
-RUN echo "appuser:x:1001:" >> /etc/group
-RUN echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
+RUN echo "appuser:x:1000:appuser" >> /etc/group \
+    && echo "appuser:x:1001:" >> /etc/group \
+    && echo "appuser:x:1000:1001::/home/appuser:" >> /etc/passwd
 
 # copy app and virtual environment
 COPY --chown=appuser . /app
