@@ -58,14 +58,19 @@ channel_name = CHANNEL
 channel_id = chan_dict[CHANNEL]
 
 # hard-coded second channel
-hard_chan = 'events'
-hard_id = chan_dict[hard_chan]
+hard_chan = ''
 
 # add hard-coded channel
-channels = {
-    channel_name: channel_id,
-    hard_chan: hard_id
-}
+if hard_chan != '':
+    hard_id = chan_dict[hard_chan]
+    channels = {
+        channel_name: channel_id,
+        hard_chan: hard_id
+    }
+else:
+    channels = {
+        channel_name: channel_id
+    }
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
