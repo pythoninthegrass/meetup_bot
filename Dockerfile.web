@@ -95,6 +95,7 @@ ENV VENV="${HOME}/.venv"
 # import useful bins from busybox image
 COPY --from=busybox:latest \
     /bin/cat \
+    /bin/chown \
     /bin/cut \
     /bin/date  \
     /bin/find \
@@ -150,9 +151,6 @@ ENV PYTHONFAULTHANDLER 1
 
 # workers per core (https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency)
 ENV WEB_CONCURRENCY=1
-
-COPY --from=busybox:uclibc /bin/chown /bin/chown
-COPY --from=busybox:uclibc /bin/rm /bin/rm
 
 RUN chown -R appuser:appuser /app \
     && chown -R appuser:appuser ${VENV} \
