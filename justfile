@@ -35,7 +35,7 @@ buildx:
 
 # arm build w/docker-compose defaults
 build-clean:
-    docker-compose build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu
+    docker-compose build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu --parallel
 
 # push local image to heroku
 push:
