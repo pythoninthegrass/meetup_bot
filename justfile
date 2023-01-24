@@ -29,15 +29,16 @@ build:
         docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
     fi
 
-# intel build
+# intel build over ssh, then push to heroku
 buildx:
     docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
+    heroku container:release web --app {{HEROKU_APP}}
 
-# arm build w/docker-compose defaults
+# arm build w/docker-compose defaults (no push due to arm64)
 build-clean:
     docker-compose build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu --parallel
 
-# push local image to heroku
+# kick off a build on heroku from ci
 push:
     git push heroku main
 
@@ -51,10 +52,6 @@ pull:
         heroku container:login
     fi
     docker pull {{TAG}}
-
-# kick off a build on heroku from ci
-git-push:
-    git push heroku main
 
 # start docker-compose container
 start:
