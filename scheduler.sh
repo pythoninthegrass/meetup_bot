@@ -44,22 +44,14 @@ send_request() {
 		--data-urlencode "exclusions=36\u00b0N,Tulsa,Nerdy Girls"
 }
 
-# TODO: remove 2300 UTC (i.e., 5pm CST) to only send once per day
-# healthchecks ID: 1500 and 2300 UTC
-# if [ $(date -u +%H%M) -eq "1500" ]; then
-#   HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
-#   send_request
-# elif [ $(date -u +%H%M) -eq "2300" ]; then
-#   HEALTHCHECKS_ID="9f0093c0-6519-4989-b7e8-a12b250c58dd"
-#   send_request
-# else
-#   echo -e "\nTime is $(date -u +%H%M). Not time to run."
-#   exit 0
-# fi
-
-# TODO: remove after QA
-send_request
-HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+# healthchecks ID: 1500  UTC
+if [ $(date -u +%H%M) -eq "1500" ]; then
+  HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+  send_request
+else
+  echo -e "\nTime is $(date -u +%H%M). Not time to run."
+  exit 0
+fi
 
 # ping healthchecks
 curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
