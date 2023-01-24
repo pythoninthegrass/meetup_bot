@@ -32,7 +32,7 @@ build:
 # intel build over ssh, then push to heroku
 buildx:
     docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
-    heroku container:release web --app {{HEROKU_APP}}
+    heroku container:release web --app ${HEROKU_APP}
 
 # arm build w/docker-compose defaults (no push due to arm64)
 build-clean:
