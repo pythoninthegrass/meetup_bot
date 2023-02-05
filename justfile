@@ -54,7 +54,7 @@ build-clean: checkbash
 
 # kick off a build on heroku from ci
 push:
-    git push heroku main
+    git push heroku main -f
 
 # pull latest heroku image
 pull:
