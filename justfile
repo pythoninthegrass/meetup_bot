@@ -4,9 +4,10 @@
 set dotenv-load
 
 # set env var
-export APP   := "meetupbot"
-export SHELL := "/bin/sh"
-export TAG   := "registry.heroku.com/${HEROKU_APP}/web:latest"
+export APP      := "meetupbot"
+export SHELL    := "/bin/sh"
+export TAG      := "registry.heroku.com/${HEROKU_APP}/web:latest"
+export SCRIPT   := "scheduler.sh"
 
 # x86_64/arm64
 arch := `uname -m`
@@ -18,11 +19,21 @@ host := `uname -n`
 default:
     just --list
 
+# lint sh script
+checkbash:
+    #!/usr/bin/env bash
+    checkbashisms {{SCRIPT}}
+    if [[ $? -eq 1 ]]; then
+        echo "bashisms found. Exiting..."
+        exit 1
+    else
+        echo "No bashisms found"
+    fi
+
 # build locally or on intel box
-build:
+build: checkbash
     #!/usr/bin/env bash
     set -euxo pipefail
-    # accepts justfile env/vars
     if [[ {{arch}} == "arm64" ]]; then
         docker build -f Dockerfile.web -t {{TAG}} --build-arg CHIPSET_ARCH=aarch64-linux-gnu .
     else
@@ -30,12 +41,15 @@ build:
     fi
 
 # intel build over ssh, then push to heroku
-buildx:
+buildx: checkbash
     docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
+
+# release to heroku
+release: buildx
     heroku container:release web --app ${HEROKU_APP}
 
 # arm build w/docker-compose defaults (no push due to arm64)
-build-clean:
+build-clean: checkbash
     docker-compose build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu --parallel
 
 # kick off a build on heroku from ci
