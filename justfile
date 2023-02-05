@@ -59,7 +59,11 @@ start:
 
 # run container
 run:
-    docker run --rm -it --env-file .env -p 3000:3000 --name {{APP}} {{TAG}} {{SHELL}}
+    docker run --rm -it \
+    --env-file .env \
+    -p 3000:3000 \
+    -v $(pwd):/app \
+    --name {{APP}} {{TAG}} {{SHELL}}
 
 # ssh into container
 exec:
