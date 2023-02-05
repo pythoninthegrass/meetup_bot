@@ -2,12 +2,8 @@
 
 # TODO: generate access and refresh tokens every 55 minutes
 
-# shellcheck disable=SC1091,SC3037,SC3045,SC2046
+# shellcheck disable=SC1091,SC2034,SC2153,SC3037,SC3045,SC2046
 
-# # env
-# if test -f ".env"; then
-# 	set -a; . .env >/dev/null 2>&1; set +a
-# fi
 test -n "${DB_USER}"
 test -n "${DB_PASS}"
 
@@ -48,18 +44,28 @@ send_request() {
 
 post_slack() {
 	day=$(date '+%a')
+	# TODO: remove Sun && Sat; reset time to 1400 UTC
 	case $day in
-	# TODO: remove Sun && Sat
 	Sun|Mon|Wed|Fri|Sat)
 		# healthchecks ID: 1400  UTC
-		if [ $(date -u +%H%M) -eq "1400" ]; then
-			echo -e "\nToday is $day. Running healthchecks."
+		if [ $(date -u +%H%M) -eq "1430" ]; then
+			printf "%s\n" "Today is $day. Running healthchecks."
+			HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+			send_request
+		fi
+		;;
+	Tue|Thu)
+		# reassign env var to alt channel for Tue/Thur
+		CHANNEL=${CHANNEL2}
+		# healthchecks ID: 1400 UTC
+		if [ $(date -u +%H%M) -eq "1430" ]; then
+			printf "%s\n" "Today is $day. Running healthchecks."
 			HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
 			send_request
 		fi
 		;;
 	*)
-		echo -e "\nToday is $day. Not time to run."
+		printf "%s\n" "Today is $day. Not time to run."
 		exit 0
 		;;
 	esac
