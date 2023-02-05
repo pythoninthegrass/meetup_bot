@@ -1,7 +1,5 @@
 #!/usr/bin/env sh
 
-# TODO: generate access and refresh tokens every 55 minutes
-
 # shellcheck disable=SC1091,SC2034,SC2153,SC3037,SC3045,SC2046
 
 test -n "${DB_USER}"
@@ -44,27 +42,22 @@ send_request() {
 
 post_slack() {
 	day=$(date '+%a')
-	# TODO: remove Sun && Sat; uncomment if/else blocks; reset time to 1400 UTC
 	case $day in
-	Sun|Mon|Wed|Fri|Sat)
+	Mon|Wed|Fri)
 		# 1400 UTC = 0800 CT
-		# if [ $(date -u +%H%M) -eq "1500" ]; then
-		# 	printf "%s\n" "Today is $day. Posting to $CHANNEL."
-		# 	send_request
-		# fi
-		printf "%s\n" "Today is $day. Posting to $CHANNEL."
-		send_request
+		if [ $(date -u +%H%M) -eq "1400" ]; then
+			printf "%s\n" "Today is $day. Posting to $CHANNEL."
+			send_request
+		fi
 		;;
 	Tue|Thu)
 		# reassign env var to alt channel for Tue/Thur
 		CHANNEL=${CHANNEL2}
-		# # 1400 UTC = 0800 CT
-		# if [ $(date -u +%H%M) -eq "1500" ]; then
-		# 	printf "%s\n" "Today is $day. Posting to $CHANNEL."
-		# 	send_request
-		# fi
-		printf "%s\n" "Today is $day. Posting to $CHANNEL."
-		send_request
+		# 1400 UTC = 0800 CT
+		if [ $(date -u +%H%M) -eq "1400" ]; then
+			printf "%s\n" "Today is $day. Posting to $CHANNEL."
+			send_request
+		fi
 		;;
 	*)
 		printf "%s\n" "Today is $day. Not time to run."
