@@ -130,9 +130,19 @@ COPY --from=builder-image /usr/local/bin/python /usr/local/bin/python
 
 ENV PATH="/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/share/doc:$PATH"
 
-# TODO: remove all bins except those needed for app
-# remove dev bins (need sh to run `startup.sh`)
-# RUN rm /bin/cat /bin/find /bin/grep /bin/ls /bin/mkdir /bin/rm /bin/tar /bin/vi /bin/which
+# remove dev bins (keep sh, uname, etc. for `startup.sh` and `scheduler.sh`)
+RUN rm \
+    /bin/cat \
+    /bin/cut \
+    /bin/date  \
+    /bin/find \
+    /bin/grep \
+    /bin/ls \
+    /bin/mkdir \
+    /bin/sed \
+    /bin/tar \
+    /bin/vi \
+    /bin/which
 
 # CMD ["/bin/sh"]
 
@@ -151,7 +161,8 @@ ENV LC_ALL C.UTF-8
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONFAULTHANDLER 1
 
-# workers per core (https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency)
+# workers per core
+# https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency
 ENV WEB_CONCURRENCY=1
 
 RUN chown -R appuser:appuser /app \
