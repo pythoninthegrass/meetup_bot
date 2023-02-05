@@ -5,7 +5,7 @@ set dotenv-load
 
 # set env var
 export APP      := "meetupbot"
-export SHELL    := "/bin/sh"
+export SHELL    := "/bin/bash"
 export TAG      := "registry.heroku.com/${HEROKU_APP}/web:latest"
 export SCRIPT   := "scheduler.sh"
 
@@ -78,6 +78,10 @@ run:
     -p 3000:3000 \
     -v $(pwd):/app \
     --name {{APP}} {{TAG}} {{SHELL}}
+
+# run container hosted on heroku
+run-heroku:
+    heroku run {{SHELL}} -a ${HEROKU_APP}
 
 # ssh into container
 exec:
