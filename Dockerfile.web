@@ -68,7 +68,8 @@ RUN groupadd ${USER_NAME} \
     && useradd -m ${USER_NAME} -g ${USER_GROUP}
 
 COPY --chown=${USER_NAME} . /app
-COPY --chown=${USER_NAME} --from=builder "$VENV" "$VENV"
+COPY --from=builder /usr/bin/curl /bin/curl
+COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 
 WORKDIR /app
 
