@@ -47,6 +47,7 @@ post_slack() {
 		# 1400 UTC = 0800 CT
 		if [ $(date -u +%H%M) -eq "1400" ]; then
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
+			gen_token
 			send_request
 		fi
 		;;
@@ -56,6 +57,7 @@ post_slack() {
 		# 1400 UTC = 0800 CT
 		if [ $(date -u +%H%M) -eq "1400" ]; then
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
+			gen_token
 			send_request
 		fi
 		;;
@@ -73,7 +75,6 @@ ping_healthchecks() {
 }
 
 main() {
-	gen_token
 	post_slack
 	ping_healthchecks
 }
