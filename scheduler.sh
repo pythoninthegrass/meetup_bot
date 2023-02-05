@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-# shellcheck disable=SC1091,SC2034,SC2153,SC3037,SC3045,SC2046
+# shellcheck disable=SC1091,SC2034,SC2153,SC3028,SC3037,SC3045,SC2046
 
 test -n "${DB_USER}"
 test -n "${DB_PASS}"

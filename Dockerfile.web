@@ -50,6 +50,7 @@ FROM python:${PYTHON_VERSION}-slim-bullseye AS runner
 ENV USER_NAME=appuser
 ENV USER_GROUP=appuser
 ENV HOME="/home/${USER_NAME}"
+ENV HOSTNAME="${HOST:-localhost}"
 ENV VENV="/opt/venv"
 
 ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
@@ -68,8 +69,17 @@ RUN groupadd ${USER_NAME} \
     && useradd -m ${USER_NAME} -g ${USER_GROUP}
 
 COPY --chown=${USER_NAME} . /app
-COPY --from=builder /usr/bin/curl /bin/curl
 COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
+
+# avoid stuck build due to user prompt
+ARG DEBIAN_FRONTEND=noninteractive
+
+# install dependencies
+RUN apt -qq update \
+    && apt -qq install \
+    --no-install-recommends -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
