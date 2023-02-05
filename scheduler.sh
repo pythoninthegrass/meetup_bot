@@ -44,25 +44,27 @@ send_request() {
 
 post_slack() {
 	day=$(date '+%a')
-	# TODO: remove Sun && Sat; reset time to 1400 UTC
+	# TODO: remove Sun && Sat; uncomment if/else blocks; reset time to 1400 UTC
 	case $day in
 	Sun|Mon|Wed|Fri|Sat)
-		# healthchecks ID: 1400  UTC
-		if [ $(date -u +%H%M) -eq "1430" ]; then
-			printf "%s\n" "Today is $day. Running healthchecks."
-			HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
-			send_request
-		fi
+		# 1400 UTC = 0800 CT
+		# if [ $(date -u +%H%M) -eq "1500" ]; then
+		# 	printf "%s\n" "Today is $day. Posting to $CHANNEL."
+		# 	send_request
+		# fi
+		printf "%s\n" "Today is $day. Posting to $CHANNEL."
+		send_request
 		;;
 	Tue|Thu)
 		# reassign env var to alt channel for Tue/Thur
 		CHANNEL=${CHANNEL2}
-		# healthchecks ID: 1400 UTC
-		if [ $(date -u +%H%M) -eq "1430" ]; then
-			printf "%s\n" "Today is $day. Running healthchecks."
-			HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
-			send_request
-		fi
+		# # 1400 UTC = 0800 CT
+		# if [ $(date -u +%H%M) -eq "1500" ]; then
+		# 	printf "%s\n" "Today is $day. Posting to $CHANNEL."
+		# 	send_request
+		# fi
+		printf "%s\n" "Today is $day. Posting to $CHANNEL."
+		send_request
 		;;
 	*)
 		printf "%s\n" "Today is $day. Not time to run."
@@ -73,6 +75,7 @@ post_slack() {
 
 ping_healthchecks() {
 	# ping healthchecks
+	HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
 	curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
 }
 
