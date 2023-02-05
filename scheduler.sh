@@ -44,8 +44,8 @@ send_request() {
 		--data-urlencode "exclusions=36\u00b0N,Tulsa,Nerdy Girls"
 }
 
-# healthchecks ID: 1500  UTC
-if [ $(date -u +%H%M) -eq "1500" ]; then
+# healthchecks ID: 1400  UTC
+if [ $(date -u +%H%M) -eq "1400" ]; then
   HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
   send_request
 else
