@@ -37,7 +37,7 @@ build: checkbash
     if [[ {{arch}} == "arm64" ]]; then
         docker build -f Dockerfile.web -t {{TAG}} --build-arg CHIPSET_ARCH=aarch64-linux-gnu .
     else
-        docker buildx build -f Dockerfile.web --progress=plain -t {{TAG}} --build-arg CHIPSET_ARCH=x86_64-linux-gnu --load .
+        docker build -f Dockerfile.web --progress=plain -t {{TAG}} .
     fi
 
 # intel build over ssh, then push to heroku
