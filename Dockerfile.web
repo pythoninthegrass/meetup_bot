@@ -63,7 +63,7 @@ ENV PYTHONFAULTHANDLER 1
 
 # workers per core
 # https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency
-ENV WEB_CONCURRENCY=1
+ENV WEB_CONCURRENCY=2
 
 RUN groupadd ${USER_NAME} \
     && useradd -m ${USER_NAME} -g ${USER_GROUP}
