@@ -8,9 +8,6 @@ ARG PYTHON_VERSION=3.10.9
 
 FROM python:${PYTHON_VERSION}-slim-bullseye AS builder
 
-WORKDIR /app
-COPY . .
-
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -37,6 +34,9 @@ ENV POETRY_NO_INTERACTION=1
 # path
 ENV VENV="/opt/venv"
 ENV PATH="$POETRY_HOME/bin:$VENV/bin:$PATH"
+
+WORKDIR /app
+COPY . .
 
 RUN python -m venv $VENV \
     && . "${VENV}/bin/activate" \
@@ -68,9 +68,6 @@ ENV WEB_CONCURRENCY=1
 RUN groupadd ${USER_NAME} \
     && useradd -m ${USER_NAME} -g ${USER_GROUP}
 
-COPY --chown=${USER_NAME} . /app
-COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
-
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -82,6 +79,8 @@ RUN apt -qq update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY --chown=${USER_NAME} . .
+COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 
 USER ${USER_NAME}
 
