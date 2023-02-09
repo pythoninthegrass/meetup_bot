@@ -81,9 +81,10 @@ post_slack() {
 	esac
 }
 
-
 main() {
 	# smoke_test
+	# gen_token
+	# send_request
 	post_slack
 	# ping_healthchecks
 }
