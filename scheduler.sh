@@ -40,6 +40,12 @@ send_request() {
 		--data-urlencode "exclusions=36\u00b0N,Tulsa,Nerdy Girls"
 }
 
+ping_healthchecks() {
+	# ping healthchecks
+	HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+	curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
+}
+
 post_slack() {
 	day=$(date '+%a')
 	case $day in
@@ -49,6 +55,7 @@ post_slack() {
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
 			gen_token
 			send_request
+			ping_healthchecks
 		fi
 		;;
 	Tue|Thu)
@@ -59,6 +66,7 @@ post_slack() {
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
 			gen_token
 			send_request
+			ping_healthchecks
 		fi
 		;;
 	*)
@@ -68,14 +76,9 @@ post_slack() {
 	esac
 }
 
-ping_healthchecks() {
-	# ping healthchecks
-	HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
-	curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
-}
 
 main() {
 	post_slack
-	ping_healthchecks
+	# ping_healthchecks
 }
 main
