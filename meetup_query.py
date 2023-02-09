@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import re
 import requests
+import requests_cache
 import sys
 from arrow import ParserError
 from colorama import Fore
@@ -27,21 +28,22 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 
-# time span (e.g., 3600 = 1 hour)
-sec = int(60)           # n seconds
-age = int(sec * 1)      # n minutes -> hours
-
-# cache the requests as script basename, expire after 1 hour
-# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
-
 # env
 home = Path.home()
 cwd = Path.cwd()
 format = 'json'
+cache_fn = config('CACHE_FN', default='raw/meetup_query')
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
 TZ = config('TZ', default='America/Chicago')
+
+# time span (e.g., 3600 = 1 hour)
+sec = int(60)               # n seconds
+ttl = int(sec * 30)         # n minutes -> hours
+
+# cache the requests as script basename, expire after n time
+requests_cache.install_cache(Path(cache_fn), expire_after=ttl)
 
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
@@ -322,7 +324,7 @@ def export_to_file(response, type='json', exclusions=''):
         # if file exists, is less than n minutes old, append to file
         if (
             Path(json_fn).exists()
-            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < age
+            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < ttl
             and os.stat(json_fn).st_size > 0
         ):
             # append to json
