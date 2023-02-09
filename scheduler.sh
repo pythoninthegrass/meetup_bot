@@ -15,9 +15,11 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 # smoke test (i.e., index)
-# curl -X 'GET' \
-#   "${URL}/" \
-#   -H 'accept: text/html'
+smoke_test() {
+	curl -X 'GET' \
+		"${URL}/" \
+		-H 'accept: text/html'
+}
 
 gen_token() {
 	# generate_token
@@ -56,6 +58,8 @@ post_slack() {
 			gen_token
 			send_request
 			ping_healthchecks
+		else
+			printf "%s\n" "Not yet $RUN_TIME! Exiting..."
 		fi
 		;;
 	Tue|Thu)
@@ -66,6 +70,8 @@ post_slack() {
 			gen_token
 			send_request
 			ping_healthchecks
+		else
+			printf "%s\n" "Not yet $RUN_TIME! Exiting..."
 		fi
 		;;
 	*)
@@ -77,6 +83,7 @@ post_slack() {
 
 
 main() {
+	# smoke_test
 	post_slack
 	# ping_healthchecks
 }
