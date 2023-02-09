@@ -11,7 +11,7 @@ paths = [
     '''(go.mod|go.sum)$''',
     '''node_modules''',
     '''vendor''',
-    '''.env.example''',
+    '''(.*?).example''',
 ]
 
 [[rules]]

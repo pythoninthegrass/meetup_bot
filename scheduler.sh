@@ -46,12 +46,12 @@ ping_healthchecks() {
 	curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
 }
 
+# * RUN_TIME: 1400 UTC = 0800 CT
 post_slack() {
 	day=$(date '+%a')
 	case $day in
 	Mon|Wed|Fri)
-		# 1400 UTC = 0800 CT
-		if [ $(date -u +%H%M) -eq "1400" ]; then
+		if [ $(date -u +%H%M) -eq "$RUN_TIME" ]; then
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
 			gen_token
 			send_request
@@ -61,8 +61,7 @@ post_slack() {
 	Tue|Thu)
 		# reassign env var to alt channel for Tue/Thur
 		CHANNEL=${CHANNEL2}
-		# 1400 UTC = 0800 CT
-		if [ $(date -u +%H%M) -eq "1400" ]; then
+		if [ $(date -u +%H%M) -eq "$RUN_TIME" ]; then
 			printf "%s\n" "Today is $day. Posting to $CHANNEL."
 			gen_token
 			send_request
