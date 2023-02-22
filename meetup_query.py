@@ -11,6 +11,7 @@ import sys
 from arrow import ParserError
 from colorama import Fore
 from decouple import config
+from typing import Union
 from icecream import ic
 from sign_jwt import main as gen_token
 from pathlib import Path
@@ -29,8 +30,8 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 
 # env
-home = Path.home()
-cwd = Path.cwd()
+home: Path = Path.home()
+cwd: Path = Path.cwd()
 format = 'json'
 cache_fn = config('CACHE_FN', default='raw/meetup_query')
 csv_fn = config('CSV_FN', default='raw/output.csv')
@@ -133,7 +134,7 @@ query($urlname: String!) {
 """
 
 
-def send_request(token, query, vars):
+def send_request(token, query, vars) -> str:
     """
     Request
 
@@ -168,7 +169,7 @@ def send_request(token, query, vars):
 
 
 # optional exclusion string parameter
-def format_response(response, location='Oklahoma City', exclusions=''):
+def format_response(response, location: str = "Oklahoma City", exclusions: str = ""):
     """
     Format response for Slack
     """
@@ -226,7 +227,7 @@ def format_response(response, location='Oklahoma City', exclusions=''):
 
 
 # TODO: QA
-def sort_csv(filename):
+def sort_csv(filename) -> None:
     """
     Sort CSV by date
     """
@@ -248,7 +249,7 @@ def sort_csv(filename):
     df.to_csv(filename, index=False)
 
 
-def sort_json(filename):
+def sort_json(filename) -> None:
     """
     Sort JSON keys
     """
@@ -301,7 +302,7 @@ def sort_json(filename):
         json.dump(data, f, indent=2)
 
 
-def export_to_file(response, type='json', exclusions=''):
+def export_to_file(response, type: str='json', exclusions: str='') -> None:
     """
     Export to CSV or JSON
     """
