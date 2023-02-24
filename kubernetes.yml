@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meetup_bot
+  labels:
+    app: meetup_bot
+spec:
+  selector:
+    matchLabels:
+      app: meetup_bot
+  template:
+    metadata:
+      labels:
+        app: meetup_bot
+    spec:
+      containers:
+        - name: meetup_bot
+          image: meetup_bot
+          ports:
+            - containerPort: 8000
