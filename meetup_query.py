@@ -4,14 +4,13 @@ import arrow
 import json
 import os
 import pandas as pd
-import re
+# import re
 import requests
 import requests_cache
 import sys
 from arrow import ParserError
 from colorama import Fore
 from decouple import config
-from typing import Union
 from icecream import ic
 from sign_jwt import main as gen_token
 from pathlib import Path
@@ -260,26 +259,36 @@ def sort_json(filename) -> None:
 
     # replace '1-07-19 17:00:00' with current year '2022-07-19 17:00:00' via regex
     # * negative lookahead only matches first digit at the beginning of the line (e.g., 1/0001 vs. 2022)
-    date_regex = r'^1(?![\d])|^0001(?![\d])'
+    # date_regex = r'^1(?![\d])|^0001(?![\d])'
 
     # TODO: get precise date from event to determine year
     # choose current year if 7 days from now is before EOY
-    if arrow.now().year == arrow.now().shift(days=7).year:
-        year = str(arrow.now(TZ).year)
-    else:
-        year = str(arrow.now(TZ).shift(days=7).year)
+    # if arrow.now().year == arrow.now().shift(days=7).year:
+    #     year = str(arrow.now(TZ).year)
+    # else:
+    #     year = str(arrow.now(TZ).shift(days=7).year)
 
-    # TODO: log decorator
     # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
     try:
-        df['date'] = df['date'].apply(lambda x: arrow.get(x, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss'))
-        df['date'] = df['date'].apply(lambda x: x.replace(re.findall(date_regex, x)[0], year))
+        # extract dates from date column into a dictionary
+        # * Timestamp('2023-02-28 16:30:00-0600', tz='pytz.FixedOffset(-360)')
+        dates = df['date'].to_dict()
+
+        # convert dates to iso8601
+        for key, value in dates.items():
+            dates[key] = arrow.get(value, 'ddd M/D h:mm a').format('YYYY-MM-DDTHH:mm:ss')
+
+        # replace dates in dictionary with iso8601
+        df['date'] = df['date'].replace(dates)
     except ParserError:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}ParserError: date column is already in correct format")
         pass
 
     # control for timestamp edge case `1-07-21 18:00:00` || `1-01-25 10:00:00` raising OutOfBoundsError
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
+
+    # convert datetimeindex to datetime
+    df['date'] = df['date'].dt.tz_localize(None)
 
     # replace NaT with epoch time to avoid float TypeError
     df['date'] = df['date'].apply(lambda x: x.replace(year=1970, month=1, day=1) if pd.isnull(x) else x)
@@ -291,8 +300,6 @@ def sort_json(filename) -> None:
     df = df[df['date'] >= arrow.now(TZ).format('YYYY-MM-DDTHH:mm:ss')]
     df = df.reset_index(drop=True)
 
-    # TODO: `TypeError: Cannot parse single argument of type <class 'pandas.core.indexes.datetimes.DatetimeIndex'>.`
-    # * Could be related to date = "Sun 1/22 1:00 pm" in json file vs. "2023-01-25T17:30-06:00"
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
@@ -321,6 +328,10 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
         # convert escaped unicode to utf-8 encoding
         data = json.loads(df.to_json(orient='records', force_ascii=False))
 
+        # TODO: don't wipe file with existing entries -- just remove duplicate key/value pairs
+        # * cf."[{ "name": "SheCodesOKC", "date": "Tue 2/28 4:30 pm"," ... }]" -> "[]" (empty list)
+        # ! Only happens locally; doesn't happen on server
+        # ! Could be related to timestamp/ttl and/or removing duplicates logic
         # write json to file
         # if file exists, is less than n minutes old, append to file
         if (
@@ -346,7 +357,7 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
 def main():
     tokens = gen_token()
     access_token = tokens['access_token']
-    refresh_token = tokens['refresh_token']
+    # refresh_token = tokens['refresh_token']
 
     # exclude keywords in event name and title (will miss events with keyword in description)
     exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']

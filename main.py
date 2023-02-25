@@ -398,11 +398,14 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", chann
 
     # if channel_name is not None, post to channel as one concatenated string
     if channel_name is not None:
-        send_message('\n'.join(msg), channel_name)
+        # get channel id chan_dict key value pair
+        channel_id = chan_dict[channel_name]
+        # post to single channel
+        send_message('\n'.join(msg), channel_id)
     else:
         # post to all channels
-        for channel_name, channel_id in channels.items():
-            send_message('\n'.join(msg), channel_id)
+        for name, id in channels.items():
+            send_message('\n'.join(msg), id)
 
     return ic(msg)
 
