@@ -4,6 +4,8 @@ setup:
       as: SCHEDULER
     - plan: heroku-postgresql
       as: DATABASE
+    - plan: coralogix
+      as: CORALOGIX
   config:
     APP_NAME: meetup-bot-bot
 build:
