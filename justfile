@@ -3,13 +3,16 @@
 # load .env (e.g., ${HEROKU_APP})
 set dotenv-load
 
+# positional params
+set positional-arguments
+
 # set env var
 export APP      := "meetupbot"
 export POETRY   := `echo ${POETRY}`
 export PY_VER   := `echo ${PY_VER}`
+export SCRIPT   := "scheduler.sh"
 export SHELL    := "/bin/bash"
 export TAG      := "registry.heroku.com/${HEROKU_APP}/web:latest"
-export SCRIPT   := "scheduler.sh"
 
 # x86_64/arm64
 arch := `uname -m`
@@ -142,6 +145,25 @@ checkbash:
         echo "No bashisms found"
     fi
 
+# [scripts]  run script in working directory
+sh args:
+    sh {{args}}
+
+# [heroku]   get current heroku status
+stats:
+    heroku ps
+    heroku status
+    heroku builds
+    heroku releases
+
+# [heroku]   get current heroku logs
+logs:
+    heroku logs --tail
+
+# [heroku]   open heroku url
+open:
+    heroku open -a ${HEROKU_APP}
+
 # [docker]   build locally
 build: checkbash
     #!/usr/bin/env bash
@@ -159,6 +181,7 @@ buildx: checkbash
 # [docker]   release to heroku
 release: buildx
     heroku container:release web --app ${HEROKU_APP}
+    just stats
 
 # [docker]   arm build w/docker-compose defaults (no push due to arm64)
 build-clean: checkbash
@@ -167,6 +190,7 @@ build-clean: checkbash
 # [heroku]   push latest image / kick off a build on heroku from ci
 push:
     git push heroku main -f
+    just stats
 
 # [heroku]   pull latest image
 pull:
