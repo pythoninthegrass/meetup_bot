@@ -164,22 +164,22 @@ release: buildx
 build-clean: checkbash
     {{docker-compose}} build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu --parallel
 
-# [docker]   push latest image / kick off a build on heroku from ci
+# [heroku]   push latest image / kick off a build on heroku from ci
 push:
     git push heroku main -f
 
-# [docker]   pull latest image
+# [heroku]   pull latest image
 pull:
     #!/usr/bin/env bash
     set -euxo pipefail
-    if [[ $(heroku auth:whoami 2>&1 | awk '/Error/ {$1=""; print $0}' | xargs) = "Error: not logged in" ]]; then
+    if [[ $(heroku auth:whoami 2>&1 | awk '/Error/ {$1=""; print $0}' | xargs) =~ "Error: " ]]; then
         echo 'Not logged into Heroku. Logging in now...'
         heroku auth:login
         heroku container:login
     fi
     docker pull {{TAG}}
 
-# [docker]   run container hosted on heroku
+# [heroku]   run container hosted on heroku
 run-heroku:
     heroku run {{SHELL}} -a ${HEROKU_APP}
 
