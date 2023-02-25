@@ -381,7 +381,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
 
 
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
+def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", channel_name: str = None, current_user: User = Depends(get_current_active_user)):
     """
     Post to slack
 
@@ -396,9 +396,13 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     # open json file and convert to list of strings
     msg = fmt_json(json_fn)
 
-    # send message as one concatenated string
-    for channel_name, channel_id in channels.items():
-        send_message('\n'.join(msg), channel_id)
+    # if channel_name is not None, post to channel as one concatenated string
+    if channel_name is not None:
+        send_message('\n'.join(msg), channel_name)
+    else:
+        # post to all channels
+        for channel_name, channel_id in channels.items():
+            send_message('\n'.join(msg), channel_id)
 
     return ic(msg)
 
