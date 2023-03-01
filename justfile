@@ -192,7 +192,7 @@ build-clean: checkbash
     {{docker-compose}} build --pull --no-cache --build-arg CHIPSET_ARCH=aarch64-linux-gnu --parallel
 
 # [heroku]   push latest image / kick off a build on heroku from ci
-push:
+push: checkbash
     git push heroku main -f
     just stats
 
