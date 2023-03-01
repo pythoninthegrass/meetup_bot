@@ -192,7 +192,7 @@ Use Meetup Pro API to send Slack messages before events occur.
         heroku buildpacks:add heroku/python
 
         # add a web worker
-        heroku ps:scale web=1                                           # stop dymo via `web=0`
+        heroku ps:scale web=1                                           # stop dyno via `web=0`
 
         # destroy app
         heroku apps:destroy -a meetup-bot-bot --confirm $HEROKU_APP
@@ -225,31 +225,25 @@ Use Meetup Pro API to send Slack messages before events occur.
 ## TODO
 * FastAPI
     * ~~Slack bot: POST formatted messages to Slack channels `#okc-metro` && `#events`~~
-      * `#testingchannel` is the canary and works swimmingly
+      * ~~`#testingchannel` is the canary and works swimmingly~~
     * Store auth in browser session vs. memory
-* Schedule event posts in channels
-  * Time Frame 
-    * Currently scheduled for 9am/5pm CST (1500/2300 UTC)
-    * Remove 2300 UTC from `scheduler.sh` to run only once per day
-* checkbashisms
-  * Refactor bashisms from `scheduler.sh`
-  ```bash
-  λ checkbashisms scheduler.sh
-  possible bashism in scheduler.sh line 11 (read with option other than -r):
-  test -n "${DB_USER}" || read -p "DB_USER: " DB_USER
-  possible bashism in scheduler.sh line 12 (read with option other than -r):
-  test -n "${DB_PASS}" || read -sp "DB_PASS: " DB_PASS
-  possible bashism in scheduler.sh line 56 (echo -e):
-    echo -e "\nTime is $(date -u +%H%M). Not time to run."
-  ```
+* ~~Schedule event posts in channels~~
+  * ~~Time Frame~~
+    * ~~Currently scheduled for 9am/5pm CST (1500/2300 UTC)~~
+    * ~~Remove 2300 UTC from `scheduler.sh` to run only once per day~~
+* ~~checkbashisms~~
+  * ~~Refactor bashisms from `scheduler.sh`~~
 * Swap `docker buildx` with `kaniko` for building images
 * Add env vars to repo secrets after open-sourcing
 * Documentation
+  * `justfile` usage
+  * Coralogix logging
+  * healthchecks.io
 
 ## Stretch Goals
 * Indicate online vs. in-person
 * Time Frame 
-  * 3 days before
+  * ~~3 days before~~
   * 2 hours before
 * Slash commands to manually call:
   * Next `n` events
