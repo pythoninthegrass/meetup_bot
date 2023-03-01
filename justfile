@@ -151,7 +151,7 @@ sh args:
 
 # [heroku]   update env vars
 env:
-    heroku config:set $(cat .env | grep -v '^#' | xargs)
+    heroku config:set $(cat .env | grep -Ev '(^#|^HEROKU_)' | xargs)
 
 # [heroku]   get current heroku status
 stats:
