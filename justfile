@@ -146,7 +146,7 @@ checkbash:
     fi
 
 # [scripts]  run script in working directory
-sh args:
+sh args=SCRIPT:
     sh {{args}}
 
 # [heroku]   update env vars
