@@ -149,6 +149,10 @@ checkbash:
 sh args:
     sh {{args}}
 
+# [heroku]   update env vars
+env:
+    heroku config:set $(cat .env | grep -v '^#' | xargs)
+
 # [heroku]   get current heroku status
 stats:
     heroku ps
