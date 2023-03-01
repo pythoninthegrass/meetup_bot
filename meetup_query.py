@@ -4,7 +4,6 @@ import arrow
 import json
 import os
 import pandas as pd
-# import re
 import requests
 import requests_cache
 import sys
@@ -36,6 +35,7 @@ cache_fn = config('CACHE_FN', default='raw/meetup_query')
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
+DAYS = config('DAYS', default=7, cast=int)
 TZ = config('TZ', default='America/Chicago')
 
 # time span (e.g., 3600 = 1 hour)
@@ -218,8 +218,8 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
         df = df[~df['title'].str.contains('|'.join(exclusions))]
 
     # TODO: cutoff time by day _and_ hour (currently only day)
-    # filter rows that aren't within the next 7 days
-    time_span = arrow.now(tz=TZ).shift(days=7)
+    # filter rows that aren't within the next n days
+    time_span = arrow.now(tz=TZ).shift(days=DAYS)
     df = df[df['date'] <= time_span.isoformat()]
 
     return df
