@@ -53,11 +53,14 @@ ping_healthchecks() {
 # if current time is within n minutes of run time, then post to slack
 date_time() {
 	# * RUN_TIME: 1400 UTC = 0800 CST
-	if [ $(date '+%H%M') -ge $((RUN_TIME-MIN)) ] && [ $(date '+%H%M') -le $((RUN_TIME+MIN)) ]; then
-		printf "%s\n" "Today is $day. Posting to $CHANNEL."
+	INT_TIME=$(date '+%H%M')
+	HMN_TIME=$(date '+%a %b %d %H:%M:%S %Z')
+	FMT_TIME=$(date -d "${RUN_TIME}" '+%H:%M:%S')
+	if [ "${INT_TIME}" -ge $((RUN_TIME-MIN)) ] && [ "${INT_TIME}" -le $((RUN_TIME+MIN)) ]; then
+		printf "%s\n" "Time is ${HMN_TIME}. Posting to $CHANNEL."
 		return 0
 	else
-		printf "%s\n" "Today is $day. Not yet $RUN_TIME! Exiting..."
+		printf "%s\n" "Time is ${HMN_TIME}. Not yet $FMT_TIME! Exiting..."
 		exit 0
 	fi
 }
