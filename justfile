@@ -12,7 +12,7 @@ export CWD      := `echo ${PWD}`
 export POETRY   := `echo ${POETRY:-1.3.2}`
 export PY_VER   := `echo ${PY_VER:-3.10.9}`
 export SCRIPT   := `echo ${SCRIPT:-"scheduler.sh"}`
-export SHELL    := `echo ${SHELL:-"/bin/sh"}`
+export SHELL    := "/bin/bash"
 export TAG      := "registry.heroku.com/${HEROKU_APP}/web:latest"
 
 # x86_64/arm64
