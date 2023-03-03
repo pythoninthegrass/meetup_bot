@@ -47,8 +47,8 @@ RUN python -m venv $VENV \
 FROM python:${PYTHON_VERSION}-slim-bullseye AS runner
 
 # set timezone
-ENV TZ=${TZ:-UTC}
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=${TZ:-"America/Chicago"}
+RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "$TZ" > /etc/timezone
 
 # setup standard non-root user for use downstream
 ENV USER_NAME=appuser
