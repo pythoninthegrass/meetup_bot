@@ -92,6 +92,9 @@ Use Meetup Pro API to send Slack messages before events occur.
         # autocomplete + login
         heroku autocomplete --refresh-cache
 
+        # log into heroku container registry (registry.heroku.com) (cf. `unauthorized: authentication required`)
+        heroku container:login
+
         # move to git repo
         cd meetup-bot-bot/
 
