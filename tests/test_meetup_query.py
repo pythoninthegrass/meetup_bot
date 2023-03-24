@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import pandas
-# import pytest
+# import os
+# import pandas
+import pytest
 import re
+# import requests
 import sys
-import time
+# import time
 # from icecream import ic
 from math import isclose
 from pathlib import Path
@@ -23,12 +25,24 @@ from sign_jwt import main as gen_token
 tokens = gen_token()
 access_token = tokens['access_token']
 
+FIXTURE_DIR = Path(__file__).parent.resolve() / 'fixtures'
 
-def test_send_request():
+@pytest.mark.datafiles(FIXTURE_DIR)
+def test_send_request(datafiles, requests_mock):
     """
     Test send_request()
     """
+
+    with open(FIXTURE_DIR / 'output.json', 'r') as f:
+        output = f.read()
+
+    endpoint = 'https://api.meetup.com/gql'
+
+    requests_mock.post(endpoint, text=output)
+
+    # TODO: QA
     res = send_request(access_token, query, vars)
+    print(res)
 
     # * upstream script returns a string (dict)
     # assert res.status_code == 200
