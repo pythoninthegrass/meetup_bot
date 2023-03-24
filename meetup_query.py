@@ -211,6 +211,8 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
     df = df[df['city'] == location]
 
     # TODO: control for mislabeled event locations (e.g. 'Techlahoma Foundation')
+    # TODO: exclude by `urlname` instead of `name`
+    # * data[0]['node']['group']['urlname'] == 'nerdygirlsokc'
     # filtered rows to exclude keywords by regex OR operator
     if exclusions:
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Excluded keywords: {exclusions}".format(exclusions=exclusions))
@@ -360,7 +362,7 @@ def main():
     # refresh_token = tokens['refresh_token']
 
     # exclude keywords in event name and title (will miss events with keyword in description)
-    exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls']
+    exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls', 'Bitcoin']
 
     # TODO: reduce `format_response` calls to 1
     # first-party query
