@@ -12,7 +12,9 @@ fi
 # get current day of week
 day=$(date '+%a')
 
-# strip double quotes from env vars if they exist
+# env vars
+HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
+# * strip double quotes from env vars if they exist
 DB_USER=$(echo "$DB_USER" | sed -e 's/^"//' -e 's/"$//')
 DB_PASS=$(echo "$DB_PASS" | sed -e 's/^"//' -e 's/"$//')
 
@@ -44,13 +46,13 @@ send_request() {
 		--data-urlencode "exclusions=36\u00b0N,Tulsa,Nerdy Girls"
 }
 
-# ping healthchecks
+# keep track of cron job health
 ping_healthchecks() {
-	HEALTHCHECKS_ID="02695fa4-3775-4a52-bd05-1db9883b079f"
 	curl --no-progress-meter --location --request GET "https://hc-ping.com/${HEALTHCHECKS_ID}"
 }
 
-# if current time is within n minutes of scheduled time, then post to slack
+# TODO: check daylight savings time
+# if current time is within n minutes of run time, then post to slack
 date_time() {
 	# human readable time
 	HMN_TIME=$(date '+%a %b %d %H:%M:%S %Z')

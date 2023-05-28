@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
+# import arrow
 # import os
-# import pandas
+import pandas
 import pytest
 import re
 # import requests
 # import requests_mock
 import sys
 # import time
-from icecream import ic
+# from icecream import ic
 from math import isclose
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def test_format_response():
 
     assert (type(df) is pd.DataFrame)
     assert (df.columns == ['name', 'date', 'title', 'description', 'city', 'eventUrl']).all()
-    assert df.empty == False
+    assert df.empty is False
 
 
 # TODO: not in use currently -- can skip for meow
@@ -76,18 +77,33 @@ def test_format_response():
 
 def test_sort_json():
     """Test sort_json()"""
-    res = send_request(access_token, query, vars)
-    exclusions = ['36\u00b0N', 'Tulsa']
-    df = format_response(res, exclusions=exclusions)
-    df.to_json("/tmp/test.json", orient='records', force_ascii=False)
+    # res = send_request(access_token, query, vars)
+    # exclusions = ['36\u00b0N', 'Tulsa']
+    # df = format_response(res, exclusions=exclusions)
+    # df.to_json("/tmp/test.json", orient='records', force_ascii=False)
     fn = "/tmp/test.json"
     sort_json(fn)
+    df = pandas.read_json(fn)   # QA only
 
-    assert Path(fn).exists() == True
+    assert Path(fn).exists() is True
     assert Path(fn).stat().st_size >= 1000
-    # TODO: verify first date is sooner than last date
-    # "date":"2022-10-13T12:00-05:00" vs. "date":"2022-10-15T14:00-05:00"
 
+    # name, date, title, description, city, eventUrl are all present
+    for col in ['name', 'date', 'title', 'description', 'city', 'eventUrl']:
+        assert re.search(col, Path(fn).read_text())
+
+    # TODO: not sorting json file
+    # * python -m pytest -vv tests/test_meetup_query.py -k sort_json
+    try:
+        # date format: '"date":"2023-05-29T11:30-05:00"'
+        assert re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}-\d{2}:\d{2}',
+        df['date'].iloc[0])
+    except (ParserError, TypeError) as e:
+        print(e)
+        pass
+
+    # check for multiple events and order by date
+    assert df['date'].iloc[0] < df['date'].iloc[1]
 
 # def test_():
 #     """Test _()"""
