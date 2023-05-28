@@ -1,0 +1,338 @@
+{
+  "data": {
+    "self": {
+      "id": "186454903",
+      "name": "Techlahoma",
+      "username": "user 186454903",
+      "memberUrl": "https://www.meetup.com/members/186454903",
+      "upcomingEvents": {
+        "count": 28,
+        "pageInfo": {
+          "endCursor": "MjkxNDEzNzU4OjE2OTI3NDE2MDAwMDA="
+        },
+        "edges": [
+          {
+            "node": {
+              "id": "293184826",
+              "title": "Injecting and testing around HttpClient (C# Specific)",
+              "description": "In working with a long list of Cross Cutting Concerns such as Logging, SDK Creation, Auth(entic/oriz)ation, APM and more, we need to configure how we interact with external HTTP connections. Not only that, but we need to be able to rely on HttpClient while also keeping our code testable. I'll try to keep this as a \"short\" stream, and I'll touch on a few topics you may not be doing to achieve maximum flexibility with your HttpClient requirements.\n\nInterested in speaking or recording a talk for us to stream? Contact @Fletch on [Techlahoma Slack](slack.techlahoma.org), or in the #ug-sea channel.\n\nWatch the stream as hosted by [Jinn Studios on YouTube](https://www.youtube.com/watch?v=9glvjlfBjNU), or Techlahoma on [Twitch](https://twitch.tv/techlahoma). Dual-Streamed!!",
+              "dateTime": "2023-05-29T11:30-05:00",
+              "eventUrl": "https://www.meetup.com/okc-sharp/events/293184826",
+              "group": {
+                "id": "18257521",
+                "name": "OKC-Sharp",
+                "urlname": "okc-sharp",
+                "link": "https://www.meetup.com/okc-sharp",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293658944",
+              "title": "Data Patterns for Successful Applications - Sean Whitesell (In Person Version)",
+              "description": "Special event:\nKCDC is June 21st to 23rd. If you like a discount on your ticket, use code **FriendOfSeanWhitesell**. Go to https://www.kcdc.info/ for tickets and information.\n\nTopic:\n\\# Data Patterns for Successful Applications\n\nIt has been said that data is the new currency. The more your company relies on data the more you need to understand data patterns for handling how data comes into your systems, managed, stored, and represented. We are no longer in the world of \"just use a single\" database. We now need to choose the right data management and storage tools based on business objectives. This means understanding more than a relational database like SQL Server or Oracle. It means understanding what database option is best based on business processes. It also means understanding patterns that can be applied to data that allow for better data analysis, and cost effective storage.\n\nIn this talk, we'll discuss data patterns that can be applied at the application level as well as database. Are you processing and storing Personally Identifiable Information (PII) or perhaps credit card information (PCI-DSS)? You'll also see data protection options for data in-transit and at rest. We'll also discuss patterns for keeping a history of changes with Event Sourcing. You'll also learn about the CQRS pattern used to keep the demand for retrieving data from impacting the ability of receiving new data.\n\nBio:\nSean is a Microsoft MVP, president of Tulsa .NET User Group since 2009, and a Sr. Cloud Architect with ArchitectNow. Sean has been programming and playing with electronics for over 20 years. He also has multiple black belts in martial arts.\n\nThis will be recorded and made available soon after. You can find recordings on https://usergroup.tv and https://youtube.com/@tulsadnug",
+              "dateTime": "2023-05-30T18:15-05:00",
+              "eventUrl": "https://www.meetup.com/tulsadevelopers-net/events/293658944",
+              "group": {
+                "id": "12635752",
+                "name": "Tulsa Developers Association",
+                "urlname": "TulsaDevelopers-net",
+                "link": "https://www.meetup.com/tulsadevelopers-net",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293658999",
+              "title": "Data Patterns for Successful Applications - Sean Whitesell (Online Version)",
+              "description": "Special event:\nKCDC is June 21st to 23rd. If you like a discount on your ticket, use code **FriendOfSeanWhitesell**. Go to https://www.kcdc.info/ for tickets and information.\n\nTopic:\n\n# Data Patterns for Successful Applications\n\nIt has been said that data is the new currency. The more your company relies on data the more you need to understand data patterns for handling how data comes into your systems, managed, stored, and represented. We are no longer in the world of \"just use a single\" database. We now need to choose the right data management and storage tools based on business objectives. This means understanding more than a relational database like SQL Server or Oracle. It means understanding what database option is best based on business processes. It also means understanding patterns that can be applied to data that allow for better data analysis, and cost effective storage.\n\nIn this talk, we'll discuss data patterns that can be applied at the application level as well as database. Are you processing and storing Personally Identifiable Information (PII) or perhaps credit card information (PCI-DSS)? You'll also see data protection options for data in-transit and at rest. We'll also discuss patterns for keeping a history of changes with Event Sourcing. You'll also learn about the CQRS pattern used to keep the demand for retrieving data from impacting the ability of receiving new data.\n\nBio:\nSean is a Microsoft MVP, president of Tulsa .NET User Group since 2009, and a Sr. Cloud Architect with ArchitectNow. Sean has been programming and playing with electronics for over 20 years. He also has multiple black belts in martial arts.\n\nThis will be recorded and made available soon after. You can find recordings on https://usergroup.tv and https://youtube.com/@tulsadnug",
+              "dateTime": "2023-05-30T18:15-05:00",
+              "eventUrl": "https://www.meetup.com/tulsadevelopers-net/events/293658999",
+              "group": {
+                "id": "12635752",
+                "name": "Tulsa Developers Association",
+                "urlname": "TulsaDevelopers-net",
+                "link": "https://www.meetup.com/tulsadevelopers-net",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293700089",
+              "title": "In person VR group at Aaru",
+              "description": "All ages and skill levels welcome. The theme for this month is rendering for VR.\n\n[https://discord.gg/2HPjHJJNCy](https://discord.gg/2HPjHJJNCy)\nJoin our discord if you want to connect to the Tulsa community .",
+              "dateTime": "2023-06-01T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-game-developers/events/293700089",
+              "group": {
+                "id": "21682363",
+                "name": "Tulsa Game Developers",
+                "urlname": "Tulsa-Game-Developers",
+                "link": "https://www.meetup.com/tulsa-game-developers",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293649502",
+              "title": "Tea & Code at Clevyr",
+              "description": "Back by popular demand (or maybe just b/c we had fun last time), we're doing another Tea and Code at Clevyr! Not familiar with that? Just show up, hang out, drink some awesome tea (all free, of course), and get to know more about your fellow Techlahomies. This is not a speaker event - we're just having a good time. Maybe we'll even fill up that mini-keg in the picture. What better way to end the work week? No laptops required; you're more than welcome to bring them however, and there will be tables and desks available if you need to escape to a quiet place.\n\n[Clevyr](https://clevyr.com) is a very community-oriented and local-to-OKC software consulting company located at Classen and NW 9th St, with a large, easy, and free parking lot just north of the building. Enter via the north door (there will be signs guiding you there).\n\nComment below if you have any questions, or reach out to @thecodeboss or @Vincent in the Techlahoma slack (not in there? send yourself an invite at [https://slack.techlahoma.org](https://slack.techlahoma.org))\n\nThis event is in collaboration with OKC Coffee and Code; join their meetup group at [https://www.meetup.com/okccoffeeandcode/](https://www.meetup.com/okccoffeeandcode/)",
+              "dateTime": "2023-06-02T16:00-05:00",
+              "eventUrl": "https://www.meetup.com/okcwebdevs/events/293649502",
+              "group": {
+                "id": "33258520",
+                "name": "OKC WebDevs",
+                "urlname": "okcwebdevs",
+                "link": "https://www.meetup.com/okcwebdevs",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293649611",
+              "title": "Tea and Code @ Clevyr",
+              "description": "If you thought this group was all about coffee, guess again. Let's raise a cuppa for the world's 2nd most popular beverage after good ol' H20: Tea!\n\nCome hang out with us at Clevyr and enjoy some tea and some summer tech banter. Just show up, hang out, drink some awesome tea (all free, of course), and get to know more about those in our local tech community. Maybe we'll even fill up that mini-keg in the picture. What better way to end the work week? No laptops required; you're more than welcome to bring them however, and there will be tables and desks available if you need to escape to a quiet place.\n\n[Clevyr](https://clevyr.com/) is a very community-oriented and local-to-OKC software consulting company located at Classen and NW 9th St, with a large, easy, and free parking lot just north of the building. Enter via the north door (there will be signs guiding you there).\n\nComment below if you have any questions, or reach out to @thecodeboss in the Techlahoma slack (not in there? send yourself an invite at [https://slack.techlahoma.org](https://slack.techlahoma.org/))\n\nThis event is in collaboration with OKC WebDevs; join their meetup group at [https://www.meetup.com/okcwebdevs](https://www.meetup.com/okcwebdevs)",
+              "dateTime": "2023-06-02T16:00-05:00",
+              "eventUrl": "https://www.meetup.com/okccoffeeandcode/events/293649611",
+              "group": {
+                "id": "24875064",
+                "name": "OKC Coffee and Code",
+                "urlname": "okccoffeeandcode",
+                "link": "https://www.meetup.com/okccoffeeandcode",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293638985",
+              "title": "Farmers Market",
+              "description": "",
+              "dateTime": "2023-06-03T10:00-05:00",
+              "eventUrl": "https://www.meetup.com/nerdygirlsokc/events/293638985",
+              "group": {
+                "id": "6100902",
+                "name": "Nerdy Girls OKC",
+                "urlname": "nerdygirlsokc",
+                "link": "https://www.meetup.com/nerdygirlsokc",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "291916574",
+              "title": "A Non-Technical Intro to Agile Software Engineering Practices (with Lego!)",
+              "description": "Ever played Jenga with technical debt? Or built a Lego tower only for code duplication to bring it down? Join us for an Agile software engineering intro like no other! We'll make the complex simple with Lego, Jenga, and cards. Learn the principles of TDD, pairing, and clean code while we play our way through the pros and cons of cross-functional teams and silos. Just remember, it's all fun and games until... well, actually, it's ALL fun and games!\n\nJoin us for a fun, non-technical workshop about Agile software development fundamentals.\n\nIn this workshop, we'll explore core Agile concepts using engaging games and hands-on activities. These will help you grasp Agile principles and practices while encouraging collaboration, problem-solving, and creativity.\n\nThis event is perfect for software engineers, project managers, students, agile coaches, scrum masters, product owners, and other professionals who want to learn more about technical Agile practices.\n\nDon't miss out on this opportunity to learn, network, and have fun with fellow Agile enthusiasts. Space is limited, so RSVP now to secure your spot!\n\n\\*Shout out to Sunny Dhillon for sharing this workshop with me (Ed) which he developed with Daniel Lynn and Agile42!\\*\n\nTulsa Agile Practitioners meets on the first Monday of every month. This will most typically be at 36 Degrees North Basecamp, but may be moved to other locations or taken online during office closures.\n\nThese meetups may be a hands-on workshop, deep-dive presentation, agile games, or Lean Coffee.\n\nTentative schedule for 2023:\n\n* July - From Chaos to Control: Learn Kanban with the Featureban game\n* August - Find Your Focus with the North Star Framework: An Exploratory Workshop\n* September - Learn Scrum By Building Your Own: The Build Your Own Scrum Workshop\n* October - Introduction to DevOps with Chocolate, Lego, and Scrum Game\n* November - From Stuck to Solved: A Hands-On Reframing Workshop (alt: What's Your Problem? Mastering the Art of Reframing)\n* December - Defeating Time Thieves by Making Work Visible",
+              "dateTime": "2023-06-05T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsaagilepractitioners/events/291916574",
+              "group": {
+                "id": "14907752",
+                "name": "Tulsa Agile Practitioners",
+                "urlname": "tulsaagilepractitioners",
+                "link": "https://www.meetup.com/tulsaagilepractitioners",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293700160",
+              "title": "In person June Game dev Meetup",
+              "description": "This month is being hosted by Philip, current student at Holberton Tulsa.\nThis is an all ages and skill level event.\n[https://discord.gg/2HPjHJJNCy](https://discord.gg/2HPjHJJNCy)\nJoin our discord if you want to connect to the Tulsa community .",
+              "dateTime": "2023-06-08T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-game-developers/events/293700160",
+              "group": {
+                "id": "21682363",
+                "name": "Tulsa Game Developers",
+                "urlname": "Tulsa-Game-Developers",
+                "link": "https://www.meetup.com/tulsa-game-developers",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293556447",
+              "title": "N/NW OKC Coffee & Code: Bring Your Laptop ",
+              "description": "We're excited to invite you to join us at Mattie's Coffee in North OKC! This coding meetup is open to everyone, regardless of your level of coding experience. Whether you're a seasoned pro or completely new to coding, you'll find a welcoming environment at our event.\n\nDuring this meetup, you'll have the opportunity to work on your own coding projects or tutorials. It doesn't matter if you're a beginner or an advanced coder – we encourage you to attend and make progress on your coding journey. Feel free to drop in whenever you can and stay as long as you'd like, even if it's just to say hello!\n\nMattie's Coffee offers excellent coffee and snacks, so come with an appetite and thirst for coding and refreshments! The coffee shop is located in Casady Square, near the intersection of Penn and Britton, just a few doors north of 1492. You'll find ample parking, so no need to worry about finding a spot.\n\nRemember to bring your laptop to make the most of the coding session. We can't wait to see you there!",
+              "dateTime": "2023-06-09T14:00-05:00",
+              "eventUrl": "https://www.meetup.com/okccoffeeandcode/events/293556447",
+              "group": {
+                "id": "24875064",
+                "name": "OKC Coffee and Code",
+                "urlname": "okccoffeeandcode",
+                "link": "https://www.meetup.com/okccoffeeandcode",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "290835414",
+              "title": "VIRTUAL Monthly open source meeting",
+              "description": "Join us here with any browser or via the Jitsi mobile app:\nhttps://jitsi.okclugnuts.org/OKCLUGNutsMonthlyOpenSourceMeetings\n\nAs always, anyone interested in anything open source is welcome to attend. Do not hesitate to bring any questions you have. We look forward to seeing virtually everyone!\n\nTechlahoma",
+              "dateTime": "2023-06-09T19:00-05:00",
+              "eventUrl": "https://www.meetup.com/okc-lugnuts/events/290835414",
+              "group": {
+                "id": "14989402",
+                "name": "OKC LUGnuts",
+                "urlname": "OKC-LUGnuts",
+                "link": "https://www.meetup.com/okc-lugnuts",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293719664",
+              "title": "Guthrie: Breakfast & Thrifting",
+              "description": "",
+              "dateTime": "2023-06-10T08:30-05:00",
+              "eventUrl": "https://www.meetup.com/nerdygirlsokc/events/293719664",
+              "group": {
+                "id": "6100902",
+                "name": "Nerdy Girls OKC",
+                "urlname": "nerdygirlsokc",
+                "link": "https://www.meetup.com/nerdygirlsokc",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293493808",
+              "title": "Tulsa Web Devs x Tulsa UX June Meetup",
+              "description": "SPECIAL MIXER EVENT WITH TULSA WEB DEVS\n(Location Information\n\nTulsa UX meets the second Tuesday each month to learn about the latest trends, hear from industry professionals in our community and discuss best practices!\n\n\\*\\*\\*\n\nIn-person:\nHolberton School – Tulsa Campus\n15 N Cheyenne Ave\nTulsa, OK 74103\n\nIf you attend any in-person Techlahoma event, you agree to adhere to posted venue and Tulsa Health Department guidelines to .\n\n\\*\\*\\*\nJoin Tulsa UX on Slack:\nhttps://slack.techlahoma.org\n#ug-tulsaux\n\n\\*If you would like anything to be added to the agenda, please message us!",
+              "dateTime": "2023-06-13T18:30-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-ux-user-group/events/293493808",
+              "group": {
+                "id": "24581024",
+                "name": "Tulsa UX",
+                "urlname": "Tulsa-UX-User-Group",
+                "link": "https://www.meetup.com/tulsa-ux-user-group",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293776894",
+              "title": "Lightning Talks ⚡️",
+              "description": "This month, we'll be doing Lightning Talks ⚡️ in-person at Clevyr! Join us for a free Tuesday lunch while listening to some awesome local speakers talk about all things dev-related. We'll share our current lineup soon, and we are actively looking to fill a couple more slots as well (more on that below).\n\nBut wait! What are lightning talks? We're glad you asked: A lightning talk is a short 5-10 minute talk over anything that you find interesting, and typically we have 3-4 talks total during a Lightning Talk meetup. Talk topics can range over a personal project, a new technology, or just something that makes you think \"hey, I bet other people might like to know about this thing.\" It's a great way for you as an attendee (and speaker!) to learn about a lot of new things that you didn't know about before.\n\nIf you're interested in speaking, reach out to @thecodeboss (Aaron Krauss) or @Vincent (Stephen Vincent) in the Techlahoma Slack if you would like to speak.\n\nLightning talks are a great opportunity for first-time speakers to step out of your comfort zone and get up on the stage. If that's you, then we'd love to have you, and we'll work with you every step of the way to make sure you feel comfortable and ready to give your talk. To sign up for this event (a future talk too), hit up @thecodeboss (Aaron Krauss) or @Vincent (Stephen Vincent) in the Techlahoma Slack.\n\nThis meetup is in-person at Clevyr (where the food, drinks, and parking are always free), and will also be streamed live on Techlahoma's Twitch channel at https://twitch.tv/techlahoma.",
+              "dateTime": "2023-06-20T11:30-05:00",
+              "eventUrl": "https://www.meetup.com/okcwebdevs/events/293776894",
+              "group": {
+                "id": "33258520",
+                "name": "OKC WebDevs",
+                "urlname": "okcwebdevs",
+                "link": "https://www.meetup.com/okcwebdevs",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293702052",
+              "title": "Tulsa Unity Users June meeting",
+              "description": "All ages and skill levels for Unity users.",
+              "dateTime": "2023-06-20T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-game-developers/events/293702052",
+              "group": {
+                "id": "21682363",
+                "name": "Tulsa Game Developers",
+                "urlname": "Tulsa-Game-Developers",
+                "link": "https://www.meetup.com/tulsa-game-developers",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "291413773",
+              "title": "Techlahoma Hack Night at 36°N with Child Care - Pair Progamming Games pt1",
+              "description": "Welcome to Techlahoma Hack Night hosted at 36 Degrees North Basecamp downtown and organized by Tulsa Web Devs.\n\nJune: At this month's Hack Night we're going to work on our pairing skills. We'll do a basic overview of what pair programming is for those who are new to the idea and give some tips / structures to play with. Then in pairs/small groups we'll work on building a simple game.\n\nThis will be a monthly event in 2023 on the 4th Tuesday of each month. This year we're going to pick a project or topic each month to work on together in a 'hackathon' type format. We'll intro the topic, break out to work on it, and come back together at the end for sharing & Q&A. Pair/mob programming, working outside your comfort zone, and meeting new people all strongly encouraged, fun required. If working in groups/pairs isn't your thing you're welcome to play along on your own or bring your own side project and stay for the good company.\n\nCurrent planned topics for 2023 :\n*(Subject to change - We're always taking suggestions!)*\n\n* Jun - Pair Programming Games (1 of 2)\n* Jul - No hack night planned - special event TBA\n* Aug - Pair Programming Games (2 of 2)\n* Sep - Build an SPA with the Vue3 Composition API\n* Oct - Refactoring the Gilded Rose\n* Nov - Hack the Box - Pen Testing / Network tools\n* Dec - No hack night planned - holidays\n\nChild care will be provided. Comment below to tell us how how many kids you will need care for.\n\nDinner will provided, so please RSVP so we can get an accurate head count.\n\n***We suggest you bring a laptop if you can!***\n\nHope to see you there!\n\nTechlahoma respects the health and safety of others and therefore will abide by any venue requirements, local, state or federal ordinances as well as CDC recommendations. We encourage the use of masks, social distancing. We encourage our members to get vaccinated as it has been proven effective.",
+              "dateTime": "2023-06-27T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-web-devs/events/291413773",
+              "group": {
+                "id": "20580812",
+                "name": "Tulsa WebDevs",
+                "urlname": "tulsa-web-devs",
+                "link": "https://www.meetup.com/tulsa-web-devs",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "293029067",
+              "title": "TBD (Holiday Week)",
+              "description": "Tulsa Agile Practitioners meets on the first Monday of every month. This will most typically be at 36 Degrees North Basecamp, but may be moved to other locations or taken online during office closures.\nThese meetups may be a hands-on workshop, deep-dive presentation, agile games, or Lean Coffee.\n**\\*\\*If you have a topic you would like to present, or a workshop you'd like to run, please reach out! We are always looking for awesome new speakers and content, learnings, ideas, so we would love for you to come share at a future meetup!\\*\\***\nTentative schedule for 2023:\n\n* July - TBD/Holiday\n* August - From Chaos to Control: Learn Kanban with the Featureban game\n* September - TBD/Holiday\n* October - Learn Scrum By Building Your Own: The Build Your Own Scrum Workshop\n* November - From Stuck to Solved: A Hands-On Reframing Workshop (alt: What's Your Problem? Mastering the Art of Reframing)\n* December - Defeating Time Thieves by Making Work Visible\n\nPossible 2024 Topics:\n\n* Find Your Focus with the North Star Framework: An Exploratory Workshop\n* Introduction to DevOps with Chocolate, Lego, and Scrum Game\n* Lego Serious Play\n* Better Estimation with Probabilistic Forecasting\n* Design Thinking\n* Design Sprints\n* Agile Basics\n* Facilitation\n* Teamwork",
+              "dateTime": "2023-07-03T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsaagilepractitioners/events/293029067",
+              "group": {
+                "id": "14907752",
+                "name": "Tulsa Agile Practitioners",
+                "urlname": "tulsaagilepractitioners",
+                "link": "https://www.meetup.com/tulsaagilepractitioners",
+                "city": "Tulsa"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "290835424",
+              "title": "VIRTUAL Monthly open source meeting",
+              "description": "Join us here with any browser or via the Jitsi mobile app:\nhttps://jitsi.okclugnuts.org/OKCLUGNutsMonthlyOpenSourceMeetings\n\nAs always, anyone interested in anything open source is welcome to attend. Do not hesitate to bring any questions you have. We look forward to seeing virtually everyone!\n\nTechlahoma",
+              "dateTime": "2023-07-14T19:00-05:00",
+              "eventUrl": "https://www.meetup.com/okc-lugnuts/events/290835424",
+              "group": {
+                "id": "14989402",
+                "name": "OKC LUGnuts",
+                "urlname": "OKC-LUGnuts",
+                "link": "https://www.meetup.com/okc-lugnuts",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "290835430",
+              "title": "VIRTUAL Monthly open source meeting",
+              "description": "Join us here with any browser or via the Jitsi mobile app:\nhttps://jitsi.okclugnuts.org/OKCLUGNutsMonthlyOpenSourceMeetings\n\nAs always, anyone interested in anything open source is welcome to attend. Do not hesitate to bring any questions you have. We look forward to seeing virtually everyone!\n\nTechlahoma",
+              "dateTime": "2023-08-11T19:00-05:00",
+              "eventUrl": "https://www.meetup.com/okc-lugnuts/events/290835430",
+              "group": {
+                "id": "14989402",
+                "name": "OKC LUGnuts",
+                "urlname": "OKC-LUGnuts",
+                "link": "https://www.meetup.com/okc-lugnuts",
+                "city": "Oklahoma City"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "291413758",
+              "title": "Techlahoma Hack Night at 36°N with Child Care - Pair Programming pt2",
+              "description": "Welcome to Techlahoma Hack Night hosted at 36 Degrees North Basecamp downtown and organized by Tulsa Web Devs.\n\nAugust: At this month's Hack Night we'll be working on our Pair Programming skills. We'll share some basic strategies for pairing and then provide a little language agnostic challenge for folks to tackle in pairs or small groups. If you didn't attend part 1 in June, that's ok, we've got plans to review that material and challenge for new folks. If you did attend part 1 in June you can try the same challenge with a new partner, finish what you started in part 1 or take on one of the other challenge options we'll provide.\n\nThis will be a monthly event in 2023 on the 4th Tuesday of each month. This year we're going to pick a project or topic each month to work on together in a 'hackathon' type format. We'll intro the topic, break out to work on it, and come back together at the end for sharing & Q&A. Pair/mob programming, working outside your comfort zone, and meeting new people all strongly encouraged, fun required. If working in groups/pairs isn't your thing you're welcome to play along on your own or bring your own side project and stay for the good company.\n\nCurrent planned topics for 2023 :\n*(Subject to change - We're always taking suggestions!)*\n\n* Aug - Pair Programming\n* Sep - Build an SPA with the Vue3 Composition API\n* Oct - Refactoring the Gilded Rose\n* Nov - Hack the Box - Pen Testing / Network tools\n* Dec - No hack night planned - holidays\n\nChild care will be provided. Comment below to tell us how how many kids you will need care for.\n\nDinner will provided, so please RSVP so we can get an accurate head count.\n\n***We suggest you bring a laptop if you can!***\n\nHope to see you there!\n\nTechlahoma respects the health and safety of others and therefore will abide by any venue requirements, local, state or federal ordinances as well as CDC recommendations. We encourage the use of masks, social distancing. We encourage our members to get vaccinated as it has been proven effective.",
+              "dateTime": "2023-08-22T18:00-05:00",
+              "eventUrl": "https://www.meetup.com/tulsa-web-devs/events/291413758",
+              "group": {
+                "id": "20580812",
+                "name": "Tulsa WebDevs",
+                "urlname": "tulsa-web-devs",
+                "link": "https://www.meetup.com/tulsa-web-devs",
+                "city": "Tulsa"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

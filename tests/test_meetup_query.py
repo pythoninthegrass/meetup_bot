@@ -5,9 +5,10 @@
 import pytest
 import re
 # import requests
+# import requests_mock
 import sys
 # import time
-# from icecream import ic
+from icecream import ic
 from math import isclose
 from pathlib import Path
 
@@ -15,12 +16,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # import functions
-# from meetup_query import send_request, format_response, sort_csv, sort_json, export_to_file
 from meetup_query import *
 from sign_jwt import main as gen_token
 
 # import vars from .env
 # from decouple import config
+
+FIXTURE_DIR = Path(__file__).parent / 'fixtures'
 
 tokens = gen_token()
 access_token = tokens['access_token']
@@ -33,19 +35,20 @@ def test_send_request(datafiles, requests_mock):
     Test send_request()
     """
 
-    with open(FIXTURE_DIR / 'output.json', 'r') as f:
-        output = f.read()
+    # with open(FIXTURE_DIR / 'raw.json', 'r') as f:
+    #     output = f.read()
 
-    endpoint = 'https://api.meetup.com/gql'
+    # endpoint = 'https://api.meetup.com/gql'
 
-    requests_mock.post(endpoint, text=output)
+    # requests_mock.POST(endpoint, text=output)
 
     # TODO: QA
     res = send_request(access_token, query, vars)
     print(res)
 
     # * upstream script returns a string (dict)
-    # assert res.status_code == 200
+    # Response HTTP Response Body: 200
+    assert re.search(r'200', res)
 
     # * spot check of raw response length is > 25000 chars
     assert (type(res) is str) and len(res) >= 1000
