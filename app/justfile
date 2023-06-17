@@ -7,7 +7,7 @@ set dotenv-load
 set positional-arguments
 
 # set env var
-export APP      := `echo ${APP_NAME:-"meetupbot"}`
+export APP      := `echo ${APP_NAME:-"meetup_bot"}`
 export CWD      := `echo ${PWD}`
 export POETRY   := `echo ${POETRY:-1.3.2}`
 export PY_VER   := `echo ${PY_VER:-3.10.9}`
