@@ -14,6 +14,7 @@ gitleaks_report*.json
 .bash_history
 tempCodeRunnerFile*
 *report.json
+*cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
