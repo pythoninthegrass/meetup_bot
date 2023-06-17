@@ -4,6 +4,7 @@
 **Table of Contents**
 * [meetup\_bot](#meetup_bot)
   * [Summary](#summary)
+  * [Quickstart](#quickstart)
   * [TODO](#todo)
   * [Stretch Goals](#stretch-goals)
   * [Further Reading](#further-reading)
@@ -11,6 +12,69 @@
 ## Summary
 Use Meetup Pro API to send Slack messages before events occur.
 
+## Quickstart
+* Clone repo
+* Setup Meetup
+  * [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
+* Setup Slack
+  * [Create a Slack app](https://api.slack.com/apps)
+  * [Create a Slack bot](https://api.slack.com/bot-users)
+* Setup Heroku
+  * [Install Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* Navigate to [app](app/) directory
+* Copy `.env.example` to `.env` and fill out environment variables
+* Install dependencies
+  * [just](https://github.com/casey/just)
+  * [asdf](https://asdf-vm.com/#/core-manage-asdf-vm)
+    * **NOTE**: `just install` will install python and poetry automatically
+    * [asdf-python](https://github.com/asdf-community/asdf-python)
+    * [asdf-poetry](https://github.com/asdf-community/asdf-poetry)
+* Setup environment
+    ```bash
+    cd app
+
+    # install dependencies
+    just install
+
+    # activate virtual environment
+    poetry shell
+    ```
+* Run app
+  * Python only
+    ```bash
+    cd app
+
+    # run individual app
+    python <sign_jwt|meetup_query|slackbot|main>.py
+
+    # run only main app
+    python main.py
+    ```
+  * Shell wrapper
+    ```bash
+    cd app
+
+    # standalone server w/hard-coded port (default: 3000)
+    ./startup.sh
+
+    # standalone server w/port argument
+    ./startup.sh 3000
+
+    # server used with scheduled job (e.g., cron job)
+    ./scheduler.sh
+    ```
+  * Docker
+    ```bash
+    # build image
+    docker build -f Dockerfile.web --progress=plain -t meetup_bot:latest .
+
+    # run image
+    docker run --name meetup_bot -it --rm --env-file .env -p 3000:3000 meetup_bot bash
+    ```
+  * Docker Compose
+    ```bash
+    # TODO: add docker-compose.yml
+    ```
 
 ## TODO
 * FastAPI
@@ -21,7 +85,8 @@ Use Meetup Pro API to send Slack messages before events occur.
 * Documentation
   * quickstart
     * `justfile` usage
-    * ~~move usage: dev/prod to docs subdir~~ [wiki](https://github.com/pythoninthegrass/meetup_bot/wiki)
+    * Docker Compose
+    * QA (especially accounts)
   * Coralogix logging
   * healthchecks.io
 
