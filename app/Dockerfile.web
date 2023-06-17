@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.5
+
 # SOURCES
 # https://denisbrogg.hashnode.dev/efficient-python-docker-image-from-any-poetry-project
 # https://binx.io/2022/06/13/poetry-docker/
@@ -73,6 +75,9 @@ ENV WEB_CONCURRENCY=2
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
+
+# TODO: debug heroku build error on line 86 for "GROUPADD"
+# ! Added 1.5 docker syntax on top-line to avoid error. Probably.
 
 RUN <<EOF
 #!/usr/bin/env bash
