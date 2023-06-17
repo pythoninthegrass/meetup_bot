@@ -227,26 +227,20 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 ## TODO
 * FastAPI
-    * ~~Slack bot: POST formatted messages to Slack channels `#okc-metro` && `#events`~~
-      * ~~`#testingchannel` is the canary and works swimmingly~~
     * Store auth in browser session vs. memory
-* ~~Schedule event posts in channels~~
-  * ~~Time Frame~~
-    * ~~Currently scheduled for 9am/5pm CST (1500/2300 UTC)~~
-    * ~~Remove 2300 UTC from `scheduler.sh` to run only once per day~~
-* ~~checkbashisms~~
-  * ~~Refactor bashisms from `scheduler.sh`~~
-* Swap `docker buildx` with `kaniko` for building images
-* Add env vars to repo secrets after open-sourcing
+* Unit test
+  * Add badge
+  * 100% coverage
 * Documentation
-  * `justfile` usage
+  * quickstart
+    * `justfile` usage
+    * move usage: dev/prod to docs subdir
   * Coralogix logging
   * healthchecks.io
 
 ## Stretch Goals
 * Indicate online vs. in-person
 * Time Frame 
-  * ~~3 days before~~
   * 2 hours before
 * Slash commands to manually call:
   * Next `n` events
