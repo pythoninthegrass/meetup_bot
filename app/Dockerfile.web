@@ -1,10 +1,7 @@
-# SOURCES
-# https://denisbrogg.hashnode.dev/efficient-python-docker-image-from-any-poetry-project
-# https://binx.io/2022/06/13/poetry-docker/
-# https://github.com/python-poetry/poetry/discussions/1879#discussioncomment-216865
+# syntax=docker/dockerfile:1.5
 
 # full semver just for python base image
-ARG PYTHON_VERSION=3.10.9
+ARG PYTHON_VERSION=3.11.4
 
 FROM python:${PYTHON_VERSION}-slim-bullseye AS builder
 
@@ -27,7 +24,7 @@ ENV PIP_DEFAULT_TIMEOUT=100
 
 # poetry env vars
 ENV POETRY_HOME="/opt/poetry"
-ENV POETRY_VERSION=1.3.2
+ENV POETRY_VERSION=1.4.2
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV POETRY_NO_INTERACTION=1
 
@@ -69,11 +66,16 @@ ENV PYTHONFAULTHANDLER 1
 # https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/README.md#web_concurrency
 ENV WEB_CONCURRENCY=2
 
-RUN groupadd ${USER_NAME} \
-    && useradd -m ${USER_NAME} -g ${USER_GROUP}
-
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+# add non-root user and setup raw directory
+RUN groupadd ${USER_NAME} \
+    && useradd -m ${USER_NAME} -g ${USER_GROUP} \
+    && mkdir -p /app/raw \
+    && chown -R ${USER_NAME}:${USER_GROUP} /app/raw
 
 # install dependencies
 RUN apt -qq update \
@@ -83,7 +85,6 @@ RUN apt -qq update \
     lsof \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
 COPY --chown=${USER_NAME} . .
 COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 

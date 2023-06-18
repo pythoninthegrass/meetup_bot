@@ -31,9 +31,13 @@
 **/docker-compose*
 **/Dockerfile*
 **/heroku.yml
+**/htmlcov
 **/img
 **/jsonwebtoken_test
-**/jsonwebtoken_test/
+**/justfile
+**/jwt_priv.pem
+**/jwt_pub.key
+**/kubernetes.yml
 **/meetup_queries.gql
 **/node_modules
 **/npm-debug.log
@@ -45,6 +49,8 @@
 **/redis-insight
 **/redis.conf*
 **/runtime.txt
+**/scratch.*
 **/secrets.dev.yaml
 **/terraform
+**/Tiltfile
 **/values.dev.yaml

@@ -4,7 +4,7 @@
 **Table of Contents**
 * [meetup\_bot](#meetup_bot)
   * [Summary](#summary)
-  * [Usage](#usage)
+  * [Quickstart](#quickstart)
   * [TODO](#todo)
   * [Stretch Goals](#stretch-goals)
   * [Further Reading](#further-reading)
@@ -12,229 +12,81 @@
 ## Summary
 Use Meetup Pro API to send Slack messages before events occur.
 
-## Usage
-* meetup_bot
-  * Dev
+## Quickstart
+* Clone repo
+* Setup Meetup
+  * [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
+* Setup Slack
+  * [Create a Slack app](https://api.slack.com/apps)
+  * [Create a Slack bot](https://api.slack.com/bot-users)
+* Setup Heroku
+  * [Install Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* Navigate to [app](app/) directory
+* Copy `.env.example` to `.env` and fill out environment variables
+* Install dependencies
+  * [just](https://github.com/casey/just)
+  * [asdf](https://asdf-vm.com/#/core-manage-asdf-vm)
+    * **NOTE**: `just install` will install python and poetry automatically
+    * [asdf-python](https://github.com/asdf-community/asdf-python)
+    * [asdf-poetry](https://github.com/asdf-community/asdf-poetry)
+* Setup environment
     ```bash
-    # docker
-    docker-compose build --pull --parallel --no-cache
-    docker-compose up -d
+    cd app
 
-    # poetry
-    poetry install
-    poetry run main.py
+    # install dependencies
+    just install
 
-    # curl/httpie/requests (httpie shown)
-    # install httpie
-    brew update
-    brew install httpie
-
-    # root
-    λ http :3000
-    HTTP/1.1 200 OK
-    content-length: 25
-    content-type: application/json
-    date: Thu, 11 Aug 2022 06:22:01 GMT
-    server: uvicorn
-
-    {
-        "message": "Hello World"
-    }
-
-    # get events
-    λ http :3000/api/events
-    HTTP/1.1 200 OK
-    ...
-
-    {
-        "city": {
-            "3": "Oklahoma City",
-            ...
-        },
-        "date": {
-            "3": "2022-08-12T09:30-05:00",
-        },
-        "description": {
-            "3": "If you can't make it to the [UXOK](https://uxok.org/) design conf...",
-        },
-        "eventUrl": {
-            "3": "https://www.meetup.com/okccoffeeandcode/events/287519063",
-        },
-        "name": {
-            "3": "OKC Coffee and Code",
-        },
-        "title": {
-            "3": "UXOK Watch Party",
-        }
-    }
-
-    # exports to cwd/raw/output.json
-    λ http POST :3000/api/export
-    HTTP/1.1 200 OK
-    ...
-
-    null
-
-    # post formatted query results to slack
-    λ http POST :3000/api/slack
-    HTTP/1.1 200 OK
-    ...
-
-    null
+    # activate virtual environment
+    poetry shell
     ```
-  * Prod
-    * Heroku
-      * Setup
-        ```bash
-        # install
-        brew tap heroku/brew && brew install heroku
-
-        # autocomplete + login
-        heroku autocomplete --refresh-cache
-
-        # log into heroku container registry (registry.heroku.com) (cf. `unauthorized: authentication required`)
-        heroku container:login
-
-        # move to git repo
-        cd meetup-bot-bot/
-
-        # set app
-        export HEROKU_APP=meetup-bot-bot
-
-        # config vars
-        heroku config
-
-        # stack
-        heroku stack
-
-        # ubuntu 22.* buildpack
-        # heroku stack:set heroku-22
-
-        # set heroku git to app
-        heroku git:remote -a $HEROKU_APP
-
-        # custom container via manifest
-        heroku stack:set container
-
-        # programmatically add .env vars to heroku config vars
-        cat .env | tr '\n' ' ' | xargs heroku config:set -a $HEROKU_APP
-
-        # deploy to heroku
-        git push heroku main
-
-        # watch logs (build, server activity)
-        heroku logs --tail
-
-        # test image locally
-        docker pull registry.heroku.com/meetup-bot-bot/web
-        docker run --rm -it registry.heroku.com/meetup-bot-bot/web bash
-
-        # control remote builds (e.g., CI)
-        heroku plugins:install heroku-builds
-
-        # get all builds
-        # * NOTE: append `-a $HEROKU_APP` if env var isn't set
-        heroku builds
-
-        # cancel specific build
-        λ heroku builds:cancel fd8ee600-46d8-4f2c-99e9-b77c109ba431
-        Stopping build fd8ee600-46d8-4f2c-99e9-b77c109ba431... done
-
-        # cancel latest build
-        heroku builds:cancel
-        ```
-      * Container manifest
-        * See [heroku.yml](heroku.yml)
-        * Creates a container from [Dockerfile.web](Dockerfile.web), attaches Redis and scheduler
-      * Container registry
-        * Faster than CI builds triggered by GitHub commits
-        ```bash
-        # login
-        heroku container:login
-
-        # heroku wrapper build (w/cache)
-        heroku container:push web
-
-        # pull buildx image (on remote intel box)
-        docker pull moby/buildkit:buildx-stable-1
-
-        # create builder
-        docker buildx create \
-        --name amd64_builder \
-        --node linux_amd64_builder \
-        --platform linux/amd64 \
-        ssh://USERNAME@IP_ADDRESS_OF_BUILDER
-
-        # select new builder
-        docker buildx use amd64_builder
-
-        # docker buildx (arm)
-        export TAG="registry.heroku.com/meetup-bot-bot/web:latest"
-
-        # build intel image
-        docker buildx build -f Dockerfile.web --progress=plain -t $TAG --load .
-
-        # push to heroku registry
-        docker push registry.heroku.com/meetup-bot-bot/web
-
-        # release image to app
-        heroku container:release web
-
-        # exec/ssh into container
-        heroku ps:exec
-
-        # open website
-        heroku open
-        ```
-      * Usage
-        ```bash
-        # deploy container via heroku.yml
-        heroku create meetup-bot-bot --manifest
-
-        # setup python buildpack
-        heroku buildpacks:add heroku/python
-
-        # add a web worker
-        heroku ps:scale web=1                                           # stop dyno via `web=0`
-
-        # destroy app
-        heroku apps:destroy -a meetup-bot-bot --confirm $HEROKU_APP
-        ```
-      * TODO: document scheduler w/API commands
-* gitleaks
-  * git pre-commit hook
+* Run app
+  * Python only
     ```bash
-    git config hooks.gitleaks true
+    cd app
+
+    # run individual app
+    python <sign_jwt|meetup_query|slackbot|main>.py
+
+    # run only main app
+    python main.py
     ```
-  * CI/CD
-    * See `meetup_bot/.github/workflows/main.yml`
-  * Manual run
+  * Shell wrapper
     ```bash
-    # set env vars
-    export GITLEAKS_CONFIG=$(pwd)/gitleaks.toml         # precedence: --config, env var, --source, default config
-    export GITLEAKS_REPORT=$(pwd)/gitleaks_report.json
+    cd app
 
-    # bash completion
-    gitleaks completion bash >> ~/.gitleaks.bash
-    echo ". ~/.gitleaks.bash" >> ~/.bashrc
+    # standalone server w/hard-coded port (default: 3000)
+    ./startup.sh
 
-    # scan local directories for secrets
-    gitleaks detect --no-git
+    # standalone server w/port argument
+    ./startup.sh 3000
 
-    # run w/report
-    gitleaks detect -r $GITLEAKS_REPORT                 # generate json report (default)
+    # server used with scheduled job (e.g., cron job)
+    ./scheduler.sh
+    ```
+  * Docker
+    ```bash
+    # build image
+    docker build -f Dockerfile.web --progress=plain -t meetup_bot:latest .
+
+    # run image
+    docker run --name meetup_bot -it --rm --env-file .env -p 3000:3000 meetup_bot bash
+    ```
+  * Docker Compose
+    ```bash
+    # TODO: add docker-compose.yml
     ```
 
 ## TODO
 * FastAPI
-    * Store auth in browser session vs. memory
+  * Store auth in browser session vs. memory
 * Unit test
   * Add badge
   * 100% coverage
 * Documentation
   * quickstart
-    * `justfile` usage
-    * move usage: dev/prod to docs subdir
+    * ~~`justfile` usage~~
+    * Docker Compose
+    * QA (especially accounts)
   * Coralogix logging
   * healthchecks.io
 
@@ -265,6 +117,10 @@ Use Meetup Pro API to send Slack messages before events occur.
 [FastAPI Auth + Login Page](https://dev.to/athulcajay/fastapi-auth-login-page-48po)
 
 [checkbashisms](https://command-not-found.com/checkbashisms)
+
+[Efficient Python Docker Image from any Poetry Project](https://denisbrogg.hashnode.dev/efficient-python-docker-image-from-any-poetry-project)
+
+[Document docker poetry best practices · python-poetry · Discussion #1879](https://github.com/python-poetry/poetry/discussions/1879#discussioncomment-216865)
 
 [Building Docker images in Kubernetes | Snyk](https://snyk.io/blog/building-docker-images-kubernetes/)
 
