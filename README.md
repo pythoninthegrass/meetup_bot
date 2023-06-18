@@ -78,13 +78,13 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 ## TODO
 * FastAPI
-    * Store auth in browser session vs. memory
+  * Store auth in browser session vs. memory
 * Unit test
   * Add badge
   * 100% coverage
 * Documentation
   * quickstart
-    * `justfile` usage
+    * ~~`justfile` usage~~
     * Docker Compose
     * QA (especially accounts)
   * Coralogix logging
