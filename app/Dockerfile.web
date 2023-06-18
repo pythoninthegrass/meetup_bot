@@ -1,10 +1,5 @@
 # syntax=docker/dockerfile:1.5
 
-# SOURCES
-# https://denisbrogg.hashnode.dev/efficient-python-docker-image-from-any-poetry-project
-# https://binx.io/2022/06/13/poetry-docker/
-# https://github.com/python-poetry/poetry/discussions/1879#discussioncomment-216865
-
 # full semver just for python base image
 ARG PYTHON_VERSION=3.11.4
 
@@ -76,28 +71,19 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-# TODO: debug heroku build error on line 86 for "GROUPADD"
-# ! Added 1.5 docker syntax on top-line to avoid error. Probably.
-
-RUN <<EOF
-#!/usr/bin/env bash
-
-# add non-root user
-groupadd ${USER_NAME}
-useradd -m ${USER_NAME} -g ${USER_GROUP}
+# add non-root user and setup raw directory
+RUN groupadd ${USER_NAME} \
+    && useradd -m ${USER_NAME} -g ${USER_GROUP} \
+    && mkdir -p /app/raw \
+    && chown -R ${USER_NAME}:${USER_GROUP} /app/raw
 
 # install dependencies
-apt -qq update
-apt -qq install --no-install-recommends -y \
+RUN apt -qq update \
+    && apt -qq install \
+    --no-install-recommends -y \
     curl \
-    lsof
-rm -rf /var/lib/apt/lists/*
-
-# setup raw directory
-mkdir -p /app/raw
-chown -R ${USER_NAME}:${USER_GROUP} /app/raw
-
-EOF
+    lsof \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=${USER_NAME} . .
 COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"

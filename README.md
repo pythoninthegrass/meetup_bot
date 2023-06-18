@@ -118,6 +118,10 @@ Use Meetup Pro API to send Slack messages before events occur.
 
 [checkbashisms](https://command-not-found.com/checkbashisms)
 
+[Efficient Python Docker Image from any Poetry Project](https://denisbrogg.hashnode.dev/efficient-python-docker-image-from-any-poetry-project)
+
+[Document docker poetry best practices · python-poetry · Discussion #1879](https://github.com/python-poetry/poetry/discussions/1879#discussioncomment-216865)
+
 [Building Docker images in Kubernetes | Snyk](https://snyk.io/blog/building-docker-images-kubernetes/)
 
 [Kaniko, How to Build Container Image with SSH | by Yossi Cohn | HiredScore Engineering | Medium](https://medium.com/hiredscore-engineering/kaniko-builds-with-private-repository-634d5e7fa4a5)
