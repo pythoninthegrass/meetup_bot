@@ -93,6 +93,12 @@ target-version = "py311"
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "qa: marks tests as qa (deselect with '-m \"not qa\"')",
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
