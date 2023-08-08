@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "meetup_bot"
 version = "1.0.0"
-description = ""
+description = "Use Meetup Pro API to send Slack messages before events occur."
 authors = ["pythoninthegrass <4097471+pythoninthegrass@users.noreply.github.com>"]
 readme = "README.md"
 
@@ -22,7 +22,7 @@ psycopg2-binary = "^2.9.4"
 PyJWT = {extras = ["crypto"], version = "^2.5.0"}
 python-decouple = "^3.6"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-python-multipart = "^0.0.5"
+python-multipart = "^0.0.6"
 requests = "^2.27.1"
 requests-cache = "^1.0.1"
 slack-sdk = "^3.19.1"
