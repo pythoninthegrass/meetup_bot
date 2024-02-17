@@ -2,7 +2,6 @@
 
 import base64
 import jwt
-import os
 import pathlib
 import requests
 import sys
@@ -10,7 +9,7 @@ import time
 from colorama import Fore
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
-from decouple import config
+from decouple import Config, RepositoryEnv
 from icecream import ic
 from pathlib import Path
 from urllib.parse import urlencode
@@ -23,13 +22,22 @@ info = "INFO:"
 error = "ERROR:"
 warning = "WARNING:"
 
+# get .env file
+if not Path(".env").exists():
+    env_file = Path(__file__).parent / '.env'
+else:
+    env_file = Path(".env")
+
+# decouple read .env file
+config = Config(RepositoryEnv(env_file))
+
 # creds
 if Path('jwt_priv.pem').exists():
     priv_key = Path('jwt_priv.pem')
     pub_key = Path('jwt_pub.key')
 else:
-    priv_key = os.getenv('PRIV_KEY_B64')
-    pub_key = os.getenv('PUB_KEY_B64')
+    priv_key = config('PRIV_KEY_B64')
+    pub_key = config('PUB_KEY_B64')
 
 SELF_ID = config('SELF_ID')
 CLIENT_ID = config('CLIENT_ID')
@@ -119,7 +127,7 @@ def verify_token(token):
     """Verify signed JWT against public key"""
 
     try:
-        decoded_token = jwt.decode(
+        jwt.decode(
             jwt=token,
             key=public_key,
             issuer=CLIENT_SECRET,
