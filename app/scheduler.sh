@@ -74,35 +74,32 @@ date_time() {
 	fi
 }
 
+# TODO: posts m-f wtf
+# ! compare w/https://dashboard.heroku.com/apps/meetup-bot-bot/scheduler
 # post to slack if it's a weekday
 post_slack() {
 	case $day in
-	Mon|Wed|Fri)
-		date_time
-		gen_token
-		send_request
-		ping_healthchecks
-		;;
-	Tue|Thu)
-		# reassign env var to alt channel for tue/thu
-		CHANNEL=${CHANNEL2}
-		date_time
-		gen_token
-		send_request
-		ping_healthchecks
-		;;
-	*)
-		date_time
-		;;
+		Mon|Wed|Fri)
+			date_time
+			gen_token
+			send_request
+			ping_healthchecks
+			;;
+		Tue|Thu)
+			# reassign env var to alt channel for tue/thu
+			CHANNEL=${CHANNEL2}
+			date_time
+			gen_token
+			send_request
+			ping_healthchecks
+			;;
+		*)
+			date_time
+			;;
 	esac
 }
 
 main() {
-	# smoke_test
-	# gen_token
-	# send_request
-	# date_time
 	post_slack
-	# ping_healthchecks
 }
 main
