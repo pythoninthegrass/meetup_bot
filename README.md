@@ -77,6 +77,10 @@ Use Meetup Pro API to send Slack messages before events occur.
     ```
 
 ## TODO
+* Norman events
+  * Get Norman events from existing GraphQL API
+  * Post to `#norman`
+    * M-F
 * FastAPI
   * Store auth in browser session vs. memory
 * Unit test
