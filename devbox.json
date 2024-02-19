@@ -18,15 +18,13 @@
   },
   "shell": {
     "init_hook": [
-      ". $VENV_DIR/bin/activate"
+      ". $VENV_DIR/bin/activate",
+      "poetry install --no-root",
+      "cd ./app"
     ],
     "scripts": {
-      "install": [
-        "poetry install"
-      ],
-      "test": [
-        "poetry run pytest"
-      ]
+      "start": "./startup.sh",
+      "test": "poetry run pytest"
     }
   }
 }
