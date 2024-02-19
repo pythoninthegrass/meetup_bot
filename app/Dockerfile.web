@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.5
+# syntax=docker/dockerfile:1.6
 
 # full semver just for python base image
-ARG PYTHON_VERSION=3.11.4
+ARG PYTHON_VERSION=3.11.6
 
 FROM python:${PYTHON_VERSION}-slim-bullseye AS builder
 
@@ -9,8 +9,8 @@ FROM python:${PYTHON_VERSION}-slim-bullseye AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 # install dependencies
-RUN apt -qq update \
-    && apt -qq install \
+RUN apt-get -qq update \
+    && apt-get -qq install \
     --no-install-recommends -y \
     curl \
     gcc \
@@ -24,7 +24,7 @@ ENV PIP_DEFAULT_TIMEOUT=100
 
 # poetry env vars
 ENV POETRY_HOME="/opt/poetry"
-ENV POETRY_VERSION=1.4.2
+ENV POETRY_VERSION=1.7.1
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV POETRY_NO_INTERACTION=1
 
@@ -78,8 +78,8 @@ RUN groupadd ${USER_NAME} \
     && chown -R ${USER_NAME}:${USER_GROUP} /app/raw
 
 # install dependencies
-RUN apt -qq update \
-    && apt -qq install \
+RUN apt-get -qq update \
+    && apt-get -qq install \
     --no-install-recommends -y \
     curl \
     lsof \
@@ -90,7 +90,4 @@ COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 
 USER ${USER_NAME}
 
-# ENTRYPOINT ["python", "main.py"]
-# CMD ["gunicorn", "-c", "config/gunicorn.conf.py", "main:app"]
 CMD ["/bin/sh", "startup.sh"]
-# CMD ["/bin/sh"]
