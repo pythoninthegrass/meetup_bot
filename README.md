@@ -7,6 +7,11 @@
   * [Minimum Requirements](#minimum-requirements)
   * [Recommended Requirements](#recommended-requirements)
   * [Quickstart](#quickstart)
+    * [Python only](#python-only)
+    * [Shell wrapper](#shell-wrapper)
+    * [Devbox](#devbox)
+    * [Docker](#docker)
+    * [Docker Compose](#docker-compose)
   * [TODO](#todo)
   * [Stretch Goals](#stretch-goals)
   * [Further Reading](#further-reading)
@@ -29,83 +34,90 @@ Use Meetup Pro API to send Slack messages before events occur.
 ## Quickstart
 * Clone repo
 * Copy `.env.example` to `.env` and fill out environment variables
-* Run app
-  * Python only
-    ```bash
-    cd ./app
 
-    # run individual app
-    python <sign_jwt|meetup_query|slackbot|main>.py
+### Python only
+```bash
+cd ./app
 
-    # run only main app
-    python main.py
-    ```
-  * Shell wrapper
-    ```bash
-    cd ./app
+# run individual app
+python <sign_jwt|meetup_query|slackbot|main>.py
 
-    # standalone server w/hard-coded port (default: 3000)
-    ./startup.sh
+# run only main app
+python main.py
+```
 
-    # standalone server w/port argument
-    ./startup.sh 3000
+### Shell wrapper
+```bash
+cd ./app
 
-    # server used with scheduled job (e.g., cron job)
-    ./scheduler.sh
-    ```
-  * Devbox
-    ```bash
-    # enter dev environment
-    devbox shell
+# standalone server w/hard-coded port (default: 3000)
+./startup.sh
 
-    # run individual app
-    python <sign_jwt|meetup_query|slackbot|main>.py
+# standalone server w/port argument
+./startup.sh 3000
 
-    # exit dev environment
-    exit
+# server used with scheduled job (e.g., cron job)
+./scheduler.sh
+```
 
-    # run standalone server
-    devbox run start
+### Devbox
+I.e., [Nix Package Manager](https://search.nixos.org/packages)
+```bash
+# enter dev environment
+devbox shell
 
-    # run tests
-    devbox run test
-    ```
-  * Docker
-    ```bash
-    cd ./app
+# run individual app
+python <sign_jwt|meetup_query|slackbot|main>.py
 
-    # build image
-    docker build -f Dockerfile.web --progress=plain -t meetup_bot:latest .
+# exit dev environment
+exit
 
-    # run image
-    docker run --name meetup_bot -it --rm --env-file .env -p 3000:3000 meetup_bot bash
-    ```
-  * Docker Compose
-    ```bash
-    cd ./app
+# run standalone server
+devbox run start
 
-    # build image
-    docker-compose build --remove-orphans
+# run tests
+devbox run test
+```
 
-    # run image
-    docker-compose up -d
+### Docker
+```bash
+cd ./app
 
-    # enter server container
-    docker exec -it meetup_bot-cont bash
+# build image
+docker build -f Dockerfile.web --progress=plain -t meetup_bot:latest .
 
-    # exit server container
-    exit
+# run image
+docker run --name meetup_bot -it --rm --env-file .env -p 3000:3000 meetup_bot bash
+```
 
-    # stop image
-    docker-compose stop
+### Docker Compose
+```bash
+cd ./app
 
-    # remove image
-    docker-compose down --volumes
-    ```
+# build image
+docker-compose build --remove-orphans
+
+# run image
+docker-compose up -d
+
+# enter server container
+docker exec -it meetup_bot-cont bash
+
+# exit server container
+exit
+
+# stop image
+docker-compose stop
+
+# remove image
+docker-compose down --volumes
+```
 
 ## TODO
 * Norman events
   * Get Norman events from existing GraphQL API
+    * Coded as `Oklahoma City`
+    * Will need to modify the query to get title and body content
   * Post to `#norman`
     * M-F
 * FastAPI
