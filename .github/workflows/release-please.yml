@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - 'main'
-  schedule:
-    - cron: '0 0 * * *'
 
 permissions:
   contents: write
@@ -19,5 +17,9 @@ jobs:
       - name: Release with release-please
         uses: google-github-actions/release-please-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: simple
+          # PAT with write access to the repository
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          # optional. customize path to release-please-config.json
+          config-file: release-please-config.json
+          # optional. customize path to .release-please-manifest.json
+          manifest-file: .release-please-manifest.json
