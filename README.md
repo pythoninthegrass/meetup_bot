@@ -4,6 +4,8 @@
 **Table of Contents**
 * [meetup\_bot](#meetup_bot)
   * [Summary](#summary)
+  * [Minimum Requirements](#minimum-requirements)
+  * [Recommended Requirements](#recommended-requirements)
   * [Quickstart](#quickstart)
   * [TODO](#todo)
   * [Stretch Goals](#stretch-goals)
@@ -12,37 +14,25 @@
 ## Summary
 Use Meetup Pro API to send Slack messages before events occur.
 
-## Quickstart
-* Clone repo
-* Setup Meetup
-  * [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
-* Setup Slack
+## Minimum Requirements
+* [Python 3.11.6](https://www.python.org/downloads/)
+* [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
+* Slack
   * [Create a Slack app](https://api.slack.com/apps)
   * [Create a Slack bot](https://api.slack.com/bot-users)
-* Setup Heroku
-  * [Install Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
-* Navigate to [app](app/) directory
+
+## Recommended Requirements
+* [Devbox](https://www.jetpack.io/devbox/docs/quickstart/)
+* [Docker](https://www.docker.com/products/docker-desktop)
+
+## Quickstart
+* Clone repo
 * Copy `.env.example` to `.env` and fill out environment variables
-* Install dependencies
-  * [just](https://github.com/casey/just)
-  * [asdf](https://asdf-vm.com/#/core-manage-asdf-vm)
-    * **NOTE**: `just install` will install python and poetry automatically
-    * [asdf-python](https://github.com/asdf-community/asdf-python)
-    * [asdf-poetry](https://github.com/asdf-community/asdf-poetry)
-* Setup environment
-    ```bash
-    cd app
-
-    # install dependencies
-    just install
-
-    # activate virtual environment
-    poetry shell
-    ```
 * Run app
   * Python only
     ```bash
-    cd app
+    cd ./app
 
     # run individual app
     python <sign_jwt|meetup_query|slackbot|main>.py
@@ -52,7 +42,7 @@ Use Meetup Pro API to send Slack messages before events occur.
     ```
   * Shell wrapper
     ```bash
-    cd app
+    cd ./app
 
     # standalone server w/hard-coded port (default: 3000)
     ./startup.sh
@@ -63,8 +53,27 @@ Use Meetup Pro API to send Slack messages before events occur.
     # server used with scheduled job (e.g., cron job)
     ./scheduler.sh
     ```
+  * Devbox
+    ```bash
+    # enter dev environment
+    devbox shell
+
+    # run individual app
+    python <sign_jwt|meetup_query|slackbot|main>.py
+
+    # exit dev environment
+    exit
+
+    # run standalone server
+    devbox run start
+
+    # run tests
+    devbox run test
+    ```
   * Docker
     ```bash
+    cd ./app
+
     # build image
     docker build -f Dockerfile.web --progress=plain -t meetup_bot:latest .
 
@@ -73,7 +82,25 @@ Use Meetup Pro API to send Slack messages before events occur.
     ```
   * Docker Compose
     ```bash
-    # TODO: add docker-compose.yml
+    cd ./app
+
+    # build image
+    docker-compose build --remove-orphans
+
+    # run image
+    docker-compose up -d
+
+    # enter server container
+    docker exec -it meetup_bot-cont bash
+
+    # exit server container
+    exit
+
+    # stop image
+    docker-compose stop
+
+    # remove image
+    docker-compose down --volumes
     ```
 
 ## TODO
