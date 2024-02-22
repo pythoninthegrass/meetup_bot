@@ -1,0 +1,68 @@
+version: "3.0"
+
+set: ['e', 'u', 'pipefail']
+shopt: ['globstar']
+
+tasks:
+  default:
+    desc: "Default task"
+    cmds:
+      - task --list
+
+  login:
+    desc: "Login to Heroku"
+    run: "once"
+    cmds:
+      - |
+        out=$(heroku auth:whoami 2>&1)
+        result=$(echo $out | awk '/Error/ {$1=""; print $0}' | xargs)
+        if [[ "$result" =~ "Error: " ]]; then
+          heroku auth:login
+          heroku container:login
+        fi
+
+  env:
+    desc: Upload .env file to Heroku
+    cmds:
+      - |
+        heroku config:set $(cat {{.TLD}}/app/.env | grep -Ev '(^#|^HEROKU_)' | xargs)
+
+  stats:
+    desc: "Show the stats of the project"
+    cmds:
+      - |
+        heroku ps
+        heroku status
+        heroku builds
+        heroku releases
+
+  logs:
+    desc: "Follow the logs of the project"
+    cmds:
+      - heroku logs --tail
+
+  open:
+    desc: "Open the project in the browser"
+    cmds:
+      - heroku open
+
+  release:
+    desc: "Release the project"
+    cmds:
+      - heroku container:release web --app ${HEROKU_APP}
+      - task stats
+
+  push:
+    desc: "Push the project to Heroku"
+    cmds:
+      - |
+        heroku container:push web --app ${HEROKU_APP}
+        task stats
+
+  pull:
+    desc: "Pull the project from Heroku"
+    deps:
+      - login
+    cmds:
+      - |
+        heroku container:pull web --app ${HEROKU_APP}
