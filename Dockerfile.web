@@ -22,24 +22,19 @@ ENV PIP_NO_CACHE_DIR=off
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 ENV PIP_DEFAULT_TIMEOUT=100
 
-# poetry env vars
-ENV POETRY_HOME="/opt/poetry"
-ENV POETRY_VERSION=1.7.1
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-ENV POETRY_NO_INTERACTION=1
-
 # path
 ENV VENV="/opt/venv"
-ENV PATH="$POETRY_HOME/bin:$VENV/bin:$PATH"
+ENV PATH="$VENV/bin:$PATH"
 
 WORKDIR /app
-COPY . .
+COPY ./app .
+COPY ./requirements.txt .
 
-RUN python -m venv $VENV \
-    && . "${VENV}/bin/activate" \
-    && python -m pip install "poetry==${POETRY_VERSION}" \
-    && poetry install --no-ansi --without dev \
-    && poetry export -f requirements.txt --output requirements.txt --without-hashes
+RUN python -m venv $VENV
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=./requirements.txt,target=/app/requirements.txt \
+    python -m pip install -r requirements.txt
 
 FROM python:${PYTHON_VERSION}-slim-bullseye AS runner
 
@@ -49,9 +44,6 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "$TZ" > /etc/time
 
 # setup standard non-root user for use downstream
 ENV USER_NAME=appuser
-ENV USER_GROUP=appuser
-ENV HOME="/home/${USER_NAME}"
-ENV HOSTNAME="${HOST:-localhost}"
 ENV VENV="/opt/venv"
 
 ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
@@ -69,14 +61,6 @@ ENV WEB_CONCURRENCY=2
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
-
-# add non-root user and setup raw directory
-RUN groupadd ${USER_NAME} \
-    && useradd -m ${USER_NAME} -g ${USER_GROUP} \
-    && mkdir -p /app/raw \
-    && chown -R ${USER_NAME}:${USER_GROUP} /app/raw
-
 # install dependencies
 RUN apt-get -qq update \
     && apt-get -qq install \
@@ -85,9 +69,25 @@ RUN apt-get -qq update \
     lsof \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=${USER_NAME} . .
-COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
+# add non-root user
+ARG UID=10001
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    ${USER_NAME}
 
 USER ${USER_NAME}
+
+WORKDIR /app
+
+COPY --chown=${USER_NAME} ./app .
+COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
+
+# expose port
+EXPOSE 3000
 
 CMD ["/bin/sh", "startup.sh"]

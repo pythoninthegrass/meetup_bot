@@ -8,7 +8,7 @@ TLD="$(git rev-parse --show-toplevel)"
 ENV_FILE="${TLD}/app/.env"
 [[ -f "${ENV_FILE}" ]] && export $(grep -v '^#' ${ENV_FILE} | xargs)
 PLATFORM="linux/amd64"
-REGISTRY_URL=${REGISTRY_URL:-docker.io}
+REGISTRY=${REGISTRY:-docker.io}
 USER_NAME=${USER_NAME:-pythoninthegrass}
 SERVICE=${SERVICE:-meetup-bot}
 
@@ -26,7 +26,7 @@ build() {
 	docker buildx build \
 		--platform="${PLATFORM}" \
 		-f "${FILENAME}" \
-		-t "${REGISTRY_URL}/${USER_NAME}/${SERVICE}" \
+		-t "${REGISTRY}/${USER_NAME}/${SERVICE}" \
 		--load .
 }
 

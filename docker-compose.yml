@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  meetup-bot:
+    container_name: meetup-bot
+    image: registry.heroku.com/jollygoodhorsepower/meetup-bot
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    platform: linux/amd64
+    tty: false                    # false for `entrypoint` in Dockerfile
+    stdin_open: false             # false for `entrypoint` in Dockerfile
+    env_file:
+      - ./app/.env
+    volumes:
+      - ./app:/app
+    ports:
+      - 3000:3000
+
+networks:
+  default:
+    driver: bridge

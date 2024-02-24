@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2046,SC2086,SC2317
+
 # set -euo pipefail
 
 TLD="$(git rev-parse --show-toplevel)"
