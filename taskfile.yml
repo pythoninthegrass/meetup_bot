@@ -11,20 +11,12 @@ env:
     # sh: "basename ${{.TASKFILE_DIR}}"     # directory name
   APP:
     sh: echo "${APP_NAME:-meetup_bot}"
-  COMPOSE_FILE:
-    sh: "echo ${COMPOSE_FILE:-{{.TASKFILE_DIR}}/app/docker-compose.yml}"
-  DOCKERFILE:
-    sh: "echo ${DOCKERFILE:-{{.TASKFILE_DIR}}/app/Dockerfile}"
-  PLATFORM:
-    sh: "echo ${PLATFORM:-linux/amd64}"
   POETRY:
     sh: "echo ${POETRY:-1.7.1}"
   PY_VER:
     sh: "echo ${PY_VER:-3.11.6}"
   SCRIPT:
     sh: "echo ${SCRIPT:-scheduler.sh}"
-  TAG:
-    sh: "echo 'registry.heroku.com/${HEROKU_APP}/web:latest'"
   UNAME:
     sh: "uname -s"
 
@@ -34,25 +26,26 @@ includes:
   docker:
     taskfile: ./tasks/docker.yml
     aliases: ["docker"]
-    dir: ./app
   heroku:
     taskfile: ./tasks/heroku.yml
     aliases: ["heroku"]
-    dir: ./app
 
 tasks:
   print:
     - |
       echo -e "TLD:\t\t$TLD"
       echo -e "APP:\t\t{{.APP}}"
+      echo -e "BUILD:\t\t{{.BUILD}}"
       echo -e "COMPOSE_FILE:\t{{.COMPOSE_FILE}}"
       echo -e "DOCKERFILE:\t{{.DOCKERFILE}}"
+      echo -e "HEROKU_APP:\t{{.HEROKU_APP}}"
       echo -e "PLATFORM:\t{{.PLATFORM}}"
       echo -e "POETRY:\t\t{{.POETRY}}"
       echo -e "PY_VER:\t\t{{.PY_VER}}"
       echo -e "SCRIPT:\t\t{{.SCRIPT}}"
-      echo -e "REGISTRY_URL:\t$REGISTRY_URL"
+      echo -e "REGISTRY:\t$REGISTRY"
       echo -e "SERVICE:\t{{.SERVICE}}"
+      echo -e "TAG:\t\t${TAG}"
       echo -e "USER_NAME:\t$USER_NAME"
       echo -e "UNAME:\t\t$UNAME"
 
@@ -87,12 +80,11 @@ tasks:
   export-reqs:
     desc: "Export requirements.txt"
     summary: |
-      Export the project dependencies to a requirements.txt file
-      in the ./app directory.
+      Export the project dependencies to a requirements.txt file.
     cmds:
       - |
         poetry export -f requirements.txt \
-          --output {{.TLD}}/app/requirements.txt \
+          --output {{.TLD}}/requirements.txt \
           --without-hashes \
           --no-ansi
     ignore_error: true

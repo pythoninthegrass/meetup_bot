@@ -3,6 +3,12 @@ version: "3.0"
 set: ['e', 'u', 'pipefail']
 shopt: ['globstar']
 
+env:
+  BUILD: "{{.TASKFILE_DIR}}/bin/build.sh"
+  COMPOSE_FILE: "{{.TLD}}/docker-compose.yml"
+  DOCKERFILE: "{{.TLD}}/Dockerfile.web"
+  PLATFORM: "linux/amd64"
+
 tasks:
   # TODO: list only the current taskfile tasks from parent taskfile
   default:
@@ -52,7 +58,7 @@ tasks:
     cmds:
       - docker exec -it {{.SERVICE}} sh
 
-  docker-logs:
+  logs:
     desc: "Follow the logs of a running container"
     cmds:
       - docker compose logs -tf {{.SERVICE}}
