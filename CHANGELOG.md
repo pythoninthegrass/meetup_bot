@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.1...v1.0.2) (2024-02-24)
+
+
+### Bug Fixes
+
+* docker ([be44104](https://github.com/pythoninthegrass/meetup_bot/commit/be44104c8caa7197eeb12123873ab64aa7677ef8))
+
 ## [1.0.1](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.0...v1.0.1) (2024-02-19)
 
 
