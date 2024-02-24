@@ -50,14 +50,14 @@ tasks:
     desc: "Release the project"
     cmds:
       - heroku container:release web --app ${HEROKU_APP}
-      - task stats
+      - task heroku:stats
 
   push:
     desc: "Push the project to Heroku"
     cmds:
       - |
         heroku container:push web --app ${HEROKU_APP}
-        task stats
+        task heroku:stats
 
   pull:
     desc: "Pull the project from Heroku"
