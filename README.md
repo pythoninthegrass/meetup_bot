@@ -127,8 +127,8 @@ docker-compose down --volumes
   * 100% coverage
 * Documentation
   * quickstart
-    * ~~`justfile` usage~~
-    * Docker Compose
+    * ~~Docker Compose~~
+    * `Taskfile` usage
     * QA (especially accounts)
   * Coralogix logging
   * healthchecks.io
