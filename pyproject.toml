@@ -22,7 +22,7 @@ psycopg2-binary = "^2.9.9"
 PyJWT = {extras = ["crypto"], version = "^2.8.0"}
 python-decouple = "^3.8"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-python-multipart = "^0.0.7"
+python-multipart = "^0.0.9"
 requests = "^2.31.0"
 requests-cache = "^1.2.0"
 slack-sdk = "^3.27.1"
