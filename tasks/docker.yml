@@ -4,18 +4,12 @@ set: ['e', 'u', 'pipefail']
 shopt: ['globstar']
 
 env:
-  BUILD: "{{.TASKFILE_DIR}}/bin/build.sh"
+  BUILD: "{{.TLD}}/bin/build.sh"
   COMPOSE_FILE: "{{.TLD}}/docker-compose.yml"
   DOCKERFILE: "{{.TLD}}/Dockerfile.web"
   PLATFORM: "linux/amd64"
 
 tasks:
-  # TODO: list only the current taskfile tasks from parent taskfile
-  default:
-    desc: "Default task"
-    cmds:
-      - task --list
-
   net:
     desc: "Create docker network"
     cmds:
@@ -38,9 +32,20 @@ tasks:
       - |
         {{.BUILD}} build {{.DOCKERFILE}} {{.SERVICE}}
 
+  login:
+    desc: "Login to the container registry"
+    cmds:
+      - |
+        echo "{{.REGISTRY_PASS}}" | docker login \
+          -u {{.USER_NAME}} \
+          --password-stdin {{.REGISTRY_URL}}
+    run: once
+    silent: true
+
   push:
     desc: "Push the docker image to the registry"
     deps:
+      - login
       - build
     cmds:
       - docker push {{.REGISTRY_URL}}/{{.USER_NAME}}/{{.SERVICE}}
