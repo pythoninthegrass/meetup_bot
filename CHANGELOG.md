@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.3](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.2...v1.0.3) (2024-03-22)
+
+
+### Bug Fixes
+
+* heroku stats ([79977ab](https://github.com/pythoninthegrass/meetup_bot/commit/79977ab5549de6d11d888b229fd3b7f0d1b352e0))
+
+
+### Documentation
+
+* update README.md ([11239c0](https://github.com/pythoninthegrass/meetup_bot/commit/11239c098f59acc35ed006610fd8b4031520f953))
+* update README.md ([9038532](https://github.com/pythoninthegrass/meetup_bot/commit/903853252fcf1bfa0d28540eed8e1fb45c6ddaa1))
+* update README.md ([a752c67](https://github.com/pythoninthegrass/meetup_bot/commit/a752c673f073d8cf355bf399416d8b4dcda05b4b))
+
 ## [1.0.2](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.1...v1.0.2) (2024-02-24)
 
 
