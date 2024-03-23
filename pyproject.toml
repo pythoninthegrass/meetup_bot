@@ -41,7 +41,7 @@ pytest-datafiles = "^3.0.0"
 pytest-xdist = "^3.5.0"
 requests-mock = "^1.11.0"
 rich = "^13.7.1"
-ruff = "^0.0.270"
+ruff = "^0.3.4"
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
