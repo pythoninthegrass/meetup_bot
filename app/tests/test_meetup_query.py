@@ -52,7 +52,7 @@ def test_send_request(datafiles, requests_mock):
     assert re.search(r'200', res)
 
     # * spot check of raw response length is > 25000 chars
-    assert (type(res) is str) and len(res) >= 1000
+    assert isinstance(res, str) and len(res) >= 1000
     assert re.search(r'"name": "Techlahoma"', res)
     assert re.search(r'"memberUrl": "https://www.meetup.com/members/186454903"', res)
 
