@@ -280,6 +280,7 @@ def load_user(username: str):
 Startup
 """
 
+# TODO: https://fastapi.tiangolo.com/advanced/events/
 @app.on_event('startup')
 def startup_event():
     """
@@ -422,7 +423,12 @@ def main():
     import uvicorn
 
     try:
-        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="warning", reload=True)
+        uvicorn.run("main:app",
+                    host="0.0.0.0",
+                    port=PORT,
+                    limit_max_requests=10000,
+                    log_level="warning",
+                    reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)
