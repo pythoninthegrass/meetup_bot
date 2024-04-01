@@ -329,6 +329,7 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
     except KeyError as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     return access_token, refresh_token
