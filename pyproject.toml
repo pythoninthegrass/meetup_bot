@@ -31,7 +31,7 @@ wheel = "^0.43.0"
 
 [tool.poetry.group.dev.dependencies]
 APScheduler = "^3.10.4"
-ipython = "^8.22.2"
+ipython = "^8.23.0"
 poetry-plugin-export = "^1.7.1"
 playwright = "^1.42.0"
 pytest = "^8.1.1"
@@ -39,9 +39,9 @@ pytest-asyncio = "^0.21.0"
 pytest-cov = "^4.1.0"
 pytest-datafiles = "^3.0.0"
 pytest-xdist = "^3.5.0"
-requests-mock = "^1.11.0"
+requests-mock = "^1.12.1"
 rich = "^13.7.1"
-ruff = "^0.0.270"
+ruff = "^0.3.4"
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
