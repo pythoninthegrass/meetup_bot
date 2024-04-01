@@ -23,10 +23,10 @@ vars:
 
 includes:
   docker:
-    taskfile: ./tasks/docker.yml
+    taskfile: ./taskfiles/docker.yml
     aliases: ["docker"]
   heroku:
-    taskfile: ./tasks/heroku.yml
+    taskfile: ./taskfiles/heroku.yml
     aliases: ["heroku"]
 
 tasks:
