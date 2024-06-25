@@ -20,7 +20,7 @@
 Use Meetup Pro API to send Slack messages before events occur.
 
 ## Minimum Requirements
-* [Python 3.11.6](https://www.python.org/downloads/)
+* [Python 3.11+](https://www.python.org/downloads/)
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 * [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
 * Slack
