@@ -1,20 +1,24 @@
 # ETC
-*.sqlite
+.bash_history
 *.db
-redis*
-!redis.conf.example
-*.pem
 *.key
-raw/
-!**/.gitkeep
-!groups.csv
-!channels.csv
+*.pem
+*.sample
+*.sample
+*.sqlite
+*cache
+*report.json
 gen_token.py
 gitleaks_report*.json
-.bash_history
+raw/
+redis*
 tempCodeRunnerFile*
-*report.json
-*cache
+
+# INCLUDE
+!*.gitkeep
+!channels.csv
+!groups.csv
+!*.example
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
