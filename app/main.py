@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import arrow
-# import os
 import pandas as pd
 import sys
 import time
