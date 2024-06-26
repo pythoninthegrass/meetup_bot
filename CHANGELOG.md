@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.4](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.3...v1.0.4) (2024-06-26)
+
+
+### Bug Fixes
+
+* print exception error ([96c3c40](https://github.com/pythoninthegrass/meetup_bot/commit/96c3c404b1268401f2a4bbfc803f32849cc54d98))
+* remove buildkit ([bd7ecc1](https://github.com/pythoninthegrass/meetup_bot/commit/bd7ecc125d188e5bf4fc526f267282dd5492a19d))
+* remove hard-coded .env path ([bc05636](https://github.com/pythoninthegrass/meetup_bot/commit/bc056360e81968c7d086fce4744f807b9093c0e3))
+* wrong dockerfile directory ([b77daf5](https://github.com/pythoninthegrass/meetup_bot/commit/b77daf51d5b1ae3d4fae406b3513ae8a201bce30))
+
+
+### Documentation
+
+* update readme ([899cb27](https://github.com/pythoninthegrass/meetup_bot/commit/899cb279d2ee87acb154edf612e196b6f9b1b541))
+
 ## [1.0.3](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.2...v1.0.3) (2024-03-22)
 
 
