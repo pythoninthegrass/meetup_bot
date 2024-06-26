@@ -11,9 +11,9 @@ env:
   APP:
     sh: echo "${APP_NAME:-meetup_bot}"
   POETRY:
-    sh: "echo ${POETRY:-1.7.1}"
+    sh: "echo ${POETRY:-1.8.3}"
   PY_VER:
-    sh: "echo ${PY_VER:-3.11.6}"
+    sh: "echo ${PY_VER:-3.11.9}"
   SCRIPT:
     sh: "echo ${SCRIPT:-scheduler.sh}"
   UNAME:
@@ -28,6 +28,9 @@ includes:
   heroku:
     taskfile: ./taskfiles/heroku.yml
     aliases: ["heroku"]
+  poetry:
+    taskfile: ./taskfiles/poetry.yml
+    aliases: ["poetry"]
 
 tasks:
   print:
@@ -63,6 +66,40 @@ tasks:
     desc: "Run pre-commit hooks"
     cmds:
       - pre-commit run --all-files
+
+  lint:
+    desc: "Run linters"
+    cmds:
+      - poetry run ruff check --fix --respect-gitignore
+
+  format:
+    desc: "Run formatters"
+    cmds:
+      - poetry run ruff format --respect-gitignore
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - poetry run pytest
+
+  pyclean:
+    desc: "Remove .pyc and __pycache__"
+    cmds:
+      - |
+        args=(
+          .
+          --debris
+          --verbose
+          -i .devbox
+        )
+        case "{{.CLI_ARGS}}" in
+          dry-run)
+            poetry run pyclean "${args[@]}" --dry-run
+            ;;
+          *)
+            poetry run pyclean "${args[@]}"
+            ;;
+        esac
 
   checkbash:
     desc: "Check bash scripts"

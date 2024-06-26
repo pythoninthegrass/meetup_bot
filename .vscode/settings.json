@@ -1,4 +1,8 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/app/.venv/bin/python",
   "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.testing.pytestArgs": [
+    "./tests/"
+    //"--headed"
+  ]
 }

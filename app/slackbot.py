@@ -2,9 +2,7 @@
 
 import arrow
 import json
-# import os
 import pandas as pd
-# import sys
 import time
 from decouple import config
 from icecream import ic
