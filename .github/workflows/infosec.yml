@@ -1,17 +1,24 @@
-name: infosec
-on: [pull_request, push, workflow_dispatch]
+name: InfoSec
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *" # run once a day at 4 AM
+
 jobs:
   creds:
     name: gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}    # Only required for Organizations, not personal accounts.
+
   # TODO: uncomment when they fix this; scan locally via `snyk monitor`
   # vuln:
   #   name: snyk
@@ -30,4 +37,3 @@ jobs:
   #       uses: github/codeql-action/upload-sarif@v2
   #       with:
   #         sarif_file: snyk.sarif
-
