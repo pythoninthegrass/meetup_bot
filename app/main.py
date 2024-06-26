@@ -279,6 +279,7 @@ def load_user(username: str):
 Startup
 """
 
+# TODO: https://fastapi.tiangolo.com/advanced/events/
 @app.on_event('startup')
 def startup_event():
     """
@@ -327,6 +328,7 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
         access_token = tokens['access_token']
         refresh_token = tokens['refresh_token']
     except KeyError as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     return access_token, refresh_token
@@ -421,7 +423,12 @@ def main():
     import uvicorn
 
     try:
-        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="warning", reload=True)
+        uvicorn.run("main:app",
+                    host="0.0.0.0",
+                    port=PORT,
+                    limit_max_requests=10000,
+                    log_level="warning",
+                    reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)

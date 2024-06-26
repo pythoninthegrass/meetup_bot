@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-"""Helper script to be used as a pre-commit hook."""
+#!/usr/bin/env python
+
 import os
 import sys
 import subprocess

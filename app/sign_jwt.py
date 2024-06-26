@@ -9,7 +9,7 @@ import time
 from colorama import Fore
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
-from decouple import Config, RepositoryEnv
+from decouple import config
 from icecream import ic
 from pathlib import Path
 from urllib.parse import urlencode
@@ -21,15 +21,6 @@ from urllib.parse import urlencode
 info = "INFO:"
 error = "ERROR:"
 warning = "WARNING:"
-
-# get .env file
-if not Path(".env").exists():
-    env_file = Path(__file__).parent / '.env'
-else:
-    env_file = Path(".env")
-
-# decouple read .env file
-config = Config(RepositoryEnv(env_file))
 
 # creds
 if Path('jwt_priv.pem').exists():

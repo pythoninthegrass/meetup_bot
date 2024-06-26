@@ -10,7 +10,7 @@ setup:
     APP_NAME: meetup-bot-bot
 build:
   docker:
-    web: ./app/Dockerfile.web
+    web: ./Dockerfile.web
 # * Defaults to Dockerfile CMD if `run` isn't declared
 # run:
 #   web: gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:${PORT:-3000} --log-file -

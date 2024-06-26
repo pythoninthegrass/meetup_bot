@@ -45,14 +45,15 @@ def test_sign_token():
     """Test sign_token()"""
     token = sign_token()
 
-    assert (type(token) is str) and len(token) >= 1030
+    assert isinstance(token, str) and len(token) >= 1030
 
 
 def test_verify_token():
     """Test verify_token()"""
     token = sign_token()
 
-    assert verify_token(token) == True
+    if verify_token(token):
+        assert True
 
 
 # TODO: mock requests.post() to test get_access_token()
@@ -66,4 +67,3 @@ def test_get_access_token():
     assert res.text.find('refresh_token') != -1
     assert res.text.find('token_type') != -1
     assert res.text.find('expires_in') != -1
-

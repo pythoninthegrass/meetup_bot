@@ -30,11 +30,13 @@ WORKDIR /app
 COPY ./app .
 COPY ./requirements.txt .
 
-RUN python -m venv $VENV
+RUN python -m venv $VENV \
+    && python -m pip install -r requirements.txt
 
-RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,source=./requirements.txt,target=/app/requirements.txt \
-    python -m pip install -r requirements.txt
+# ! heroku doesn't use buildkit
+# RUN --mount=type=cache,target=/root/.cache/pip \
+#     --mount=type=bind,source=./requirements.txt,target=/app/requirements.txt \
+#     python -m pip install -r requirements.txt
 
 FROM python:${PYTHON_VERSION}-slim-bullseye AS runner
 
