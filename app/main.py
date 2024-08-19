@@ -32,22 +32,11 @@ info = "INFO:"
 error = "ERROR:"
 warning = "WARNING:"
 
-# logs
-# pony.options.CUT_TRACEBACK = False
-# logging.basicConfig(level=logging.DEBUG)
-
-# time span (e.g., 3600 = 1 hour)
-# sec = int(60)           # n seconds
-# age = int(sec * 1)      # n minutes -> hours
-
-# cache the requests as script basename, expire after 1 hour
-# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
-
 # env
 home = Path.home()
 cwd = Path.cwd()
-csv_fn = config('CSV_FN', default='raw/output.csv')
-json_fn = config('JSON_FN', default='raw/output.json')
+csv_fn = config("CSV_FN", default="raw/output.csv")
+json_fn = config("JSON_FN", default="raw/output.json")
 tz = config("TZ", default="America/Chicago")
 
 # time
@@ -55,25 +44,25 @@ loc_time = arrow.now().to(tz)
 time.tzset()
 
 # pandas don't truncate output
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 pd.set_option('display.max_colwidth', None)
 
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
 
 # creds
-TTL = config('TTL', default=3600, cast=int)
-HOST = config('HOST')
-PORT = config('PORT', default=3000, cast=int)
-SECRET_KEY = config('SECRET_KEY')
-ALGORITHM = config('ALGORITHM', default='HS256')
-TOKEN_EXPIRE = config('TOKEN_EXPIRE', default=30, cast=int)
-DB_NAME = config('DB_NAME')
-DB_USER = config('DB_USER')
-DB_PASS = config('DB_PASS')
-DB_HOST = config('DB_HOST')
-DB_PORT = config('DB_PORT', default=5432, cast=int)
+TTL = config("TTL", default=3600, cast=int)
+HOST = config("HOST")
+PORT = config("PORT", default=3000, cast=int)
+SECRET_KEY = config("SECRET_KEY")
+ALGORITHM = config("ALGORITHM", default="HS256")
+TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
+DB_NAME = config("DB_NAME")
+DB_USER = config("DB_USER")
+DB_PASS = config("DB_PASS")
+DB_HOST = config("DB_HOST")
+DB_PORT = config("DB_PORT", default=5432, cast=int)
 
 
 """
@@ -258,12 +247,6 @@ async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()
     )
 
     return {"access_token": oauth_token, "token_type": "bearer"}
-
-
-# @app.get("/users/me")
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    """Read users me"""
-    return current_user
 
 
 """
