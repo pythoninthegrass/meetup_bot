@@ -17,10 +17,12 @@ from jose import JWTError, jwt
 from meetup_query import *
 from passlib.context import CryptContext
 from pathlib import Path
-from pony.orm import *
+from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 from pydantic import BaseModel
+from schedule import get_schedule, snooze_schedule, check_and_revert_snooze
 from sign_jwt import main as gen_token
 from slackbot import *
+from typing import List, Union
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -46,8 +48,10 @@ home = Path.home()
 cwd = Path.cwd()
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
-TZ = config('TZ', default='America/Chicago')
-loc_time = arrow.now().to(TZ)
+tz = config("TZ", default="America/Chicago")
+
+# time
+loc_time = arrow.now().to(tz)
 time.tzset()
 
 # pandas don't truncate output
@@ -266,6 +270,7 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
 Login
 """
 
+
 def load_user(username: str):
     with db_session:
         user = UserInfo.get(username=username)
@@ -279,8 +284,9 @@ def load_user(username: str):
 Startup
 """
 
+
 # TODO: https://fastapi.tiangolo.com/advanced/events/
-@app.on_event('startup')
+@app.on_event("startup")
 def startup_event():
     """
     Run startup event
@@ -351,7 +357,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     access_token, refresh_token = generate_token()
 
     # default exclusions
-    exclusion_list = ['36\u00b0N', 'Nerdy Girls']
+    exclusion_list = ["36\u00b0N", "Nerdy Girls"]
 
     # if exclusions, add to list of exclusions
     if exclusions is not None:
@@ -381,8 +387,56 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     return pd.read_json(json_fn)
 
 
+@api_router.get("/check-schedule")
+def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Request = None):
+    """
+    Check if it's time to post to Slack based on the schedule
+    """
+    current_time = arrow.now(tz)
+    current_day = current_time.format("dddd")  # e.g., "Monday"
+
+    with db_session:
+        check_and_revert_snooze()  # Check and revert any expired snoozes
+        schedule = get_schedule(current_day)
+        if schedule and schedule.enabled:
+            # Parse the schedule_time as a time, not a full date-time
+            schedule_time = arrow.get(schedule.schedule_time, "HH:mm").replace(tzinfo=schedule.timezone)
+            schedule_time_local = schedule_time.to(tz)
+
+            # Is time within 5 minutes of scheduled time
+            time_diff = abs(
+                (current_time.hour * 60 + current_time.minute) - (schedule_time_local.hour * 60 + schedule_time_local.minute)
+            )
+
+            should_post = time_diff <= 5
+
+            if request:
+                # If it's a web request, return a JSON response
+                return {
+                    "should_post": should_post,
+                    "current_time": current_time.isoformat(),
+                    "schedule_time": schedule_time_local.isoformat(),
+                    "time_diff_minutes": time_diff,
+                }
+            else:
+                # If it's an internal call, return a boolean
+                return should_post
+
+    # If no schedule found or not enabled
+    if request:
+        return {"should_post": False, "reason": "No schedule found or not enabled"}
+    else:
+        return False
+
+
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", channel_name: str = None, current_user: User = Depends(get_current_active_user)):
+def post_slack(
+    location: str = "Oklahoma City",
+    exclusions: str = "Tulsa",
+    channel_name: str = None,
+    current_user: User = Depends(get_current_active_user),
+    override: bool = False,
+):
     """
     Post to slack
 
@@ -391,6 +445,9 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", chann
 
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not should_post_to_slack() and not override:
+        return {"message": "Not scheduled to post at this time"}
 
     get_events(location, exclusions=exclusions)
 
@@ -402,7 +459,7 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", chann
         # get channel id chan_dict key value pair
         channel_id = chan_dict[channel_name]
         # post to single channel
-        send_message('\n'.join(msg), channel_id)
+        send_message("\n".join(msg), channel_id)
     else:
         # post to all channels
         for name, id in channels.items():
