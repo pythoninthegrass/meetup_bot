@@ -4,5 +4,6 @@
   "python.testing.pytestArgs": [
     "./tests/"
     //"--headed"
-  ]
+  ],
+  "debug.inlineValues": "off"
 }
