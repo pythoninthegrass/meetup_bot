@@ -135,6 +135,7 @@ db.generate_mapping(create_tables=True)
 Authentication
 """
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -314,8 +315,8 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     # generate access and refresh tokens
     try:
         tokens = gen_token()
-        access_token = tokens['access_token']
-        refresh_token = tokens['refresh_token']
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
     except KeyError as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -446,7 +447,7 @@ def post_slack(
     else:
         # post to all channels
         for name, id in channels.items():
-            send_message('\n'.join(msg), id)
+            send_message("\n".join(msg), id)
 
     return ic(msg)
 
