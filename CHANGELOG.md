@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.4...v1.1.0) (2024-08-21)
+
+
+### Features
+
+* add scheduling ([800acda](https://github.com/pythoninthegrass/meetup_bot/commit/800acda371006760724ca67e6b0a70260b39b0b1))
+
 ## [1.0.4](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.3...v1.0.4) (2024-06-26)
 
 
