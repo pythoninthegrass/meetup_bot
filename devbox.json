@@ -16,8 +16,7 @@
   "shell": {
     "init_hook": [
       ". $VENV_DIR/bin/activate",
-      "uv pip install -r requirements.txt",
-      "cd ./app"
+      "uv pip install -r requirements.txt"
     ],
     "scripts": {
       "export-reqs": "uv pip freeze | uv pip compile - -o requirements.txt",
