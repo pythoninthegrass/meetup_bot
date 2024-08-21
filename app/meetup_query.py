@@ -36,7 +36,7 @@ csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
 DAYS = config('DAYS', default=7, cast=int)
-TZ = config('TZ', default='America/Chicago')
+tz = config('TZ', default='America/Chicago')
 
 # time span (e.g., 3600 = 1 hour)
 sec = int(60)               # n seconds
@@ -45,6 +45,7 @@ ttl = int(sec * 30)         # n minutes -> hours
 # cache the requests as script basename, expire after n time
 requests_cache.install_cache(Path(cache_fn), expire_after=ttl)
 
+# TODO: fix mocker patch for groups_csv
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
 
@@ -221,7 +222,7 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
 
     # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next n days
-    time_span = arrow.now(tz=TZ).shift(days=DAYS)
+    time_span = arrow.now(tz=tz).shift(days=DAYS)
     df = df[df['date'] <= time_span.isoformat()]
 
     return df
@@ -299,7 +300,7 @@ def sort_json(filename) -> None:
     df = df.sort_values(by=['date'])
 
     # drop events by date when they are older than the current time
-    df = df[df['date'] >= arrow.now(TZ).format('YYYY-MM-DDTHH:mm:ss')]
+    df = df[df['date'] >= arrow.now(tz).format('YYYY-MM-DDTHH:mm:ss')]
     df = df.reset_index(drop=True)
 
     # convert date to human readable format (Thu 5/26 at 11:30 am)

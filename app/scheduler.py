@@ -5,7 +5,6 @@ import arrow
 import atexit
 import os
 import requests
-# import socket
 import sys
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -90,19 +89,6 @@ def post_to_slack():
     except requests.exceptions.RequestException as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}[{loc_time.format('YYYY-MM-DD HH:mm:ss')}] {e}")
         sys.exit(1)
-
-
-# TODO: debug available ports (Errno 48)
-# def next_free_port(port=3001, max_port=65535):
-#     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     while port <= max_port:
-#         try:
-#             sock.bind((HOST, port))
-#             sock.close()
-#             return port
-#         except OSError:
-#             port += 1
-#     raise IOError('No free ports')
 
 
 def main():

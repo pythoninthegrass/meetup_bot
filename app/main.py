@@ -17,10 +17,12 @@ from jose import JWTError, jwt
 from meetup_query import *
 from passlib.context import CryptContext
 from pathlib import Path
-from pony.orm import *
+from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 from pydantic import BaseModel
+from schedule import get_schedule, snooze_schedule, check_and_revert_snooze
 from sign_jwt import main as gen_token
 from slackbot import *
+from typing import List, Union
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -30,46 +32,37 @@ info = "INFO:"
 error = "ERROR:"
 warning = "WARNING:"
 
-# logs
-# pony.options.CUT_TRACEBACK = False
-# logging.basicConfig(level=logging.DEBUG)
-
-# time span (e.g., 3600 = 1 hour)
-# sec = int(60)           # n seconds
-# age = int(sec * 1)      # n minutes -> hours
-
-# cache the requests as script basename, expire after 1 hour
-# requests_cache.install_cache(Path(__file__).stem, expire_after=age)
-
 # env
 home = Path.home()
 cwd = Path.cwd()
-csv_fn = config('CSV_FN', default='raw/output.csv')
-json_fn = config('JSON_FN', default='raw/output.json')
-TZ = config('TZ', default='America/Chicago')
-loc_time = arrow.now().to(TZ)
+csv_fn = config("CSV_FN", default="raw/output.csv")
+json_fn = config("JSON_FN", default="raw/output.json")
+tz = config("TZ", default="America/Chicago")
+
+# time
+loc_time = arrow.now().to(tz)
 time.tzset()
 
 # pandas don't truncate output
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 pd.set_option('display.max_colwidth', None)
 
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
 
 # creds
-TTL = config('TTL', default=3600, cast=int)
-HOST = config('HOST')
-PORT = config('PORT', default=3000, cast=int)
-SECRET_KEY = config('SECRET_KEY')
-ALGORITHM = config('ALGORITHM', default='HS256')
-TOKEN_EXPIRE = config('TOKEN_EXPIRE', default=30, cast=int)
-DB_NAME = config('DB_NAME')
-DB_USER = config('DB_USER')
-DB_PASS = config('DB_PASS')
-DB_HOST = config('DB_HOST')
-DB_PORT = config('DB_PORT', default=5432, cast=int)
+TTL = config("TTL", default=3600, cast=int)
+HOST = config("HOST")
+PORT = config("PORT", default=3000, cast=int)
+SECRET_KEY = config("SECRET_KEY")
+ALGORITHM = config("ALGORITHM", default="HS256")
+TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
+DB_NAME = config("DB_NAME")
+DB_USER = config("DB_USER")
+DB_PASS = config("DB_PASS")
+DB_HOST = config("DB_HOST")
+DB_PORT = config("DB_PORT", default=5432, cast=int)
 
 
 """
@@ -141,6 +134,7 @@ db.generate_mapping(create_tables=True)
 """
 Authentication
 """
+
 
 class Token(BaseModel):
     access_token: str
@@ -256,15 +250,10 @@ async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()
     return {"access_token": oauth_token, "token_type": "bearer"}
 
 
-# @app.get("/users/me")
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    """Read users me"""
-    return current_user
-
-
 """
 Login
 """
+
 
 def load_user(username: str):
     with db_session:
@@ -279,8 +268,9 @@ def load_user(username: str):
 Startup
 """
 
+
 # TODO: https://fastapi.tiangolo.com/advanced/events/
-@app.on_event('startup')
+@app.on_event("startup")
 def startup_event():
     """
     Run startup event
@@ -325,8 +315,8 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     # generate access and refresh tokens
     try:
         tokens = gen_token()
-        access_token = tokens['access_token']
-        refresh_token = tokens['refresh_token']
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
     except KeyError as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -351,7 +341,7 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     access_token, refresh_token = generate_token()
 
     # default exclusions
-    exclusion_list = ['36\u00b0N', 'Nerdy Girls']
+    exclusion_list = ["36\u00b0N", "Nerdy Girls"]
 
     # if exclusions, add to list of exclusions
     if exclusions is not None:
@@ -381,8 +371,56 @@ def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", curre
     return pd.read_json(json_fn)
 
 
+@api_router.get("/check-schedule")
+def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Request = None):
+    """
+    Check if it's time to post to Slack based on the schedule
+    """
+    current_time = arrow.now(tz)
+    current_day = current_time.format("dddd")  # e.g., "Monday"
+
+    with db_session:
+        check_and_revert_snooze()  # Check and revert any expired snoozes
+        schedule = get_schedule(current_day)
+        if schedule and schedule.enabled:
+            # Parse the schedule_time as a time, not a full date-time
+            schedule_time = arrow.get(schedule.schedule_time, "HH:mm").replace(tzinfo=schedule.timezone)
+            schedule_time_local = schedule_time.to(tz)
+
+            # Is time within 5 minutes of scheduled time
+            time_diff = abs(
+                (current_time.hour * 60 + current_time.minute) - (schedule_time_local.hour * 60 + schedule_time_local.minute)
+            )
+
+            should_post = time_diff <= 5
+
+            if request:
+                # If it's a web request, return a JSON response
+                return {
+                    "should_post": should_post,
+                    "current_time": current_time.isoformat(),
+                    "schedule_time": schedule_time_local.isoformat(),
+                    "time_diff_minutes": time_diff,
+                }
+            else:
+                # If it's an internal call, return a boolean
+                return should_post
+
+    # If no schedule found or not enabled
+    if request:
+        return {"should_post": False, "reason": "No schedule found or not enabled"}
+    else:
+        return False
+
+
 @api_router.post("/slack")
-def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", channel_name: str = None, current_user: User = Depends(get_current_active_user)):
+def post_slack(
+    location: str = "Oklahoma City",
+    exclusions: str = "Tulsa",
+    channel_name: str = None,
+    current_user: User = Depends(get_current_active_user),
+    override: bool = False,
+):
     """
     Post to slack
 
@@ -391,6 +429,9 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", chann
 
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not should_post_to_slack() and not override:
+        return {"message": "Not scheduled to post at this time"}
 
     get_events(location, exclusions=exclusions)
 
@@ -402,11 +443,11 @@ def post_slack(location: str = "Oklahoma City", exclusions: str = "Tulsa", chann
         # get channel id chan_dict key value pair
         channel_id = chan_dict[channel_name]
         # post to single channel
-        send_message('\n'.join(msg), channel_id)
+        send_message("\n".join(msg), channel_id)
     else:
         # post to all channels
         for name, id in channels.items():
-            send_message('\n'.join(msg), id)
+            send_message("\n".join(msg), id)
 
     return ic(msg)
 
