@@ -9,19 +9,20 @@ on:
     workflows: ["Build Docker image"]
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.actor }}/${{ github.repository }}:latest
+      image: ghcr.io/${{ github.repository }}:latest
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.GITHUB_TOKEN }}
 
     services:
       app:
-        image: ghcr.io/${{ github.actor }}/${{ github.repository }}:latest
+        image: ghcr.io/${{ github.repository }}:latest
         credentials:
            username: ${{ github.actor }}
            password: ${{ secrets.GITHUB_TOKEN }}
