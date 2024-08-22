@@ -1,0 +1,46 @@
+name: Pytest Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["Build Docker image"]
+    types:
+      - completed
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.actor }}/${{ github.repository }}:latest
+      credentials:
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+    services:
+      app:
+        image: ghcr.io/${{ github.actor }}/${{ github.repository }}:latest
+        credentials:
+           username: ${{ github.actor }}
+           password: ${{ secrets.GITHUB_TOKEN }}
+        ports:
+          - 3000:3000
+        env:
+          URL: http://localhost
+          PORT: 3000
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install pytest
+      run: |
+        python -m pip install pytest requests python-decouple
+
+    - name: Run pytest
+      run: |
+        pytest ./tests/test_smoke.py
+      env:
+        URL: http://app
+        PORT: 3000
