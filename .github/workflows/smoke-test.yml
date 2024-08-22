@@ -14,12 +14,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}:latest
-      credentials:
-         username: ${{ github.actor }}
-         password: ${{ secrets.GITHUB_TOKEN }}
-
     services:
       app:
         image: ghcr.io/${{ github.repository }}:latest
@@ -43,5 +37,5 @@ jobs:
       run: |
         pytest ./tests/test_smoke.py
       env:
-        URL: http://app
+        URL: http://localhost
         PORT: 3000
