@@ -19,6 +19,10 @@ on:
         required: true
         default: 'latest'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY_URL: ghcr.io
   REGISTRY_USER: ${{ github.repository_owner }}
@@ -68,7 +72,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./app
-          file: Dockerfile
+          file: ./app/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
