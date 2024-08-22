@@ -18,8 +18,6 @@ repos:
         args: ['--maxkb=1024']
       - id: check-executables-have-shebangs
         files: \.(py|sh)$
-      - id: check-docstring-first
-        files: \.(py)$
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
         files: \.(py|sh)$

@@ -46,7 +46,7 @@ time.tzset()
 # pandas don't truncate output
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
-pd.set_option('display.max_colwidth', None)
+pd.set_option("display.max_colwidth", None)
 
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
@@ -63,6 +63,23 @@ DB_USER = config("DB_USER")
 DB_PASS = config("DB_PASS")
 DB_HOST = config("DB_HOST")
 DB_PORT = config("DB_PORT", default=5432, cast=int)
+
+"""
+IP Address Whitelisting
+"""
+
+
+class IPConfig(BaseModel):
+    whitelist: List[str] = ["localhost", "127.0.0.1"]
+    public_ips: List[str] = []  # TODO: add whitelisted public IPs here
+
+
+ip_config = IPConfig()
+
+
+def is_ip_allowed(request: Request):
+    client_host = request.client.host
+    return client_host in ip_config.whitelist or client_host in ip_config.public_ips
 
 
 """
@@ -104,18 +121,14 @@ db = Database()
 
 # user model
 class UserInfo(db.Entity):
-   username = Required(str, unique=True)
-   # password = Required(str)
-   hashed_password = Required(str)
-   email = Optional(str)
+    username = Required(str, unique=True)
+    # password = Required(str)
+    hashed_password = Required(str)
+    email = Optional(str)
 
-
-# sqlite db
-# db.bind(provider='sqlite', filename=DB_NAME, create_db=True)      # local db
-# db.bind(provider='sqlite', filename=':memory:')                   # in-memory db
 
 # strip double quotes from string
-DB_PASS = DB_PASS.strip('"')                                        # local image
+DB_PASS = DB_PASS.strip('"')
 
 # postgres db
 db.bind(provider='postgres',
@@ -232,6 +245,24 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
+async def ip_whitelist_or_auth(request: Request, current_user: User = Depends(get_current_active_user)):
+    if is_ip_allowed(request):
+        return {"bypass_auth": True}
+
+    return current_user
+
+
+def check_auth(auth: Union[dict, User]) -> None:
+    """
+    Shared function to check authentication result.
+    Raises an HTTPException if authentication fails.
+    """
+    if isinstance(auth, dict) and auth.get("bypass_auth"):
+        print("Authentication bypassed due to whitelisted IP")
+    elif not isinstance(auth, User):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @app.post("/token", response_model=Token)
 async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """Login for oauth access token"""
@@ -283,6 +314,12 @@ def startup_event():
             UserInfo(username=DB_USER, hashed_password=hashed_password)
 
 
+@app.get("/healthz", status_code=200)
+def health_check():
+    """Smoke test to check if the app is running"""
+    return {"status": "ok"}
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     with open(Path("resources/templates/login.html")) as f:
@@ -326,7 +363,11 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(location: str = "Oklahoma City", exclusions: str = "Tulsa", current_user: User = Depends(get_current_active_user)):
+def get_events(auth: dict = Depends(ip_whitelist_or_auth),
+               location: str = "Oklahoma City",
+               exclusions: str = "Tulsa",
+               current_user: User = Depends(get_current_active_user)
+    ):
     """
     Query upcoming Meetup events
 
@@ -415,6 +456,7 @@ def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Re
 
 @api_router.post("/slack")
 def post_slack(
+    auth: dict = Depends(ip_whitelist_or_auth),
     location: str = "Oklahoma City",
     exclusions: str = "Tulsa",
     channel_name: str = None,
@@ -450,6 +492,55 @@ def post_slack(
             send_message("\n".join(msg), id)
 
     return ic(msg)
+
+
+@api_router.post("/snooze")
+def snooze_slack_post(
+    duration: str,
+    auth: dict = Depends(ip_whitelist_or_auth),
+    ):
+    """
+    Snooze the Slack post for the specified duration
+
+    Args:
+        duration (str): Duration to snooze the post. Valid options are:
+                        "5_minutes", "next_scheduled", "rest_of_week"
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        snooze_schedule(duration)
+        return {"message": f"Slack post snoozed for {duration}"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# TODO: test IP whitelisting
+@api_router.get("/schedule")
+def get_current_schedule(auth: Union[dict, User] = Depends(ip_whitelist_or_auth)):
+    """
+    Get the current schedule including any active snoozes
+    """
+    check_auth(auth)
+
+    with db_session:
+        check_and_revert_snooze()  # Check and revert any expired snoozes
+        schedules = []
+        for day in ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]:
+            schedule = get_schedule(day)
+            if schedule:
+                schedules.append(
+                    {
+                        "day": schedule.day,
+                        "schedule_time": schedule.schedule_time,
+                        "enabled": schedule.enabled,
+                        "snooze_until": schedule.snooze_until,
+                        "original_schedule_time": schedule.original_schedule_time,
+                    }
+                )
+
+    return {"schedules": schedules}
 
 
 # routes
