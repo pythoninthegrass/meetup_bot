@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.0...v1.1.1) (2024-08-26)
+
+
+### Bug Fixes
+
+* override schedule times ([f18718b](https://github.com/pythoninthegrass/meetup_bot/commit/f18718b62b403fabf7dce0921c9056dd96defba1))
+
 ## [1.1.0](https://github.com/pythoninthegrass/meetup_bot/compare/v1.0.4...v1.1.0) (2024-08-21)
 
 
