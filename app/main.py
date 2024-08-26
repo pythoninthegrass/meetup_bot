@@ -38,6 +38,7 @@ cwd = Path.cwd()
 csv_fn = config("CSV_FN", default="raw/output.csv")
 json_fn = config("JSON_FN", default="raw/output.json")
 tz = config("TZ", default="America/Chicago")
+bypass_schedule = config("OVERRIDE", default=False, cast=bool)
 
 # time
 loc_time = arrow.now().to(tz)
@@ -461,7 +462,7 @@ def post_slack(
     exclusions: str = "Tulsa",
     channel_name: str = None,
     current_user: User = Depends(get_current_active_user),
-    override: bool = False,
+    override: bool = bypass_schedule,
 ):
     """
     Post to slack
@@ -472,7 +473,7 @@ def post_slack(
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if not should_post_to_slack() and not override:
+    if not should_post_to_slack() and override is False:
         return {"message": "Not scheduled to post at this time"}
 
     get_events(location, exclusions=exclusions)
