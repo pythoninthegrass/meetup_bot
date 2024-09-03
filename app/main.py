@@ -14,12 +14,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
+from math import ceil
 from meetup_query import *
 from passlib.context import CryptContext
 from pathlib import Path
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 from pydantic import BaseModel
-from schedule import get_schedule, snooze_schedule, check_and_revert_snooze
+from schedule import get_schedule, get_current_schedule_time, snooze_schedule, check_and_revert_snooze
 from sign_jwt import main as gen_token
 from slackbot import *
 from typing import List, Union
@@ -41,7 +42,9 @@ tz = config("TZ", default="America/Chicago")
 bypass_schedule = config("OVERRIDE", default=False, cast=bool)
 
 # time
-loc_time = arrow.now().to(tz)
+current_time_local = arrow.now(tz)
+current_time_utc = arrow.utcnow()
+current_day = current_time_local.format("dddd")  # Monday, Tuesday, etc.
 time.tzset()
 
 # pandas don't truncate output
@@ -418,41 +421,42 @@ def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Re
     """
     Check if it's time to post to Slack based on the schedule
     """
-    current_time = arrow.now(tz)
-    current_day = current_time.format("dddd")  # e.g., "Monday"
 
     with db_session:
         check_and_revert_snooze()  # Check and revert any expired snoozes
         schedule = get_schedule(current_day)
-        if schedule and schedule.enabled:
-            # Parse the schedule_time as a time, not a full date-time
-            schedule_time = arrow.get(schedule.schedule_time, "HH:mm").replace(tzinfo=schedule.timezone)
-            schedule_time_local = schedule_time.to(tz)
 
-            # Is time within 5 minutes of scheduled time
-            time_diff = abs(
-                (current_time.hour * 60 + current_time.minute) - (schedule_time_local.hour * 60 + schedule_time_local.minute)
+        if schedule and schedule.enabled:
+            utc_time, local_time = get_current_schedule_time(schedule)
+
+            # Parse the schedule time
+            schedule_time_local = (
+                arrow.get(schedule.schedule_time, "HH:mm")
+                .replace(year=current_time_local.year, month=current_time_local.month, day=current_time_local.day, tzinfo="UTC")
+                .to(tz)
             )
 
-            should_post = time_diff <= 5
+            # Calculate time difference in minutes and round up
+            time_diff = abs((schedule_time_local - current_time_local).total_seconds() / 60)
+            time_diff_rounded = ceil(time_diff)
 
-            if request:
-                # If it's a web request, return a JSON response
-                return {
-                    "should_post": should_post,
-                    "current_time": current_time.isoformat(),
-                    "schedule_time": schedule_time_local.isoformat(),
-                    "time_diff_minutes": time_diff,
-                }
-            else:
-                # If it's an internal call, return a boolean
-                return should_post
+            # TODO: walk back to 5-10 minutes vs. 90 minutes
+            # Check if current time is within n minutes of scheduled time
+            should_post = time_diff_rounded <= 90
 
-    # If no schedule found or not enabled
-    if request:
-        return {"should_post": False, "reason": "No schedule found or not enabled"}
-    else:
-        return False
+            # TODO: verify if it's actually CST or CDT
+            return {
+                "should_post": should_post,
+                "current_time": current_time_local.format("dddd HH:mm ZZZ"),
+                "schedule_time": schedule_time_local.format("dddd HH:mm ZZZ"),
+                "time_diff_minutes": time_diff_rounded,
+            }
+
+        # If no schedule found or not enabled
+        elif not schedule or not schedule.enabled:
+            return {
+                "should_post": False,
+            }
 
 
 @api_router.post("/slack")
@@ -473,8 +477,25 @@ def post_slack(
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if not should_post_to_slack() and override is False:
-        return {"message": "Not scheduled to post at this time"}
+    should_post_result = should_post_to_slack()
+
+    if isinstance(should_post_result, dict):
+        if not should_post_result.get("should_post", False) and not override:
+            time_diff = should_post_result.get("time_diff_minutes")
+            current_time = arrow.get(should_post_result.get("current_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
+            schedule_time = arrow.get(should_post_result.get("schedule_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
+
+            return {
+                "message": "Not scheduled to post at this time",
+                "reason": f"Time difference: {time_diff} minutes",
+                "current_time": current_time,
+                "scheduled_time": schedule_time,
+            }
+    elif isinstance(should_post_result, bool):
+        if not should_post_result and not override:
+            return {"message": "Not scheduled to post at this time", "reason": "Schedule check returned False"}
+    else:
+        return {"message": "Error checking schedule", "reason": "Unexpected return type from should_post_to_slack"}
 
     get_events(location, exclusions=exclusions)
 
