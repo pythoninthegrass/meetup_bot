@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   meetup-bot:
     container_name: meetup-bot
