@@ -4,11 +4,6 @@ set: ['e', 'u', 'pipefail']
 shopt: ['globstar']
 
 tasks:
-  default:
-    desc: "Default task"
-    cmds:
-      - task --list
-
   login:
     desc: "Login to Heroku"
     run: "once"
