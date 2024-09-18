@@ -30,13 +30,19 @@ pd.set_option('display.max_colwidth', None)
 # env
 home: Path = Path.home()
 cwd: Path = Path.cwd()
+script_dir: Path = Path(__file__).resolve().parents[0]
 format = 'json'
 cache_fn = config('CACHE_FN', default='raw/meetup_query')
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
-groups_csv = Path('groups.csv')
-DAYS = config('DAYS', default=7, cast=int)
+days = config('DAYS', default=7, cast=int)
 tz = config('TZ', default='America/Chicago')
+
+groups_csv = script_dir / "groups.csv"
+if not groups_csv.exists():
+    groups_csv = cwd / "groups.csv"
+    if not groups_csv.exists():
+        raise FileNotFoundError(f"groups.csv not found in {script_dir} or {cwd}")
 
 # time span (e.g., 3600 = 1 hour)
 sec = int(60)               # n seconds
@@ -45,7 +51,6 @@ ttl = int(sec * 30)         # n minutes -> hours
 # cache the requests as script basename, expire after n time
 requests_cache.install_cache(Path(cache_fn), expire_after=ttl)
 
-# TODO: fix mocker patch for groups_csv
 # read groups from file via pandas
 csv = pd.read_csv(groups_csv, header=0)
 
@@ -222,7 +227,7 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
 
     # TODO: cutoff time by day _and_ hour (currently only day)
     # filter rows that aren't within the next n days
-    time_span = arrow.now(tz=tz).shift(days=DAYS)
+    time_span = arrow.now(tz=tz).shift(days=days)
     df = df[df['date'] <= time_span.isoformat()]
 
     return df

@@ -13,6 +13,8 @@ gitleaks_report*.json
 raw/
 redis*
 tempCodeRunnerFile*
+test.csv
+test.json
 
 # INCLUDE
 !*.gitkeep
@@ -338,5 +340,3 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-
-jsonwebtoken_test/tempCodeRunnerFile.js
