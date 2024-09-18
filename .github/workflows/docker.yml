@@ -68,6 +68,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # TODO: wheel and jose pycrypto are taking a massive amount of time to build on a gha arm64 runner
+      # ! look for pre-compiled binaries
+      # ! cache pip installs
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
