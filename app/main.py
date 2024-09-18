@@ -477,25 +477,26 @@ def post_slack(
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    should_post_result = should_post_to_slack()
+    # TODO: debug
+    # should_post_result = should_post_to_slack()
 
-    if isinstance(should_post_result, dict):
-        if not should_post_result.get("should_post", False) and not override:
-            time_diff = should_post_result.get("time_diff_minutes")
-            current_time = arrow.get(should_post_result.get("current_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
-            schedule_time = arrow.get(should_post_result.get("schedule_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
+    # if isinstance(should_post_result, dict):
+    #     if not should_post_result.get("should_post", False) and not override:
+    #         time_diff = should_post_result.get("time_diff_minutes")
+    #         current_time = arrow.get(should_post_result.get("current_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
+    #         schedule_time = arrow.get(should_post_result.get("schedule_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
 
-            return {
-                "message": "Not scheduled to post at this time",
-                "reason": f"Time difference: {time_diff} minutes",
-                "current_time": current_time,
-                "scheduled_time": schedule_time,
-            }
-    elif isinstance(should_post_result, bool):
-        if not should_post_result and not override:
-            return {"message": "Not scheduled to post at this time", "reason": "Schedule check returned False"}
-    else:
-        return {"message": "Error checking schedule", "reason": "Unexpected return type from should_post_to_slack"}
+    #         return {
+    #             "message": "Not scheduled to post at this time",
+    #             "reason": f"Time difference: {time_diff} minutes",
+    #             "current_time": current_time,
+    #             "scheduled_time": schedule_time,
+    #         }
+    # elif isinstance(should_post_result, bool):
+    #     if not should_post_result and not override:
+    #         return {"message": "Not scheduled to post at this time", "reason": "Schedule check returned False"}
+    # else:
+    #     return {"message": "Error checking schedule", "reason": "Unexpected return type from should_post_to_slack"}
 
     get_events(location, exclusions=exclusions)
 
