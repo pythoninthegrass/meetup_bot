@@ -6,7 +6,7 @@ shopt: ['globstar']
 env:
   BUILD: "{{.TLD}}/bin/build.sh"
   COMPOSE_FILE: "{{.TLD}}/docker-compose.yml"
-  DOCKERFILE: "{{.TLD}}/Dockerfile"
+  DOCKERFILE: "{{.TLD}}/Dockerfile.web"
   PLATFORM: "linux/amd64"
 
 tasks:
