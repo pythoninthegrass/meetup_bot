@@ -6,8 +6,7 @@ shopt: ['globstar']
 dotenv: ['./app/.env']
 
 env:
-  TLD:
-    sh: git rev-parse --show-toplevel
+  TLD: "{{.ROOT_DIR}}"
   APP:
     sh: echo "${APP_NAME:-meetup_bot}"
   POETRY:
