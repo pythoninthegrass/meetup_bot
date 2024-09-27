@@ -1,4 +1,7 @@
 <img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-0-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # meetup_bot
 **Table of Contents**
@@ -14,6 +17,7 @@
     * [Docker Compose](#docker-compose)
   * [TODO](#todo)
   * [Stretch Goals](#stretch-goals)
+  * [Contributors](#contributors)
   * [Further Reading](#further-reading)
 
 ## Summary
@@ -143,6 +147,23 @@ docker-compose down --volumes
   * Next `n` events
   * This week's events
   * Create new events
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Further Reading
 [API Doc Authentication | Meetup](https://www.meetup.com/api/authentication/#p04-jwt-flow-section)
