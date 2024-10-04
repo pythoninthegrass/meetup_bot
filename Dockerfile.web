@@ -93,3 +93,5 @@ COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 EXPOSE 3000
 
 CMD ["/bin/sh", "startup.sh"]
+
+LABEL org.opencontainers.image.title="meetup-bot"
