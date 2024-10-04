@@ -1,18 +1,18 @@
-name: Run pytest in Docker
+name: Run pytest
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - '**/*.py'
-  pull_request:
-    branches:
-      - main
-      - master
-    paths:
-      - '**/*.py'
+  # push:
+  #   branches:
+  #     - main
+  #     - master
+  #   paths:
+  #     - '**/*.py'
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - master
+  #   paths:
+  #     - '**/*.py'
   workflow_dispatch:
 
 jobs:
