@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7.0
+
+ARG PYTHON_VERSION=3.11.9
+
+FROM python:${PYTHON_VERSION}-alpine AS builder
+
+RUN apk add --no-cache \
+    curl \
+    gcc \
+    musl-dev \
+    python3-dev
+
+ENV PIP_NO_CACHE_DIR=off
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+ENV PIP_DEFAULT_TIMEOUT=100
+
+ENV VENV="/opt/venv"
+ENV PATH="$VENV/bin:$PATH"
+
+WORKDIR /app
+
+COPY requirements-dev.txt .
+
+RUN python -m venv $VENV \
+    && . $VENV/bin/activate \
+    && python -m pip install --upgrade pip \
+    && python -m pip install -r requirements-dev.txt
+
+FROM python:${PYTHON_VERSION}-alpine AS runner
+
+ENV TZ=${TZ:-"America/Chicago"}
+RUN apk add --no-cache tzdata \
+    && ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime \
+    && echo "$TZ" > /etc/timezone
+
+ENV USER_NAME=appuser
+ENV VENV="/opt/venv"
+
+ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
+
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
+
+ARG UID=10001
+RUN adduser -D -u ${UID} ${USER_NAME}
+
+USER ${USER_NAME}
+
+WORKDIR /app
+
+COPY --chown=${USER_NAME} ./app .
+COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
+
+ENTRYPOINT [ "pytest" ]
+
+LABEL org.opencontainers.image.title="meetup_bot"
+LABEL org.opencontainers.image.version="test"
+LABEL org.opencontainers.image.description="meetup_bot image for running tests in CI"

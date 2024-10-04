@@ -20,7 +20,6 @@
 **/*.py#
 **/*.py~
 **/*.pyc
-**/*test.*
 **/azds.yaml
 **/bin
 **/capture_groups.py

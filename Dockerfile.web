@@ -94,4 +94,5 @@ EXPOSE 3000
 
 CMD ["/bin/sh", "startup.sh"]
 
-LABEL org.opencontainers.image.title="meetup-bot"
+LABEL org.opencontainers.image.title="meetup_bot"
+LABEL org.opencontainers.image.version="latest"
