@@ -38,6 +38,7 @@ env:
   REDIRECT_URI: ${{ vars.REDIRECT_URI }}
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
   SELF_ID: ${{ secrets.SELF_ID }}
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
   SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
   TOKEN_URL: ${{ vars.TOKEN_URL }}
@@ -51,7 +52,7 @@ jobs:
     # TODO: avoid hardcoding the image name
     services:
       server:
-        image: ghcr.io/pythoninthegrass/meetup-bot
+        image: ghcr.io/pythoninthegrass/meetup_bot:latest
         ports:
           - 3000:3000
         env:
@@ -76,12 +77,13 @@ jobs:
           SELF_ID: ${{ env.SELF_ID }}
           SIGNING_KEY_ID: ${{ env.SIGNING_KEY_ID }}
           SIGNING_SECRET: ${{ env.SIGNING_SECRET }}
+          SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK }}
           TOKEN_URL: ${{ env.TOKEN_URL }}
           TZ: ${{ env.TZ }}
           USER_TOKEN: ${{ env.USER_TOKEN }}
 
     container:
-      image: python:3.11.9-slim-bullseye
+      image: ghcr.io/pythoninthegrass/meetup_bot:test
 
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
@@ -89,26 +91,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install system dependencies
-      run: |
-        apt-get -qq update \
-        && apt-get -qq install \
-          --no-install-recommends -y \
-          curl \
-          gcc \
-          git \
-          python3-dev \
-        && rm -rf /var/lib/apt/lists/*
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip pytest
-        python -m pip install -r requirements.txt
-
-    # - name: Wait for server to be ready
-    #   run: |
-    #     timeout 60s bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' server:3000/healthz)" != "200" ]]; do sleep 5; done' || false
 
     - name: Run pytest
       run: pytest -s
