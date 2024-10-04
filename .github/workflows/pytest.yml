@@ -15,11 +15,74 @@ on:
   #     - '**/*.py'
   workflow_dispatch:
 
+env:
+  REGISTRY_URL: ${{ vars.REGISTRY_URL }}
+  REGISTRY_USER: ${{ github.repository_owner }}
+  IMAGE: ${{ vars.IMAGE }}
+  ALGORITHM: ${{ vars.ALGORITHM }}
+  BOT_USER_TOKEN: ${{ secrets.BOT_USER_TOKEN }}
+  CHANNEL: ${{ vars.CHANNEL }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+  CSV_FN: ${{ vars.CSV_FN }}
+  DAYS: ${{ vars.DAYS }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_PASS: ${{ secrets.DB_PASS }}
+  DB_PORT: ${{ vars.DB_PORT }}
+  DB_USER: ${{ secrets.DB_USER }}
+  JSON_FN: ${{ vars.JSON_FN }}
+  PORT: ${{ vars.PORT }}
+  PRIV_KEY_B64: ${{ secrets.PRIV_KEY_B64 }}
+  PUB_KEY_B64: ${{ secrets.PUB_KEY_B64 }}
+  REDIRECT_URI: ${{ vars.REDIRECT_URI }}
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  SELF_ID: ${{ secrets.SELF_ID }}
+  SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+  SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
+  TOKEN_URL: ${{ vars.TOKEN_URL }}
+  TZ: ${{ vars.TZ }}
+  USER_TOKEN: ${{ secrets.USER_TOKEN }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # TODO: avoid hardcoding the image name
+    services:
+      server:
+        image: ghcr.io/pythoninthegrass/meetup-bot
+        ports:
+          - 3000:3000
+        env:
+          ALGORITHM: ${{ env.ALGORITHM }}
+          BOT_USER_TOKEN: ${{ env.BOT_USER_TOKEN }}
+          CHANNEL: ${{ env.CHANNEL }}
+          CLIENT_ID: ${{ env.CLIENT_ID }}
+          CLIENT_SECRET: ${{ env.CLIENT_SECRET }}
+          CSV_FN: ${{ env.CSV_FN }}
+          DAYS: ${{ env.DAYS }}
+          DB_HOST: ${{ env.DB_HOST }}
+          DB_NAME: ${{ env.DB_NAME }}
+          DB_PASS: ${{ env.DB_PASS }}
+          DB_PORT: ${{ env.DB_PORT }}
+          DB_USER: ${{ env.DB_USER }}
+          JSON_FN: ${{ env.JSON_FN }}
+          PORT: ${{ env.PORT }}
+          PRIV_KEY_B64: ${{ env.PRIV_KEY_B64 }}
+          PUB_KEY_B64: ${{ env.PUB_KEY_B64 }}
+          REDIRECT_URI: ${{ env.REDIRECT_URI }}
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          SELF_ID: ${{ env.SELF_ID }}
+          SIGNING_KEY_ID: ${{ env.SIGNING_KEY_ID }}
+          SIGNING_SECRET: ${{ env.SIGNING_SECRET }}
+          TOKEN_URL: ${{ env.TOKEN_URL }}
+          TZ: ${{ env.TZ }}
+          USER_TOKEN: ${{ env.USER_TOKEN }}
+
     container:
       image: python:3.11.9-slim-bullseye
+
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -43,5 +106,11 @@ jobs:
         python -m pip install --upgrade pip pytest
         python -m pip install -r requirements.txt
 
+    # - name: Wait for server to be ready
+    #   run: |
+    #     timeout 60s bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' server:3000/healthz)" != "200" ]]; do sleep 5; done' || false
+
     - name: Run pytest
       run: pytest -s
+      env:
+        URL: http://server:3000
