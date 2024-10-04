@@ -53,7 +53,7 @@ WORKDIR /app
 COPY --chown=${USER_NAME} ./app .
 COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
 
-ENTRYPOINT [ "pytest" ]
+CMD [ "sleep", "infinity" ]
 
 LABEL org.opencontainers.image.title="meetup_bot"
 LABEL org.opencontainers.image.version="test"
