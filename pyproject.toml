@@ -30,7 +30,7 @@ python-multipart = "^0.0.9"
 requests = "^2.32.3"
 requests-cache = "^1.2.1"
 slack-sdk = "^3.33.0"
-uvicorn = "^0.29.0"
+uvicorn = "^0.32.0"
 wheel = "^0.43.0"
 
 [tool.poetry.group.dev.dependencies]
