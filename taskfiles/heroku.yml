@@ -6,15 +6,14 @@ shopt: ['globstar']
 tasks:
   login:
     desc: "Login to Heroku"
-    run: "once"
     cmds:
       - |
-        out=$(heroku auth:whoami 2>&1)
-        result=$(echo $out | awk '/Error/ {$1=""; print $0}' | xargs)
-        if [[ "$result" =~ "Error: " ]]; then
-          heroku auth:login
-          heroku container:login
-        fi
+        heroku auth:login
+        heroku container:login
+    run: "once"
+    silent: true
+    status:
+      - heroku auth:whoami >/dev/null 2>&1
 
   env:
     desc: Upload .env file to Heroku
