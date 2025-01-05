@@ -13,7 +13,7 @@ services:
     volumes:
       - ./app:/app
     ports:
-      - ${PORT:-3000}:3000
+      - ${PORT:-3100}:3100
     networks:
       - default
 
