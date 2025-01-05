@@ -1,6 +1,6 @@
 services:
   meetup-bot:
-    container_name: meetup-bot
+    # container_name: meetup-bot
     image: ghcr.io/pythoninthegrass/meetup-bot
     build:
       context: .
