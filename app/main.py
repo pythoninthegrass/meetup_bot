@@ -126,7 +126,6 @@ db = Database()
 # user model
 class UserInfo(db.Entity):
     username = Required(str, unique=True)
-    # password = Required(str)
     hashed_password = Required(str)
     email = Optional(str)
 
@@ -141,7 +140,6 @@ db.bind(provider='postgres',
         host=DB_HOST,
         database=DB_NAME,
         port=DB_PORT,
-        sslmode='require'
 )
 
 # generate mapping
