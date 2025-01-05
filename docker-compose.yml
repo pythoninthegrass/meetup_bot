@@ -8,8 +8,6 @@ services:
     platform: ${PLATFORM:-linux/amd64}  # linux/amd64, linux/arm64/v8
     tty: false                          # false for `entrypoint` in Dockerfile
     stdin_open: false                   # false for `entrypoint` in Dockerfile
-    env_file:
-      - ./app/.env
     volumes:
       - ./app:/app
     ports:
