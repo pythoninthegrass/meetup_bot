@@ -287,10 +287,7 @@ def process_events(response, exclusions: list = None) -> list:
     """
     Process events from response
     """
-    if exclusions is not None:
-        df = format_response(response, exclusions=exclusions)
-    else:
-        df = format_response(response)
+    df = format_response(response, exclusions=exclusions) if exclusions is not None else format_response(response)
 
     # If DataFrame is empty, return early
     if df.empty:
