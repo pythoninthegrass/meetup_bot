@@ -30,7 +30,7 @@ colorama==0.4.6
     # via
     #   meetup-bot (pyproject.toml)
     #   icecream
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   pyjwt
     #   python-jose
