@@ -4,7 +4,7 @@ import arrow
 import time
 from datetime import datetime, timedelta
 from decouple import config
-from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
+from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 
 # env
 DB_NAME = config("DB_NAME")

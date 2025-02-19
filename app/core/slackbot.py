@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import time
+from app.core.meetup_query import get_all_events
 from config import *
 from decouple import config
 from icecream import ic
-from meetup_query import get_all_events
 from pathlib import Path
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError

@@ -7,13 +7,13 @@ import pandas as pd
 import requests
 import requests_cache
 import sys
+from app.core.sign_jwt import main as gen_token
 from arrow import ParserError
 from colorama import Fore
 from config import *
 from decouple import config
 from icecream import ic
 from pathlib import Path
-from sign_jwt import main as gen_token
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -35,9 +35,11 @@ tz = config('TZ', default='America/Chicago')
 
 groups_csv = script_dir / "groups.csv"
 if not groups_csv.exists():
-    groups_csv = cwd / "groups.csv"
+    groups_csv = cwd / "app" / "groups.csv"
     if not groups_csv.exists():
-        raise FileNotFoundError(f"groups.csv not found in {script_dir} or {cwd}")
+        groups_csv = cwd / "groups.csv"
+        if not groups_csv.exists():
+            raise FileNotFoundError(f"groups.csv not found in {script_dir}, {cwd}/app, or {cwd}")
 
 # time span (e.g., 3600 = 1 hour)
 sec = 60                # n seconds

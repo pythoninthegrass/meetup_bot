@@ -94,10 +94,10 @@ def process(handles):
     ic(df.head(df.shape[0]))
 
     # export raw CSV
-    df.to_csv("raw/scratch.csv", index=False)
+    df.to_csv("../raw/scratch.csv", index=False)
 
     # read groups.csv
-    df = pd.read_csv("raw/scratch.csv")
+    df = pd.read_csv("../raw/scratch.csv")
 
     # add column for urlname (group name) (split at second to last field)
     df["urlname"] = df["url"].apply(lambda x: x.split("/")[-2])
@@ -106,7 +106,7 @@ def process(handles):
     df = df.sort_values(by=["urlname"])
 
     # export final CSV
-    df.to_csv("groups.csv", index=False)
+    df.to_csv("../groups.csv", index=False)
 
 
 def main():

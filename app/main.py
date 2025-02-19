@@ -6,6 +6,10 @@ import json
 import pandas as pd
 import sys
 import time
+from app.core.meetup_query import get_all_events
+from app.core.sign_jwt import main as gen_token
+from app.core.slackbot import *
+from app.utils.schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
 from colorama import Fore
 from config import *
 from contextlib import asynccontextmanager
@@ -22,14 +26,10 @@ from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
 from math import ceil
-from meetup_query import get_all_events
 from passlib.context import CryptContext
 from pathlib import Path
 from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 from pydantic import BaseModel
-from schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
-from sign_jwt import main as gen_token
-from slackbot import *
 from typing import Union
 
 # verbose icecream
