@@ -19,7 +19,6 @@ RUN uv python install "$PYTHON_VERSION"
 WORKDIR /app
 
 COPY ./app .
-COPY ./README.md .
 COPY pyproject.toml .
 
 # venv
