@@ -9,7 +9,11 @@ import time
 from app.core.meetup_query import get_all_events
 from app.core.sign_jwt import main as gen_token
 from app.core.slackbot import *
-from app.utils.schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
+from app.utils.schedule import (
+    TZ,
+    get_schedule,
+    snooze_schedule,
+)
 from colorama import Fore
 from config import *
 from contextlib import asynccontextmanager
@@ -590,7 +594,14 @@ def snooze_slack_post(
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        snooze_schedule(duration)
+        current_time = arrow.now(tz)
+        current_day = current_time.format("dddd")
+        schedule = get_schedule(current_day)
+
+        if not schedule:
+            raise HTTPException(status_code=404, detail=f"No schedule found for {current_day}")
+
+        snooze_schedule(schedule, duration)
         return {"message": f"Slack post snoozed for {duration}"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

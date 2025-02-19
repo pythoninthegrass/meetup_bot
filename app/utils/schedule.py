@@ -4,7 +4,7 @@ import arrow
 import time
 from datetime import datetime, timedelta
 from decouple import config
-from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
+from pony.orm import Database, Optional, PrimaryKey, Required, Set, commit, db_session
 
 # env
 DB_NAME = config("DB_NAME")
@@ -122,48 +122,47 @@ def get_schedule(day):
 
 
 @db_session
-def snooze_schedule(duration):
+def snooze_schedule(schedule, duration):
     """Snooze the schedule for the specified duration"""
     current_time = arrow.now(TZ)
-    current_day = current_time.format("dddd")
-    schedule = Schedule.get(day=current_day)
+    # Compute today's scheduled datetime using the stored schedule_time (assumed in HH:mm format)
+    # Use the schedule's timezone for the current date
+    today_str = arrow.now(schedule.timezone).format('YYYY-MM-DD')
+    # Create a datetime for today at the scheduled time
+    daily_schedule_time = arrow.get(f"{today_str} {schedule.schedule_time}", "YYYY-MM-DD HH:mm").to(schedule.timezone)
 
-    if schedule:
-        schedule_time = arrow.get(schedule.schedule_time, "HH:mm").replace(tzinfo="UTC")
-        schedule_time = schedule_time.to(schedule.timezone)
-
-        if duration == "5_minutes":
-            snooze_until = current_time.shift(minutes=5)
-            new_schedule_time = snooze_until.to("UTC").format("HH:mm")
-        elif duration == "next_scheduled":
-            if current_time > schedule_time:
-                # If current time is past today's scheduled time, set for tomorrow
-                snooze_until = schedule_time.shift(days=1)
-            else:
-                snooze_until = schedule_time
-            new_schedule_time = schedule.schedule_time
-        elif duration == "rest_of_week":
-            # Find the next Sunday
-            days_until_sunday = (7 - current_time.weekday()) % 7
-            snooze_until = current_time.shift(days=days_until_sunday).replace(hour=0, minute=0, second=0, microsecond=0)
-            new_schedule_time = schedule.schedule_time
-        else:
-            raise ValueError("Invalid snooze duration")
-
-        schedule.snooze_until = snooze_until.datetime
-        schedule.original_schedule_time = schedule.schedule_time
-        schedule.schedule_time = new_schedule_time
-        print(f"Snoozed schedule until {snooze_until.format('YYYY-MM-DD HH:mm:ss')}")
+    if duration == "5_minutes":
+        snooze_until = current_time.shift(minutes=5)
+        new_schedule_time = snooze_until.to("UTC").format("HH:mm")
+    elif duration == "next_scheduled":
+        snooze_until = daily_schedule_time.shift(days=1) if current_time > daily_schedule_time else daily_schedule_time
+        new_schedule_time = schedule.schedule_time
+    elif duration == "rest_of_week":
+        # For rest_of_week, calculate days until next Sunday.
+        # Using (7 - weekday()) % 7 to correctly handle all days including Sunday
+        days_until_sunday = (6 - current_time.weekday()) % 7
+        snooze_until = current_time.shift(days=days_until_sunday).replace(hour=0, minute=0, second=0, microsecond=0)
+        new_schedule_time = schedule.schedule_time
     else:
-        print(f"No schedule found for {current_day}")
+        raise ValueError("Invalid snooze duration")
+
+    # Store snooze_until as a naive UTC datetime
+    schedule.snooze_until = snooze_until.to('UTC').naive
+    schedule.original_schedule_time = schedule.schedule_time
+    schedule.schedule_time = new_schedule_time
+    print(f"Snoozed schedule until {snooze_until.format('YYYY-MM-DD HH:mm:ss')}")
+    return schedule
 
 
 @db_session
 def check_and_revert_snooze():
     """Check if any snoozes need to be reverted and revert them if necessary"""
     current_time = arrow.now(TZ)
+    current_time_naive = current_time.to('UTC').naive
+
+    # Don't materialize the query before making changes to avoid potential inconsistencies
     for schedule in Schedule.select(lambda s: s.snooze_until is not None):
-        if current_time.datetime >= schedule.snooze_until:
+        if current_time_naive >= schedule.snooze_until:
             schedule.schedule_time = schedule.original_schedule_time
             schedule.snooze_until = None
             schedule.original_schedule_time = None
