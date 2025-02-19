@@ -260,9 +260,19 @@ def sort_json(filename) -> None:
     """
     Sort JSON keys
     """
+    # Check if file exists and has content
+    if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}No events found to sort")
+        return
 
     # pandas remove duplicate keys by eventUrl key
     df = pd.read_json(filename, orient='records')
+
+    # Check if DataFrame is empty
+    if df.empty:
+        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}No events found to sort")
+        return
+
     df = df.drop_duplicates(subset='eventUrl')
 
     # replace '1-07-19 17:00:00' with current year '2022-07-19 17:00:00' via regex
@@ -321,13 +331,16 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
     """
     Export to CSV or JSON
     """
-
     if exclusions != '':
         df = format_response(response, exclusions=exclusions)
     else:
         df = format_response(response)
 
-    # create directory if it doesn't exist
+    # If DataFrame is empty, return early
+    if df.empty:
+        return
+
+    # Create directory if it doesn't exist
     Path('raw').mkdir(parents=True, exist_ok=True)
 
     if type == 'csv':
@@ -364,8 +377,14 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
 # TODO: disable in prod (use `main.py`)
 def main():
     tokens = gen_token()
-    access_token = tokens['access_token']
-    # refresh_token = tokens['refresh_token']
+    if not tokens:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}Failed to get access tokens")
+        sys.exit(1)
+
+    access_token = tokens.get('access_token')
+    if not access_token:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}No access token in response")
+        sys.exit(1)
 
     # exclude keywords in event name and title (will miss events with keyword in description)
     exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls', 'Bitcoin']
