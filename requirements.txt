@@ -32,6 +32,7 @@ colorama==0.4.6
     #   icecream
 cryptography==44.0.1
     # via
+    #   meetup-bot (pyproject.toml)
     #   pyjwt
     #   python-jose
 ecdsa==0.19.0
@@ -72,7 +73,7 @@ pony==0.7.19
     # via meetup-bot (pyproject.toml)
 psycopg2-binary==2.9.10
     # via meetup-bot (pyproject.toml)
-pyasn1==0.6.1
+pyasn1==0.4.8
     # via
     #   python-jose
     #   rsa
@@ -92,9 +93,9 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-decouple==3.8
     # via meetup-bot (pyproject.toml)
-python-jose==3.3.0
+python-jose==3.4.0
     # via meetup-bot (pyproject.toml)
-python-multipart==0.0.9
+python-multipart==0.0.20
     # via meetup-bot (pyproject.toml)
 pytz==2024.2
     # via pandas
