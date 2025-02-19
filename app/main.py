@@ -26,7 +26,7 @@ from pydantic import BaseModel
 from schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
 from sign_jwt import main as gen_token
 from slackbot import *
-from typing import List, Union
+from typing import Union
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -452,44 +452,41 @@ def post_slack(
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # TODO: debug
-    # should_post_result = should_post_to_slack()
+    # Get events and check for errors
+    events = get_all_events([exclusions] if exclusions else None)
+    if not events:
+        return {"message": "No upcoming events found", "status": "info"}
 
-    # if isinstance(should_post_result, dict):
-    #     if not should_post_result.get("should_post", False) and not override:
-    #         time_diff = should_post_result.get("time_diff_minutes")
-    #         current_time = arrow.get(should_post_result.get("current_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
-    #         schedule_time = arrow.get(should_post_result.get("schedule_time"), "dddd HH:mm ZZZ").to(tz).format("dddd HH:mm ZZZ")
+    # Format messages directly from events data
+    try:
+        # Format each event into a Slack message
+        messages = []
+        for event in events:
+            message = f'• {event["date"]} *{event["name"]}* <{event["eventUrl"]}|{event["title"]}> '
+            messages.append(message)
 
-    #         return {
-    #             "message": "Not scheduled to post at this time",
-    #             "reason": f"Time difference: {time_diff} minutes",
-    #             "current_time": current_time,
-    #             "scheduled_time": schedule_time,
-    #         }
-    # elif isinstance(should_post_result, bool):
-    #     if not should_post_result and not override:
-    #         return {"message": "Not scheduled to post at this time", "reason": "Schedule check returned False"}
-    # else:
-    #     return {"message": "Error checking schedule", "reason": "Unexpected return type from should_post_to_slack"}
+        if not messages:
+            return {"message": "No upcoming events to post", "status": "info"}
 
-    get_events(location, exclusions=exclusions)
+        # if channel_name is not None, post to channel as one concatenated string
+        if channel_name is not None:
+            # get channel id from chan_dict
+            channel_id = chan_dict[channel_name]
+            # post to single channel
+            response = send_message("\n".join(messages), channel_id)
+            if not response:
+                return {"message": "Failed to send message to Slack", "status": "error"}
+        else:
+            # post to all channels
+            channels = load_channels()
+            for name, id in channels.items():
+                response = send_message("\n".join(messages), id)
+                if not response:
+                    return {"message": f"Failed to send message to channel {name}", "status": "error"}
 
-    # open json file and convert to list of strings
-    msg = fmt_json(json_fn)
-
-    # if channel_name is not None, post to channel as one concatenated string
-    if channel_name is not None:
-        # get channel id chan_dict key value pair
-        channel_id = chan_dict[channel_name]
-        # post to single channel
-        send_message("\n".join(msg), channel_id)
-    else:
-        # post to all channels
-        for name, id in channels.items():
-            send_message("\n".join(msg), id)
-
-    return ic(msg)
+        return {"message": messages, "status": "success"}
+    except Exception as e:
+        return {"message": f"Error posting to Slack: {str(e)}", "status": "error"}
 
 
 @api_router.post("/snooze")

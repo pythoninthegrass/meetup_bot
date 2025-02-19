@@ -162,6 +162,12 @@ def get_access_token(token):
         print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}HTTP Error: {e}")
         print(f"Response: {response.text}")
         return None
+    except requests.exceptions.ConnectionError as e:
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Connection Error: {e}")
+        return None
+    except requests.exceptions.Timeout as e:
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Timeout Error: {e}")
+        return None
     except requests.exceptions.RequestException as e:
         print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Request failed: {e}")
         return None

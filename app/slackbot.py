@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 
-import json
-import pandas as pd
 import time
 from config import *
 from decouple import config
 from icecream import ic
+from meetup_query import get_all_events
 from pathlib import Path
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
-
-# pandas don't truncate output
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_colwidth', None)
 
 # env
 home = Path.home()
@@ -38,56 +32,40 @@ HOST = config('HOST', default='localhost')
 # strip double quotes from env strings (local image)
 CHANNEL = CHANNEL.strip('"')
 
-# read channel
-chan = pd.read_csv('channels.csv', header=0)
+def load_channels():
+    # read channel
+    chan = pd.read_csv('channels.csv', header=0)
 
-# create dict of channels
-chan_dict = {}
+    # create dict of channels
+    chan_dict = {}
 
-# loop through channels and find id
-for name, id in zip(chan['name'], chan['id'], strict=False):
-    chan_dict[name] = id
+    # loop through channels and find id
+    for name, id in zip(chan['name'], chan['id'], strict=False):
+        chan_dict[name] = id
 
-# channel name and id
-channel_name = CHANNEL
-channel_id = chan_dict[CHANNEL]
+    # channel name and id
+    channel_name = CHANNEL
+    channel_id = chan_dict[CHANNEL]
 
-# hard-coded second channel
-hard_chan = ''
+    # hard-coded second channel
+    hard_chan = ''
 
-# add hard-coded channel
-if hard_chan != '':
-    hard_id = chan_dict[hard_chan]
-    channels = {
-        channel_name: channel_id,
-        hard_chan: hard_id
-    }
-else:
-    channels = {
-        channel_name: channel_id
-    }
+    # add hard-coded channel
+    if hard_chan != '':
+        hard_id = chan_dict[hard_chan]
+        channels = {
+            channel_name: channel_id,
+            hard_chan: hard_id
+        }
+    else:
+        channels = {
+            channel_name: channel_id
+        }
+
+    return channels
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
-
-
-def fmt_json(filename):
-    # read json file
-    data = json.load(open(filename))
-
-    # create dataframe
-    df = pd.DataFrame(data)
-
-    # add column: 'message' with date, name, title, eventUrl
-    df['message'] = df.apply(
-        lambda x: f'• {x["date"]} *{x["name"]}* <{x["eventUrl"]}|{x["title"]}> ',
-        axis=1
-    )
-
-    # convert message column to list of strings (avoids alignment shenanigans)
-    msg = df['message'].tolist()
-
-    return msg
 
 
 def send_message(message, channel_id):
@@ -111,21 +89,31 @@ def send_message(message, channel_id):
             ]
         )
         return response
-    except SlackApiError as e:
-        assert e.response["ok"] is False
-        assert e.response["error"]
-        print(f"Got an error: {e.response['error']}")
+    except Exception as e:
+        print(f"Got an error: {str(e)}")
+        return None
 
 
 def main():
-    # open json file and convert to list of strings
-    msg = fmt_json(json_fn)
+    # load channels
+    channels = load_channels()
 
-    # send message as one concatenated string
-    for channel_name, channel_id in channels.items():
-        send_message('\n'.join(msg), channel_id)
+    # Get events
+    events = get_all_events()
 
-    return ic(msg)
+    # Format messages
+    messages = []
+    for event in events:
+        message = f'• {event["date"]} *{event["name"]}* <{event["eventUrl"]}|{event["title"]}> '
+        messages.append(message)
+
+    # Only send messages if we have events
+    if messages:
+        # send message as one concatenated string
+        for channel_name, channel_id in channels.items():
+            send_message('\n'.join(messages), channel_id)
+
+    return ic(messages)
 
 
 if __name__ == '__main__':

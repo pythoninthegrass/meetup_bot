@@ -40,8 +40,8 @@ if not groups_csv.exists():
         raise FileNotFoundError(f"groups.csv not found in {script_dir} or {cwd}")
 
 # time span (e.g., 3600 = 1 hour)
-sec = 60               # n seconds
-ttl = int(sec * 30)         # n minutes -> hours
+sec = 60                # n seconds
+ttl = int(sec * 30)     # n minutes -> hours
 
 # cache the requests as script basename, expire after n time
 requests_cache.install_cache(Path(cache_fn), expire_after=ttl)
@@ -180,23 +180,29 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
     # convert response to json
     response_json = json.loads(response)
 
-    # TODO: add arg for `self` or `groupByUrlname`
     # extract data from json
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
+        # Check if data is empty before accessing it
+        if not data:
+            return df
+
+        # Check location only if we have data
         if data[0]['node']['group']['city'] != location:
             print(f"{Fore.YELLOW}{WARNING:<10}{Fore.RESET}Skipping event outside of {location}")
+            return df
     except KeyError:
         if response_json['data']['groupByUrlname'] is None:
-            data = ""
             print(f"{Fore.YELLOW}{WARNING:<10}{Fore.RESET}Skipping group due to empty response")
-            pass
+            return df
         else:
             data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
-            # TODO: handle no upcoming events to fallback on initial response
+            if not data:  # Check if data is empty
+                return df
+
             if response_json['data']['groupByUrlname']['city'] != location:
                 print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}No data for {location} found")
-                pass
+                return df
 
     # append data to rows
     if data is not None:
@@ -275,11 +281,11 @@ def sort_and_format_events(df):
     return json.loads(df.to_json(orient='records', force_ascii=False))
 
 
-def process_events(response, exclusions: str = '') -> list:
+def process_events(response, exclusions: list = None) -> list:
     """
     Process events from response
     """
-    if exclusions != '':
+    if exclusions is not None:
         df = format_response(response, exclusions=exclusions)
     else:
         df = format_response(response)
@@ -288,7 +294,23 @@ def process_events(response, exclusions: str = '') -> list:
     if df.empty:
         return []
 
-    return sort_and_format_events(df)
+    try:
+        # extract dates from date column into a dictionary
+        dates = df['date'].to_dict()
+
+        # convert dates to arrow objects for consistent formatting
+        for key, value in dates.items():
+            date_obj = arrow.get(value)
+            dates[key] = date_obj.format('ddd M/D h:mm a')
+
+        # replace dates in dataframe
+        df['date'] = pd.Series(dates)
+
+        # convert to list of dicts
+        return df.to_dict('records')
+    except Exception as e:
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Error processing events: {e}")
+        return []
 
 
 def get_all_events(exclusions: list = None) -> list:
@@ -310,7 +332,8 @@ def get_all_events(exclusions: list = None) -> list:
     # first-party query
     response = send_request(access_token, query, vars)
     events = process_events(response, exclusions)
-    all_events.extend(events)
+    if events:  # Only extend if we got events
+        all_events.extend(events)
 
     # third-party query
     for url in url_vars:
@@ -324,9 +347,18 @@ def get_all_events(exclusions: list = None) -> list:
     # Sort all events by date
     if all_events:
         df = pd.DataFrame(all_events)
-        return sort_and_format_events(df)
+        try:
+            # Convert dates to datetime for sorting
+            df['date'] = pd.to_datetime(df['date'], format='%a %-m/%-d %-I:%M %p')
+            df = df.sort_values('date')
+            # Convert back to original format
+            df['date'] = df['date'].dt.strftime('%a %-m/%-d %-I:%M %p')
+            return df.to_dict('records')
+        except Exception as e:
+            print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Error sorting events: {e}")
+            return all_events
 
-    return []
+    return all_events
 
 
 if __name__ == '__main__':
