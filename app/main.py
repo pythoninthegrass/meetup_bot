@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import arrow
+import asyncio
 import json
 import pandas as pd
 import sys
 import time
 from colorama import Fore
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from decouple import config
 from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException, Request, status
@@ -19,9 +21,9 @@ from math import ceil
 from meetup_query import get_all_events
 from passlib.context import CryptContext
 from pathlib import Path
-from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
+from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 from pydantic import BaseModel
-from schedule import get_schedule, get_current_schedule_time, snooze_schedule, check_and_revert_snooze
+from schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
 from sign_jwt import main as gen_token
 from slackbot import *
 from typing import List, Union
@@ -74,8 +76,8 @@ IP Address Whitelisting
 
 
 class IPConfig(BaseModel):
-    whitelist: List[str] = ["localhost", "127.0.0.1"]
-    public_ips: List[str] = []  # TODO: add whitelisted public IPs here
+    whitelist: list[str] = ["localhost", "127.0.0.1"]
+    public_ips: list[str] = []  # TODO: add whitelisted public IPs here
 
 
 ip_config = IPConfig()
@@ -90,8 +92,10 @@ def is_ip_allowed(request: Request):
 FastAPI app
 """
 
-# main web app
-app = FastAPI(title="meetup_bot API", openapi_url="/meetup_bot.json")
+# Create the app with minimal initial setup
+app = FastAPI(title="meetup_bot API",
+              openapi_url="/meetup_bot.json"
+)
 
 # add `/api` route in front of all other endpoints
 api_router = APIRouter(prefix="/api")
@@ -130,20 +134,37 @@ class UserInfo(db.Entity):
     email = Optional(str)
 
 
-# strip double quotes from string
-DB_PASS = DB_PASS.strip('"')
+# Move database initialization to lifespan context
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB connection
+    db.bind(provider='postgres',
+            user=DB_USER,
+            password=DB_PASS.strip('"'),
+            host=DB_HOST,
+            database=DB_NAME,
+            port=DB_PORT)
+    db.generate_mapping(create_tables=True)
 
-# postgres db
-db.bind(provider='postgres',
-        user=DB_USER,
-        password=DB_PASS,
-        host=DB_HOST,
-        database=DB_NAME,
-        port=DB_PORT,
+    # Create initial user if needed (moved from startup_event)
+    with db_session:
+        if not UserInfo.exists(username=DB_USER):
+            hashed_password = get_password_hash(DB_PASS)
+            UserInfo(username=DB_USER, hashed_password=hashed_password)
+
+    print("Application startup complete")
+
+    yield  # Application runs here
+
+    # Cleanup
+    print("Application shutdown")
+    db.disconnect()
+
+app = FastAPI(
+    title="meetup_bot API",
+    openapi_url="/meetup_bot.json",
+    lifespan=lifespan
 )
-
-# generate mapping
-db.generate_mapping(create_tables=True)
 
 
 """
@@ -254,7 +275,7 @@ async def ip_whitelist_or_auth(request: Request, current_user: User = Depends(ge
     return current_user
 
 
-def check_auth(auth: Union[dict, User]) -> None:
+def check_auth(auth: dict | User) -> None:
     """
     Shared function to check authentication result.
     Raises an HTTPException if authentication fails.
@@ -295,25 +316,6 @@ def load_user(username: str):
             return user
         else:
             raise HTTPException(status_code=404, detail="User not found")
-
-
-"""
-Startup
-"""
-
-
-# TODO: https://fastapi.tiangolo.com/advanced/events/
-@app.on_event("startup")
-def startup_event():
-    """
-    Run startup event
-    """
-
-    # create user
-    with db_session:
-        if not UserInfo.exists(username=DB_USER):
-            hashed_password = get_password_hash(DB_PASS)
-            UserInfo(username=DB_USER, hashed_password=hashed_password)
 
 
 @app.get("/healthz", status_code=200)
@@ -519,7 +521,7 @@ def snooze_slack_post(
 
 # TODO: test IP whitelisting
 @api_router.get("/schedule")
-def get_current_schedule(auth: Union[dict, User] = Depends(ip_whitelist_or_auth)):
+def get_current_schedule(auth: dict | User = Depends(ip_whitelist_or_auth)):
     """
     Get the current schedule including any active snoozes
     """

@@ -12,8 +12,10 @@ export PATH="${VENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
 
 server() {
 	gunicorn \
-		-w 2 \
-		-k uvicorn.workers.UvicornWorker main:app \
+		-w 1 \
+		--threads 4 \
+		-k uvicorn.workers.UvicornH11Worker main:app \
+		--preload \
 		-b "0.0.0.0:${PORT:-3000}" \
 		--log-file -
 }
