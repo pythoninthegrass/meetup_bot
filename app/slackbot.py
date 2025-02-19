@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
-import arrow
 import json
 import pandas as pd
 import time
+from config import *
 from decouple import config
 from icecream import ic
 from pathlib import Path
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-
-# logging.basicConfig(level=logging.DEBUG)
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -26,8 +24,7 @@ cwd = Path.cwd()
 csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
-tz = config('TZ', default='America/Chicago')
-loc_time = arrow.now().to(tz)
+loc_time = CURRENT_TIME_LOCAL
 time.tzset()
 
 # creds
@@ -48,7 +45,7 @@ chan = pd.read_csv('channels.csv', header=0)
 chan_dict = {}
 
 # loop through channels and find id
-for name, id in zip(chan['name'], chan['id']):
+for name, id in zip(chan['name'], chan['id'], strict=False):
     chan_dict[name] = id
 
 # channel name and id
@@ -120,7 +117,6 @@ def send_message(message, channel_id):
         print(f"Got an error: {e.response['error']}")
 
 
-# TODO: transform json response vs. file
 def main():
     # open json file and convert to list of strings
     msg = fmt_json(json_fn)

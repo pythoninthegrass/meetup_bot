@@ -9,18 +9,14 @@ import requests_cache
 import sys
 from arrow import ParserError
 from colorama import Fore
+from config import *
 from decouple import config
 from icecream import ic
-from sign_jwt import main as gen_token
 from pathlib import Path
+from sign_jwt import main as gen_token
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
-
-# logging prefixes
-info = "INFO:"
-error = "ERROR:"
-warning = "WARNING:"
 
 # pandas don't truncate output
 pd.set_option('display.max_rows', None)
@@ -44,7 +40,7 @@ if not groups_csv.exists():
         raise FileNotFoundError(f"groups.csv not found in {script_dir} or {cwd}")
 
 # time span (e.g., 3600 = 1 hour)
-sec = int(60)               # n seconds
+sec = 60               # n seconds
 ttl = int(sec * 30)         # n minutes -> hours
 
 # cache the requests as script basename, expire after n time
@@ -158,7 +154,7 @@ def send_request(token, query, vars) -> str:
             json={'query': query, 'variables': vars},
             headers=headers
         )
-        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Response HTTP Response Body: {r.status_code}")
+        print(f"{Fore.GREEN}{INFO:<10}{Fore.RESET}Response HTTP Response Body: {r.status_code}")
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
         pretty_response = json.dumps(r.json(), indent=2, sort_keys=False)
@@ -166,7 +162,7 @@ def send_request(token, query, vars) -> str:
         # formatted response
         # print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
     except requests.exceptions.RequestException as e:
-        print('HTTP Request failed:\n{error}'.format(error=e))
+        print(f'HTTP Request failed:\n{e}')
         sys.exit(1)
 
     return pretty_response
@@ -189,17 +185,17 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
     try:
         data = response_json['data']['self']['upcomingEvents']['edges']
         if data[0]['node']['group']['city'] != location:
-            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping event outside of {location}")
+            print(f"{Fore.YELLOW}{WARNING:<10}{Fore.RESET}Skipping event outside of {location}")
     except KeyError:
         if response_json['data']['groupByUrlname'] is None:
             data = ""
-            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping group due to empty response")
+            print(f"{Fore.YELLOW}{WARNING:<10}{Fore.RESET}Skipping group due to empty response")
             pass
         else:
             data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
             # TODO: handle no upcoming events to fallback on initial response
             if response_json['data']['groupByUrlname']['city'] != location:
-                print(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
+                print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}No data for {location} found")
                 pass
 
     # append data to rows
@@ -220,7 +216,7 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
     # * data[0]['node']['group']['urlname'] == 'nerdygirlsokc'
     # filtered rows to exclude keywords by regex OR operator
     if exclusions:
-        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Excluded keywords: {exclusions}".format(exclusions=exclusions))
+        print(f"{Fore.GREEN}{INFO:<10}{Fore.RESET}Excluded keywords: {exclusions}".format(exclusions=exclusions))
         df = df[~df['name'].str.contains('|'.join(exclusions))]
         df = df[~df['title'].str.contains('|'.join(exclusions))]
 
@@ -253,7 +249,7 @@ def sort_and_format_events(df):
         # replace dates in dictionary with iso8601
         df['date'] = df['date'].replace(dates)
     except ParserError:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}ParserError: date column is already in correct format")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}ParserError: date column is already in correct format")
         pass
 
     # control for timestamp edge case `1-07-21 18:00:00` || `1-01-25 10:00:00` raising OutOfBoundsError
@@ -301,12 +297,12 @@ def get_all_events(exclusions: list = None) -> list:
     """
     tokens = gen_token()
     if not tokens:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}Failed to get access tokens")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Failed to get access tokens")
         return []
 
     access_token = tokens.get('access_token')
     if not access_token:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}No access token in response")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}No access token in response")
         return []
 
     all_events = []
@@ -323,7 +319,7 @@ def get_all_events(exclusions: list = None) -> list:
         if events:
             all_events.extend(events)
         else:
-            print(f'{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found')
+            print(f'{Fore.GREEN}{INFO:<10}{Fore.RESET}No upcoming events for {url} found')
 
     # Sort all events by date
     if all_events:

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import arrow
 import asyncio
 import json
 import pandas as pd
 import sys
 import time
 from colorama import Fore
+from config import *
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from decouple import config
@@ -30,11 +30,6 @@ from typing import List, Union
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
-
-# logging prefixes
-info = "INFO:"
-error = "ERROR:"
-warning = "WARNING:"
 
 # env
 home = Path.home()
@@ -359,7 +354,7 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
         access_token = tokens["access_token"]
         refresh_token = tokens["refresh_token"]
     except KeyError as e:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError: {e}")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}KeyError: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     return access_token, refresh_token

@@ -7,20 +7,13 @@ import requests
 import sys
 import time
 from colorama import Fore
-from cryptography.hazmat.primitives import serialization
+from config import ERROR, INFO, WARNING
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from decouple import config
 from icecream import ic
 from pathlib import Path
 from urllib.parse import urlencode
-
-# verbose icecream
-# ic.configureOutput(includeContext=True)
-
-# logging prefixes
-info = "INFO:"
-error = "ERROR:"
-warning = "WARNING:"
 
 # creds
 if Path('jwt_priv.pem').exists():
@@ -130,10 +123,10 @@ def verify_token(token):
             verify=True,
             algorithms=['RS256']
         )
-        print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Success! Token verified.")
+        print(f"{Fore.GREEN}{INFO:<10}{Fore.RESET}Success! Token verified.")
         return True
     except jwt.exceptions.ExpiredSignatureError as e:
-        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Token has expired: {e}")
+        print(f"{Fore.YELLOW}{WARNING:<10}{Fore.RESET}Token has expired: {e}")
         return False
     except (
         jwt.exceptions.InvalidTokenError,
@@ -141,7 +134,7 @@ def verify_token(token):
         jwt.exceptions.InvalidIssuerError,
         jwt.exceptions.InvalidAudienceError,
         ) as e:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}{e}")
         sys.exit(1)
 
 
@@ -166,11 +159,11 @@ def get_access_token(token):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}HTTP Error: {e}")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}HTTP Error: {e}")
         print(f"Response: {response.text}")
         return None
     except requests.exceptions.RequestException as e:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}Request failed: {e}")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Request failed: {e}")
         return None
 
 
@@ -182,13 +175,13 @@ def main():
 
     # verify JWT
     if not verify_token(token):
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}Token verification failed")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Token verification failed")
         return None
 
     # get access and refresh tokens
     tokens = get_access_token(token)
     if not tokens:
-        print(f"{Fore.RED}{error:<10}{Fore.RESET}Failed to get access token")
+        print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}Failed to get access token")
         return None
 
     return tokens
