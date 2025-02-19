@@ -3,7 +3,7 @@
 # full semver just for python base image
 ARG PYTHON_VERSION=3.11.11
 
-FROM python:${PYTHON_VERSION}-slim AS builder
+FROM python:${PYTHON_VERSION}-slim-bookworm as builder
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
@@ -22,23 +22,24 @@ ENV PIP_NO_CACHE_DIR=off
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 ENV PIP_DEFAULT_TIMEOUT=100
 
-# path
-ENV VENV="/opt/venv"
+# venv
+ARG UV_PROJECT_ENVIRONMENT="/opt/venv"
+ENV VENV="${UV_PROJECT_ENVIRONMENT}"
 ENV PATH="$VENV/bin:$PATH"
 
+# uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
+
 COPY ./app .
-COPY ./requirements.txt .
+COPY ./README.md .
+COPY pyproject.toml .
 
-RUN python -m venv $VENV \
-    && python -m pip install -r requirements.txt
+RUN uv venv $UV_PROJECT_ENVIRONMENT \
+    && uv pip install -r pyproject.toml
 
-# ! heroku doesn't use buildkit
-# RUN --mount=type=cache,target=/root/.cache/pip \
-#     --mount=type=bind,source=./requirements.txt,target=/app/requirements.txt \
-#     python -m pip install -r requirements.txt
-
-FROM python:${PYTHON_VERSION}-slim AS runner
+FROM python:${PYTHON_VERSION}-slim-bookworm as runner
 
 # set timezone
 ENV TZ=${TZ:-"America/Chicago"}
@@ -46,9 +47,8 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "$TZ" > /etc/time
 
 # setup standard non-root user for use downstream
 ENV USER_NAME=appuser
-ENV VENV="/opt/venv"
-
-ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
+ARG VENV="/opt/venv"
+ENV PATH=$VENV/bin:$HOME/.local/bin:$PATH
 
 # standardise on locale, don't generate .pyc, enable tracebacks on seg faults
 ENV LANG C.UTF-8

@@ -43,7 +43,6 @@
 **/obj
 **/pre-commit-config.yaml
 **/Procfile
-**/README.md
 **/redis-data
 **/redis-insight
 **/redis.conf*
