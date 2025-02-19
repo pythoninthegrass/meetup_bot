@@ -97,8 +97,8 @@ exclude = [
     "venv",
 ]
 
-# Assume Python 3.12
-target-version = "py312"
+# Assume Python 3.11
+target-version = "py311"
 
 [tool.ruff.format]
 # Use spaces instead of tabs
