@@ -4,10 +4,17 @@ set: ['e', 'u', 'pipefail']
 shopt: ['globstar']
 
 env:
-  BUILD: "{{.TLD}}/bin/build.sh"
   COMPOSE_FILE: "{{.TLD}}/docker-compose.yml"
   DOCKERFILE: "{{.TLD}}/Dockerfile.web"
-  PLATFORM: "linux/amd64"
+  PLATFORM:
+    sh: "echo ${PLATFORM:-linux/amd64}"
+  REGISTRY:
+    sh: "echo ${REGISTRY:-ghcr.io}"
+  USER_NAME:
+    sh: "echo ${USER_NAME:-pythoninthegrass}"
+  SERVICE: "meetup_bot"
+  VERSION:
+    sh: "echo ${VERSION:-latest}"
 
 tasks:
   net:
@@ -15,22 +22,41 @@ tasks:
     cmds:
       - |
         docker network create \
-        --driver bridge \
-        app-tier
+          --driver bridge \
+          app-tier
+    status:
+      - |
+        docker network ls --format \{\{.Name\}\} \
+          | grep -q '^app-tier$'
 
   vol:
     desc: "Create docker volume"
     cmds:
       - |
         docker volume create \
-        --driver local \
-        mvp-vol
+          --driver local \
+          {{.SERVICE}}-vol
+    status:
+      - |
+        docker volume ls --format \{\{.Name\}\} \
+          | grep -q '^{{.SERVICE}}-vol$'
 
   build:
     desc: "Build the docker image"
+    summary: |
+      Build the docker image with the specified dockerfile.
+
+      The default dockerfile is Dockerfile.web.
+
+      USAGE
+        task docker:build
     cmds:
       - |
-        {{.BUILD}} build {{.DOCKERFILE}} {{.SERVICE}}
+        docker build \
+          -f {{.DOCKERFILE}} \
+          -t {{.SERVICE}} \
+          --platform {{.PLATFORM}} \
+          .
 
   login:
     desc: "Login to the container registry"
