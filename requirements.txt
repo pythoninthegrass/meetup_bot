@@ -92,7 +92,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-decouple==3.8
     # via meetup-bot (pyproject.toml)
-python-jose==3.3.0
+python-jose==3.4.0
     # via meetup-bot (pyproject.toml)
 python-multipart==0.0.9
     # via meetup-bot (pyproject.toml)
