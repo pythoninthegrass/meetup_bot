@@ -9,27 +9,18 @@ env:
   TLD: "{{.ROOT_DIR}}"
   APP:
     sh: echo "${APP_NAME:-meetup_bot}"
-  POETRY:
-    sh: "echo ${POETRY:-1.8.3}"
-  PY_VER:
-    sh: "echo ${PY_VER:-3.11.9}"
   SCRIPT:
     sh: "echo ${SCRIPT:-scheduler.sh}"
-  UNAME:
-    sh: "uname -s"
 
 vars:
 
 includes:
   docker:
     taskfile: ./taskfiles/docker.yml
-    aliases: ["docker"]
   heroku:
     taskfile: ./taskfiles/heroku.yml
-    aliases: ["heroku"]
-  poetry:
-    taskfile: ./taskfiles/poetry.yml
-    aliases: ["poetry"]
+  uv:
+    taskfile: ./taskfiles/uv.yml
 
 tasks:
   print:
