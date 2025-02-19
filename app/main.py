@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import arrow
+import json
 import pandas as pd
 import sys
 import time
@@ -15,7 +16,7 @@ from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
 from math import ceil
-from meetup_query import *
+from meetup_query import get_all_events
 from passlib.context import CryptContext
 from pathlib import Path
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
@@ -36,7 +37,6 @@ warning = "WARNING:"
 # env
 home = Path.home()
 cwd = Path.cwd()
-csv_fn = config("CSV_FN", default="raw/output.csv")
 json_fn = config("JSON_FN", default="raw/output.json")
 tz = config("TZ", default="America/Chicago")
 bypass_schedule = config("OVERRIDE", default=False, cast=bool)
@@ -363,7 +363,6 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
     return access_token, refresh_token
 
 
-# TODO: decouple export from formatted response
 @api_router.get("/events")
 def get_events(auth: dict = Depends(ip_whitelist_or_auth),
                location: str = "Oklahoma City",
@@ -381,8 +380,6 @@ def get_events(auth: dict = Depends(ip_whitelist_or_auth),
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    access_token, refresh_token = generate_token()
-
     # default exclusions
     exclusion_list = ["36\u00b0N", "Nerdy Girls"]
 
@@ -391,27 +388,10 @@ def get_events(auth: dict = Depends(ip_whitelist_or_auth),
         exclusions = exclusions.split(",")
         exclusion_list = exclusion_list + exclusions
 
-    response = send_request(access_token, query, vars)
+    # Get all events with the specified exclusions
+    events = get_all_events(exclusion_list)
 
-    export_to_file(response, format, exclusions=exclusion_list)
-
-    # third-party query
-    output = []
-    for url in url_vars:
-        response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
-        # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusion_list)) > 0:
-            output.append(response)
-        else:
-            print(f"{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found")
-    # loop through output and append to file
-    for i in range(len(output)):
-        export_to_file(output[i], format)
-
-    # cleanup output file
-    sort_json(json_fn)
-
-    return pd.read_json(json_fn)
+    return events
 
 
 @api_router.get("/check-schedule")

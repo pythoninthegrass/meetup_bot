@@ -33,7 +33,6 @@ cwd: Path = Path.cwd()
 script_dir: Path = Path(__file__).resolve().parents[0]
 format = 'json'
 cache_fn = config('CACHE_FN', default='raw/meetup_query')
-csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 days = config('DAYS', default=7, cast=int)
 tz = config('TZ', default='America/Chicago')
@@ -233,60 +232,15 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
     return df
 
 
-# TODO: QA
-def sort_csv(filename) -> None:
+def sort_and_format_events(df):
     """
-    Sort CSV by date
+    Sort and format events data
     """
-
-    # read csv
-    df = pd.read_csv(filename, header=0)
-
-    # drop duplicates by event url
-    df = df.drop_duplicates(subset='eventUrl')
-
-    # sort by date
-    df['date'] = pd.to_datetime(df['date'])
-    df = df.sort_values(by=['date'])
-
-    # convert date to human readable format (Thu 5/26 at 11:30 am)
-    df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
-
-    # write csv
-    df.to_csv(filename, index=False)
-
-
-def sort_json(filename) -> None:
-    """
-    Sort JSON keys
-    """
-    # Check if file exists and has content
-    if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}No events found to sort")
-        return
-
-    # pandas remove duplicate keys by eventUrl key
-    df = pd.read_json(filename, orient='records')
-
-    # Check if DataFrame is empty
     if df.empty:
-        print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}No events found to sort")
-        return
+        return []
 
     df = df.drop_duplicates(subset='eventUrl')
 
-    # replace '1-07-19 17:00:00' with current year '2022-07-19 17:00:00' via regex
-    # * negative lookahead only matches first digit at the beginning of the line (e.g., 1/0001 vs. 2022)
-    # date_regex = r'^1(?![\d])|^0001(?![\d])'
-
-    # TODO: get precise date from event to determine year
-    # choose current year if 7 days from now is before EOY
-    # if arrow.now().year == arrow.now().shift(days=7).year:
-    #     year = str(arrow.now(TZ).year)
-    # else:
-    #     year = str(arrow.now(TZ).shift(days=7).year)
-
-    # convert date column from 'ddd M/D h:mm a' (e.g., Tue 7/19 5:00 pm) to iso8601
     try:
         # extract dates from date column into a dictionary
         # * Timestamp('2023-02-28 16:30:00-0600', tz='pytz.FixedOffset(-360)')
@@ -321,15 +275,13 @@ def sort_json(filename) -> None:
     # convert date to human readable format (Thu 5/26 at 11:30 am)
     df['date'] = df['date'].apply(lambda x: arrow.get(x).format('ddd M/D h:mm a'))
 
-    # export to json (convert escaped unicode to utf-8 encoding first)
-    data = json.loads(df.to_json(orient='records', force_ascii=False))
-    with open(json_fn, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2)
+    # convert to JSON-compatible format
+    return json.loads(df.to_json(orient='records', force_ascii=False))
 
 
-def export_to_file(response, type: str='json', exclusions: str='') -> None:
+def process_events(response, exclusions: str = '') -> list:
     """
-    Export to CSV or JSON
+    Process events from response
     """
     if exclusions != '':
         df = format_response(response, exclusions=exclusions)
@@ -338,84 +290,50 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
 
     # If DataFrame is empty, return early
     if df.empty:
-        return
+        return []
 
-    # Create directory if it doesn't exist
-    Path('raw').mkdir(parents=True, exist_ok=True)
-
-    if type == 'csv':
-        df.to_csv(Path(csv_fn), mode='a', header=False, index=False)
-    elif type == 'json':
-        # convert escaped unicode to utf-8 encoding
-        data = json.loads(df.to_json(orient='records', force_ascii=False))
-
-        # TODO: don't wipe file with existing entries -- just remove duplicate key/value pairs
-        # * cf."[{ "name": "SheCodesOKC", "date": "Tue 2/28 4:30 pm"," ... }]" -> "[]" (empty list)
-        # ! Only happens locally; doesn't happen on server
-        # ! Could be related to timestamp/ttl and/or removing duplicates logic
-        # write json to file
-        # if file exists, is less than n minutes old, append to file
-        if (
-            Path(json_fn).exists()
-            and (arrow.now() - arrow.get(os.path.getmtime(json_fn))).seconds < ttl
-            and os.stat(json_fn).st_size > 0
-        ):
-            # append to json
-            with open(json_fn, 'r') as f:
-                data_json = json.load(f)
-                data_json.extend(data)
-                with open(json_fn, 'w', encoding='utf-8') as f:
-                    json.dump(data_json, f, indent=2)
-        else:
-            # create/overwrite json
-            with open(json_fn, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2)
-    else:
-        print('Invalid export file type')
+    return sort_and_format_events(df)
 
 
-# TODO: disable in prod (use `main.py`)
-def main():
+def get_all_events(exclusions: list = None) -> list:
+    """
+    Get all events from both first-party and third-party queries
+    """
     tokens = gen_token()
     if not tokens:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}Failed to get access tokens")
-        sys.exit(1)
+        return []
 
     access_token = tokens.get('access_token')
     if not access_token:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}No access token in response")
-        sys.exit(1)
+        return []
 
-    # exclude keywords in event name and title (will miss events with keyword in description)
-    exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls', 'Bitcoin']
+    all_events = []
 
-    # TODO: reduce `format_response` calls to 1
     # first-party query
     response = send_request(access_token, query, vars)
-    # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
-    export_to_file(response, format, exclusions=exclusions)                  # csv/json
+    events = process_events(response, exclusions)
+    all_events.extend(events)
 
     # third-party query
-    output = []
     for url in url_vars:
         response = send_request(access_token, url_query, f'{{"urlname": "{url}"}}')
-        # append to output dict if the response is not empty
-        if len(format_response(response, exclusions=exclusions)) > 0:
-            output.append(response)
+        events = process_events(response, exclusions)
+        if events:
+            all_events.extend(events)
         else:
             print(f'{Fore.GREEN}{info:<10}{Fore.RESET}No upcoming events for {url} found')
-    # loop through output and append to file
-    for i in range(len(output)):
-        export_to_file(output[i], format)
 
-    # cleanup output file
-    if format == 'csv':
-        sort_csv(csv_fn)
-    elif format == 'json':
-        sort_json(json_fn)
+    # Sort all events by date
+    if all_events:
+        df = pd.DataFrame(all_events)
+        return sort_and_format_events(df)
 
-    return response
+    return []
 
 
 if __name__ == '__main__':
-    main()
+    exclusions = ['36\u00b0N', 'Tulsa', 'Nerdy Girls', 'Bitcoin']
+    events = get_all_events(exclusions)
+    print(json.dumps(events, indent=2))
