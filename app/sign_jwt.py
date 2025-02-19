@@ -87,25 +87,29 @@ def gen_payload_data():
 
     Avoids `invalid_grant` by getting a new `exp` value during signing
     """
-
     payload_data = {
-        "audience": 'api.meetup.com',
-        "kid": SIGNING_KEY_ID,
         "sub": SELF_ID,
-        "iss": CLIENT_SECRET,
-        "exp": time.time() + int(JWT_LIFE_SPAN)
+        "iss": CLIENT_ID,
+        "aud": "api.meetup.com",
+        "exp": int(time.time() + JWT_LIFE_SPAN)
     }
-
     return payload_data
 
 
 def sign_token():
     """Generate signed JWT"""
 
+    # Define headers exactly as specified in docs
+    jwt_headers = {
+        "kid": SIGNING_KEY_ID,
+        "typ": "JWT",
+        "alg": "RS256"
+    }
+
     payload_data = gen_payload_data()
 
     payload = jwt.encode(
-        headers=headers,
+        headers=jwt_headers,
         payload=payload_data,
         key=private_key,
         algorithm='RS256'
@@ -121,7 +125,8 @@ def verify_token(token):
         jwt.decode(
             jwt=token,
             key=public_key,
-            issuer=CLIENT_SECRET,
+            issuer=CLIENT_ID,
+            audience="api.meetup.com",
             verify=True,
             algorithms=['RS256']
         )
@@ -134,6 +139,7 @@ def verify_token(token):
         jwt.exceptions.InvalidTokenError,
         jwt.exceptions.InvalidSignatureError,
         jwt.exceptions.InvalidIssuerError,
+        jwt.exceptions.InvalidAudienceError,
         ) as e:
         print(f"{Fore.RED}{error:<10}{Fore.RESET}{e}")
         sys.exit(1)
@@ -142,18 +148,30 @@ def verify_token(token):
 def get_access_token(token):
     """Post token to auth server to get access token"""
 
+    # Headers for the token request
+    request_headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    # Payload exactly as specified in docs
+    # https://www.meetup.com/api/authentication/#p04-jwt-flow-section
     payload = {
-        "grant_type": 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        "assertion": token,
-        "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "audience": 'api.meetup.com',
-        "exp": time.time() + int(JWT_LIFE_SPAN)
+        "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        "assertion": token
     }
     payload = urlencode(payload)
 
-    return requests.request("POST", TOKEN_URL, headers=headers, data=payload)
+    try:
+        response = requests.request("POST", TOKEN_URL, headers=request_headers, data=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}HTTP Error: {e}")
+        print(f"Response: {response.text}")
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}Request failed: {e}")
+        return None
 
 
 def main():
@@ -163,12 +181,17 @@ def main():
     token = sign_token()
 
     # verify JWT
-    verify_token(token)
+    if not verify_token(token):
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}Token verification failed")
+        return None
 
     # get access and refresh tokens
-    res = get_access_token(token)
+    tokens = get_access_token(token)
+    if not tokens:
+        print(f"{Fore.RED}{error:<10}{Fore.RESET}Failed to get access token")
+        return None
 
-    return res.json()
+    return tokens
 
 
 if __name__ == "__main__":
