@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import arrow
 import asyncio
 import json
 import pandas as pd
@@ -190,6 +191,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+oauth_form_dependency = Depends(OAuth2PasswordRequestForm)
+
 
 def verify_password(plain_password, hashed_password):
     """Validate plaintext password against hashed password"""
@@ -222,10 +225,7 @@ def authenticate_user(username: str, password: str):
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     """Create access token"""
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE)
+    expire = datetime.utcnow() + expires_delta if expires_delta else datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -246,8 +246,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
+    except JWTError as err:
+        raise credentials_exception from err
     user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
@@ -255,19 +255,24 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
+current_user_dependency = Depends(get_current_user)
+
+async def get_current_active_user(current_user: User = current_user_dependency):
     """Get current active user"""
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
 
     return current_user
 
+current_active_user_dependency = Depends(get_current_active_user)
 
-async def ip_whitelist_or_auth(request: Request, current_user: User = Depends(get_current_active_user)):
+async def ip_whitelist_or_auth(request: Request, current_user: User = current_active_user_dependency):
     if is_ip_allowed(request):
         return {"bypass_auth": True}
 
     return current_user
+
+ip_whitelist_auth_dependency = Depends(ip_whitelist_or_auth)
 
 
 def check_auth(auth: dict | User) -> None:
@@ -282,7 +287,7 @@ def check_auth(auth: dict | User) -> None:
 
 
 @app.post("/token", response_model=Token)
-async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
     """Login for oauth access token"""
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -334,7 +339,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
 
 # TODO: use refresh token to get new access token
 @api_router.get("/token")
-def generate_token(current_user: User = Depends(get_current_active_user)):
+def generate_token(current_user: User = current_active_user_dependency):
     """
     Get access and refresh tokens
 
@@ -355,16 +360,16 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
         refresh_token = tokens["refresh_token"]
     except KeyError as e:
         print(f"{Fore.RED}{ERROR:<10}{Fore.RESET}KeyError: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
     return access_token, refresh_token
 
 
 @api_router.get("/events")
-def get_events(auth: dict = Depends(ip_whitelist_or_auth),
+def get_events(auth: dict = ip_whitelist_auth_dependency,
                location: str = "Oklahoma City",
                exclusions: str = "Tulsa",
-               current_user: User = Depends(get_current_active_user)
+               current_user: User = current_active_user_dependency
     ):
     """
     Query upcoming Meetup events
@@ -392,7 +397,7 @@ def get_events(auth: dict = Depends(ip_whitelist_or_auth),
 
 
 @api_router.get("/check-schedule")
-def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Request = None):
+def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Request = None):
     """
     Check if it's time to post to Slack based on the schedule
     """
@@ -436,11 +441,11 @@ def should_post_to_slack(auth: dict = Depends(ip_whitelist_or_auth), request: Re
 
 @api_router.post("/slack")
 def post_slack(
-    auth: dict = Depends(ip_whitelist_or_auth),
+    auth: dict = ip_whitelist_auth_dependency,
     location: str = "Oklahoma City",
     exclusions: str = "Tulsa",
     channel_name: str = None,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = current_active_user_dependency,
     override: bool = bypass_schedule,
 ):
     """
@@ -492,7 +497,7 @@ def post_slack(
 @api_router.post("/snooze")
 def snooze_slack_post(
     duration: str,
-    auth: dict = Depends(ip_whitelist_or_auth),
+    auth: dict = ip_whitelist_auth_dependency,
     ):
     """
     Snooze the Slack post for the specified duration
@@ -508,12 +513,12 @@ def snooze_slack_post(
         snooze_schedule(duration)
         return {"message": f"Slack post snoozed for {duration}"}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 # TODO: test IP whitelisting
 @api_router.get("/schedule")
-def get_current_schedule(auth: dict | User = Depends(ip_whitelist_or_auth)):
+def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
     """
     Get the current schedule including any active snoozes
     """
