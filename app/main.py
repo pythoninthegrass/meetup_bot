@@ -9,12 +9,15 @@ import time
 from colorama import Fore
 from config import *
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from decouple import config
-from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.models import SecuritySchemeType
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
+from fastapi.security.base import SecurityBase
+from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
@@ -60,6 +63,8 @@ PORT = config("PORT", default=3000, cast=int)
 SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = config("ALGORITHM", default="HS256")
 TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
+COOKIE_NAME = "session_token"  # Name of the cookie that will store the session token
+IS_DEV = HOST in ["localhost", "127.0.0.1", "0.0.0.0"] or PORT == 3000  # Development mode check
 DB_NAME = config("DB_NAME")
 DB_USER = config("DB_USER")
 DB_PASS = config("DB_PASS")
@@ -89,8 +94,9 @@ FastAPI app
 """
 
 # Create the app with minimal initial setup
-app = FastAPI(title="meetup_bot API",
-              openapi_url="/meetup_bot.json"
+app = FastAPI(
+    title="meetup_bot API",
+    openapi_url="/meetup_bot.json",
 )
 
 # add `/api` route in front of all other endpoints
@@ -114,7 +120,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 """
 Database
 """
@@ -130,68 +135,28 @@ class UserInfo(db.Entity):
     email = Optional(str)
 
 
-# Move database initialization to lifespan context
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize DB connection
-    db.bind(provider='postgres',
-            user=DB_USER,
-            password=DB_PASS.strip('"'),
-            host=DB_HOST,
-            database=DB_NAME,
-            port=DB_PORT)
-    db.generate_mapping(create_tables=True)
+# Initialize database connection
+db.bind(provider='postgres',
+        user=DB_USER,
+        password=DB_PASS.strip('"'),
+        host=DB_HOST,
+        database=DB_NAME,
+        port=DB_PORT)
+db.generate_mapping(create_tables=True)
 
-    # Create initial user if needed (moved from startup_event)
-    with db_session:
-        if not UserInfo.exists(username=DB_USER):
-            hashed_password = get_password_hash(DB_PASS)
-            UserInfo(username=DB_USER, hashed_password=hashed_password)
-
-    print("Application startup complete")
-
-    yield  # Application runs here
-
-    # Cleanup
-    print("Application shutdown")
-    db.disconnect()
-
-app = FastAPI(
-    title="meetup_bot API",
-    openapi_url="/meetup_bot.json",
-    lifespan=lifespan
-)
+# Create initial user if needed
+with db_session:
+    if not UserInfo.exists(username=DB_USER):
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        hashed_password = pwd_context.hash(DB_PASS)
+        UserInfo(username=DB_USER, hashed_password=hashed_password)
 
 
 """
 Authentication
 """
 
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-oauth_form_dependency = Depends(OAuth2PasswordRequestForm)
 
 
 def verify_password(plain_password, hashed_password):
@@ -225,29 +190,109 @@ def authenticate_user(username: str, password: str):
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     """Create access token"""
     to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta if expires_delta else datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE)
+    expire = datetime.now(UTC) + expires_delta if expires_delta else datetime.now(UTC) + timedelta(minutes=TOKEN_EXPIRE)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     return encoded_jwt
 
 
-# TODO: store user session in cookie
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Get current user"""
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    disabled: bool | None = None
+
+
+class UserInDB(User):
+    hashed_password: str
+
+
+# Authentication schemes
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="token",
+    auto_error=False
+)
+
+class CookieOrHeaderToken(SecurityBase):
+    def __init__(
+        self,
+        *,
+        cookie_name: str = COOKIE_NAME,
+        scheme_name: str | None = None,
+        description: str | None = None,
+        auto_error: bool = True,
+    ):
+        self.cookie_name = cookie_name
+        self.scheme_name = scheme_name or self.__class__.__name__
+        self.description = description
+        self.auto_error = auto_error
+        self.model = {
+            "type": SecuritySchemeType.http,
+            "scheme": "bearer",
+        }
+
+    async def __call__(self, request: Request) -> str | None:
+        # First try cookie
+        cookie_token = request.cookies.get(self.cookie_name)
+        if cookie_token:
+            return cookie_token
+
+        # Then try Authorization header
+        authorization = request.headers.get("Authorization")
+        if not authorization:
+            return None
+
+        scheme, token = get_authorization_scheme_param(authorization)
+        if scheme.lower() != "bearer":
+            return None
+
+        return token
+
+# Security schemes
+security = CookieOrHeaderToken(auto_error=False)  # Don't auto-error so we can try form auth
+oauth_form_dependency = Depends(OAuth2PasswordRequestForm)
+
+# Update app to include both security schemes
+app.swagger_ui_init_oauth = {
+    "usePkceWithAuthorizationCodeGrant": True,
+    "clientId": "meetup_bot",
+}
+
+async def get_current_user(
+    request: Request,
+    token: str | None = Depends(security),
+    form_token: str | None = Depends(oauth2_scheme),
+):
+    """Get current user from session cookie, bearer token, or form authentication"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    # Try cookie/header token first, then form token
+    token_to_verify = token or form_token
+    if not token_to_verify:
+        raise credentials_exception
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token_to_verify, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
     except JWTError as err:
         raise credentials_exception from err
+
     user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
@@ -287,7 +332,7 @@ def check_auth(auth: dict | User) -> None:
 
 
 @app.post("/token", response_model=Token)
-async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
+async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
     """Login for oauth access token"""
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -299,6 +344,17 @@ async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = oauth_for
     oauth_token_expires = timedelta(minutes=TOKEN_EXPIRE)
     oauth_token = create_access_token(
         data={"sub": user.username}, expires_delta=oauth_token_expires
+    )
+
+    # Set the session cookie
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=oauth_token,
+        httponly=True,              # Prevents JavaScript access
+        secure=not IS_DEV,          # Only require HTTPS in production
+        samesite="lax",             # Protects against CSRF
+        max_age=TOKEN_EXPIRE * 60,  # Convert minutes to seconds
+        expires=datetime.now(UTC) + oauth_token_expires
     )
 
     return {"access_token": oauth_token, "token_type": "bearer"}
@@ -334,7 +390,31 @@ def index(request: Request):
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
     """Redirect to "/docs" from index page if user successfully logs in with HTML form"""
     if load_user(username) and verify_password(password, load_user(username).hashed_password):
-        return RedirectResponse(url="/docs", status_code=303)
+        response = RedirectResponse(url="/docs", status_code=303)
+
+        # Create and set session cookie
+        oauth_token_expires = timedelta(minutes=TOKEN_EXPIRE)
+        oauth_token = create_access_token(
+            data={"sub": username}, expires_delta=oauth_token_expires
+        )
+
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=oauth_token,
+            httponly=True,
+            secure=not IS_DEV,  # Only require HTTPS in production
+            samesite="lax",
+            max_age=TOKEN_EXPIRE * 60,
+            expires=datetime.now(UTC) + oauth_token_expires
+        )
+
+
+        return response
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password"
+    )
 
 
 # TODO: use refresh token to get new access token
