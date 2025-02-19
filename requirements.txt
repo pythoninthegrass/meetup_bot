@@ -94,7 +94,7 @@ python-decouple==3.8
     # via meetup-bot (pyproject.toml)
 python-jose==3.3.0
     # via meetup-bot (pyproject.toml)
-python-multipart==0.0.9
+python-multipart==0.0.18
     # via meetup-bot (pyproject.toml)
 pytz==2024.2
     # via pandas
