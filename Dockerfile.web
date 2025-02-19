@@ -3,7 +3,7 @@
 # full semver just for python base image
 ARG PYTHON_VERSION=3.11.11
 
-FROM python:${PYTHON_VERSION}-slim-bullseye AS builder
+FROM python:${PYTHON_VERSION}-slim AS builder
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
@@ -38,7 +38,7 @@ RUN python -m venv $VENV \
 #     --mount=type=bind,source=./requirements.txt,target=/app/requirements.txt \
 #     python -m pip install -r requirements.txt
 
-FROM python:${PYTHON_VERSION}-slim-bullseye AS runner
+FROM python:${PYTHON_VERSION}-slim AS runner
 
 # set timezone
 ENV TZ=${TZ:-"America/Chicago"}
