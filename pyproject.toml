@@ -58,6 +58,26 @@ python_files = ["test_*.py"]
 addopts = "-v --cov=app --cov-report=term-missing"
 asyncio_mode = "auto"
 
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/__init__.py",
+    "*/capture_groups.py",
+    "*/config.py",
+    "*/scratch.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+
 [tool.ruff]
 # Fix without reporting on leftover violations
 fix-only = true

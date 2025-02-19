@@ -6,6 +6,10 @@ from pathlib import Path
 # Get the path to the root directory of the project
 root_path = Path(__file__).resolve().parents[1]
 
+# Add the project root directory to the Python path
+project_root = str(Path(__file__).parent.parent)
+sys.path.insert(0, project_root)
+
 # Add the app directory to the sys.path
 app_path = root_path / "app"
 sys.path.insert(0, str(app_path))

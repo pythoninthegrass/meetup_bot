@@ -1,7 +1,7 @@
 import json
 import pytest
+from app.core.slackbot import main, send_message
 from pathlib import Path
-from slackbot import main, send_message
 from unittest.mock import MagicMock, patch
 
 
@@ -30,7 +30,7 @@ def test_send_message():
     mock_response.status_code = 200
     mock_client.chat_postMessage.return_value = mock_response
 
-    with patch('slackbot.client', mock_client):
+    with patch('app.core.slackbot.client', mock_client):
         response = send_message("Test message", "test_channel")
 
         mock_client.chat_postMessage.assert_called_once_with(
@@ -53,7 +53,7 @@ def test_send_message_error():
     mock_client = MagicMock()
     mock_client.chat_postMessage.side_effect = Exception("Test error")
 
-    with patch('slackbot.client', mock_client):
+    with patch('app.core.slackbot.client', mock_client):
         response = send_message("Test message", "test_channel")
         mock_client.chat_postMessage.assert_called_once()
         assert response is None
@@ -67,9 +67,9 @@ def test_main(mock_events, mock_channels):
 
     expected_message = "• Thu 5/26 11:30 am *Test Group* <https://test.url|Test Event> "
 
-    with patch('slackbot.client', mock_client), \
-         patch('slackbot.load_channels', return_value=mock_channels), \
-         patch('slackbot.get_all_events', return_value=mock_events):
+    with patch('app.core.slackbot.client', mock_client), \
+         patch('app.core.slackbot.load_channels', return_value=mock_channels), \
+         patch('app.core.slackbot.get_all_events', return_value=mock_events):
         result = main()
 
         mock_client.chat_postMessage.assert_called_once_with(
@@ -93,9 +93,9 @@ def test_main(mock_events, mock_channels):
 def test_main_no_events(mock_channels):
     mock_client = MagicMock()
 
-    with patch('slackbot.client', mock_client), \
-         patch('slackbot.load_channels', return_value=mock_channels), \
-         patch('slackbot.get_all_events', return_value=[]):
+    with patch('app.core.slackbot.client', mock_client), \
+         patch('app.core.slackbot.load_channels', return_value=mock_channels), \
+         patch('app.core.slackbot.get_all_events', return_value=[]):
         result = main()
 
         mock_client.chat_postMessage.assert_not_called()

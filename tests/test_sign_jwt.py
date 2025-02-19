@@ -2,9 +2,9 @@ import jwt
 import pytest
 import requests
 import time
+from app.core.sign_jwt import gen_payload_data, get_access_token, main, sign_token, verify_token
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from sign_jwt import gen_payload_data, get_access_token, main, sign_token, verify_token
 from unittest.mock import MagicMock, patch
 
 
@@ -33,10 +33,10 @@ def test_gen_payload_data():
 
 
 def test_sign_token(mock_private_key):
-    with patch('sign_jwt.private_key', mock_private_key), \
-         patch('sign_jwt.SIGNING_KEY_ID', 'test_key_id'), \
-         patch('sign_jwt.CLIENT_ID', 'test_client_id'), \
-         patch('sign_jwt.SELF_ID', 'test_self_id'):
+    with patch('app.core.sign_jwt.private_key', mock_private_key), \
+         patch('app.core.sign_jwt.SIGNING_KEY_ID', 'test_key_id'), \
+         patch('app.core.sign_jwt.CLIENT_ID', 'test_client_id'), \
+         patch('app.core.sign_jwt.SELF_ID', 'test_self_id'):
         token = sign_token()
         assert isinstance(token, str)
         # Verify the token structure
@@ -48,10 +48,10 @@ def test_sign_token(mock_private_key):
 
 
 def test_verify_token_valid(mock_private_key, mock_public_key):
-    with patch('sign_jwt.private_key', mock_private_key), \
-         patch('sign_jwt.public_key', mock_public_key), \
-         patch('sign_jwt.CLIENT_ID', 'test_client_id'), \
-         patch('sign_jwt.SELF_ID', 'test_self_id'), \
+    with patch('app.core.sign_jwt.private_key', mock_private_key), \
+         patch('app.core.sign_jwt.public_key', mock_public_key), \
+         patch('app.core.sign_jwt.CLIENT_ID', 'test_client_id'), \
+         patch('app.core.sign_jwt.SELF_ID', 'test_self_id'), \
          patch('time.time', return_value=1000000):
         # Create a token that won't expire immediately
         token = jwt.encode(
@@ -71,9 +71,9 @@ def test_verify_token_valid(mock_private_key, mock_public_key):
 
 
 def test_verify_token_expired(mock_private_key, mock_public_key):
-    with patch('sign_jwt.private_key', mock_private_key), \
-         patch('sign_jwt.public_key', mock_public_key), \
-         patch('sign_jwt.CLIENT_ID', 'test_client_id'), \
+    with patch('app.core.sign_jwt.private_key', mock_private_key), \
+         patch('app.core.sign_jwt.public_key', mock_public_key), \
+         patch('app.core.sign_jwt.CLIENT_ID', 'test_client_id'), \
          patch('time.time', return_value=1000000):
         token = sign_token()
         # Move time forward past expiration
@@ -109,20 +109,20 @@ def test_main_success(mock_private_key, mock_public_key):
         "refresh_token": "test_refresh_token"
     }
 
-    with patch('sign_jwt.private_key', mock_private_key), \
-         patch('sign_jwt.public_key', mock_public_key), \
-         patch('sign_jwt.CLIENT_ID', 'test_client_id'), \
-         patch('sign_jwt.get_access_token', return_value=mock_tokens), \
+    with patch('app.core.sign_jwt.private_key', mock_private_key), \
+         patch('app.core.sign_jwt.public_key', mock_public_key), \
+         patch('app.core.sign_jwt.CLIENT_ID', 'test_client_id'), \
+         patch('app.core.sign_jwt.get_access_token', return_value=mock_tokens), \
          patch('jwt.decode', return_value={'exp': time.time() + 300}):
         result = main()
         assert result == mock_tokens
 
 
 def test_main_failure(mock_private_key, mock_public_key):
-    with patch('sign_jwt.private_key', mock_private_key), \
-         patch('sign_jwt.public_key', mock_public_key), \
-         patch('sign_jwt.CLIENT_ID', 'test_client_id'), \
-         patch('sign_jwt.get_access_token', return_value=None), \
+    with patch('app.core.sign_jwt.private_key', mock_private_key), \
+         patch('app.core.sign_jwt.public_key', mock_public_key), \
+         patch('app.core.sign_jwt.CLIENT_ID', 'test_client_id'), \
+         patch('app.core.sign_jwt.get_access_token', return_value=None), \
          patch('jwt.decode', return_value={'exp': time.time() + 300}):
         result = main()
         assert result is None

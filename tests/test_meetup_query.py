@@ -2,7 +2,7 @@ import arrow
 import json
 import pandas as pd
 import pytest
-from meetup_query import format_response, get_all_events, process_events, send_request
+from app.core.meetup_query import format_response, get_all_events, process_events, send_request
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
@@ -160,9 +160,9 @@ def test_get_all_events():
         }
     })
 
-    with patch("meetup_query.gen_token", return_value=mock_tokens), \
-         patch("meetup_query.send_request") as mock_send, \
-         patch("meetup_query.url_vars", ["test-group"]), \
+    with patch("app.core.meetup_query.gen_token", return_value=mock_tokens), \
+         patch("app.core.meetup_query.send_request") as mock_send, \
+         patch("app.core.meetup_query.url_vars", ["test-group"]), \
          patch("arrow.now", return_value=arrow.get("2024-09-18")):
 
         # Set up mock to return different responses for first-party and third-party queries
@@ -203,9 +203,9 @@ def test_get_all_events_with_exclusions():
         }
     })
 
-    with patch("meetup_query.gen_token", return_value=mock_tokens), \
-         patch("meetup_query.send_request") as mock_send, \
-         patch("meetup_query.url_vars", ["test-group"]), \
+    with patch("app.core.meetup_query.gen_token", return_value=mock_tokens), \
+         patch("app.core.meetup_query.send_request") as mock_send, \
+         patch("app.core.meetup_query.url_vars", ["test-group"]), \
          patch("arrow.now", return_value=arrow.get("2024-09-18")):
 
         # Set up mock to return different responses
@@ -236,9 +236,9 @@ def test_get_all_events_empty_response():
         }
     })
 
-    with patch("meetup_query.gen_token", return_value=mock_tokens), \
-         patch("meetup_query.send_request") as mock_send, \
-         patch("meetup_query.url_vars", ["test-group"]):
+    with patch("app.core.meetup_query.gen_token", return_value=mock_tokens), \
+         patch("app.core.meetup_query.send_request") as mock_send, \
+         patch("app.core.meetup_query.url_vars", ["test-group"]):
 
         # Set up mock to return empty responses
         mock_send.side_effect = [mock_empty_response, mock_group_response]
