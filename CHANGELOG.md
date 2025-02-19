@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.1...v1.1.2) (2025-02-19)
+
+
+### Documentation
+
+* add [@alex-code4okc](https://github.com/alex-code4okc) as a contributor ([7feccfa](https://github.com/pythoninthegrass/meetup_bot/commit/7feccfa439115616c7fdb760c15043ff3e6d858e))
+* contributing ([fd2c294](https://github.com/pythoninthegrass/meetup_bot/commit/fd2c294a018e6943b4b6b66af74b8eaa14db0c0c))
+* update readme ([437d81a](https://github.com/pythoninthegrass/meetup_bot/commit/437d81a528e7e63b98d8f9ab7e1086d2a11023b7))
+
 ## [1.1.1](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.0...v1.1.1) (2024-08-26)
 
 
