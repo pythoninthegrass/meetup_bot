@@ -6,11 +6,27 @@ import json
 import pandas as pd
 import sys
 import time
+from app.core.db import (
+    Token,
+    TokenData,
+    User,
+    UserInDB,
+    authenticate_user,
+    create_access_token,
+    db,
+    db_session,
+    get_user,
+    init_db,
+    load_user,
+    verify_password,
+)
 from app.core.meetup_query import get_all_events
 from app.core.sign_jwt import main as gen_token
 from app.core.slackbot import *
 from app.utils.schedule import (
     TZ,
+    check_and_revert_snooze,
+    get_current_schedule_time,
     get_schedule,
     snooze_schedule,
 )
@@ -30,9 +46,7 @@ from fastapi.templating import Jinja2Templates
 from icecream import ic
 from jose import JWTError, jwt
 from math import ceil
-from passlib.context import CryptContext
 from pathlib import Path
-from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 from pydantic import BaseModel
 from typing import Union
 
@@ -69,29 +83,20 @@ ALGORITHM = config("ALGORITHM", default="HS256")
 TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
 COOKIE_NAME = "session_token"  # Name of the cookie that will store the session token
 IS_DEV = HOST in ["localhost", "127.0.0.1", "0.0.0.0"] or PORT == 3000  # Development mode check
-DB_NAME = config("DB_NAME")
-DB_USER = config("DB_USER")
-DB_PASS = config("DB_PASS")
-DB_HOST = config("DB_HOST")
-DB_PORT = config("DB_PORT", default=5432, cast=int)
 
 """
 IP Address Whitelisting
 """
 
-
 class IPConfig(BaseModel):
     whitelist: list[str] = ["localhost", "127.0.0.1"]
     public_ips: list[str] = []  # TODO: add whitelisted public IPs here
 
-
 ip_config = IPConfig()
-
 
 def is_ip_allowed(request: Request):
     client_host = request.client.host
     return client_host in ip_config.whitelist or client_host in ip_config.public_ips
-
 
 """
 FastAPI app
@@ -124,101 +129,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-"""
-Database
-"""
-
-# init db
-db = Database()
-
-
-# user model
-class UserInfo(db.Entity):
-    username = Required(str, unique=True)
-    hashed_password = Required(str)
-    email = Optional(str)
-
-
-# Initialize database connection
-db.bind(provider='postgres',
-        user=DB_USER,
-        password=DB_PASS.strip('"'),
-        host=DB_HOST,
-        database=DB_NAME,
-        port=DB_PORT)
-db.generate_mapping(create_tables=True)
-
-# Create initial user if needed
-with db_session:
-    if not UserInfo.exists(username=DB_USER):
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        hashed_password = pwd_context.hash(DB_PASS)
-        UserInfo(username=DB_USER, hashed_password=hashed_password)
-
+# Initialize database
+init_db()
 
 """
 Authentication
 """
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password, hashed_password):
-    """Validate plaintext password against hashed password"""
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    """Return hashed password"""
-    return pwd_context.hash(password)
-
-
-def get_user(username: str):
-    with db_session:
-        user = UserInfo.get(username=username)
-        if user:
-            return UserInDB(username=user.username, hashed_password=user.hashed_password)
-
-
-def authenticate_user(username: str, password: str):
-    """Authenticate user"""
-    user = get_user(username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-
-    return user
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    """Create access token"""
-    to_encode = data.copy()
-    expire = datetime.now(UTC) + expires_delta if expires_delta else datetime.now(UTC) + timedelta(minutes=TOKEN_EXPIRE)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-    return encoded_jwt
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
 
 # Authentication schemes
 oauth2_scheme = OAuth2PasswordBearer(
@@ -303,7 +219,6 @@ async def get_current_user(
 
     return user
 
-
 current_user_dependency = Depends(get_current_user)
 
 async def get_current_active_user(current_user: User = current_user_dependency):
@@ -323,7 +238,6 @@ async def ip_whitelist_or_auth(request: Request, current_user: User = current_ac
 
 ip_whitelist_auth_dependency = Depends(ip_whitelist_or_auth)
 
-
 def check_auth(auth: dict | User) -> None:
     """
     Shared function to check authentication result.
@@ -333,7 +247,6 @@ def check_auth(auth: dict | User) -> None:
         print("Authentication bypassed due to whitelisted IP")
     elif not isinstance(auth, User):
         raise HTTPException(status_code=401, detail="Unauthorized")
-
 
 @app.post("/token", response_model=Token)
 async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
@@ -368,27 +281,15 @@ async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordReq
 Login
 """
 
-
-def load_user(username: str):
-    with db_session:
-        user = UserInfo.get(username=username)
-        if user:
-            return user
-        else:
-            raise HTTPException(status_code=404, detail="User not found")
-
-
 @app.get("/healthz", status_code=200)
 def health_check():
     """Smoke test to check if the app is running"""
     return {"status": "ok"}
 
-
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     with open(Path("resources/templates/login.html")) as f:
         return HTMLResponse(content=f.read(), status_code=200)
-
 
 @app.post("/auth/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -411,7 +312,6 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
             max_age=TOKEN_EXPIRE * 60,
             expires=datetime.now(UTC) + oauth_token_expires
         )
-
 
         return response
 

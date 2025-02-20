@@ -34,7 +34,7 @@ class Schedule(db.Entity):
     timezone = Required(str)
     enabled = Required(bool, default=True)
     snooze_until = Optional(datetime)
-    original_schedule_time = Optional(str)
+    original_schedule_time = Optional(str, nullable=True)  # Explicitly allow NULL
     last_changed = Required(datetime, default=datetime.utcnow)
 
 
@@ -165,7 +165,8 @@ def check_and_revert_snooze():
         if current_time_naive >= schedule.snooze_until:
             schedule.schedule_time = schedule.original_schedule_time
             schedule.snooze_until = None
-            schedule.original_schedule_time = None
+            # Set to empty string instead of None to avoid database constraint issues
+            schedule.original_schedule_time = ""
             print(f"Reverted snooze for {schedule.day}")
 
 
