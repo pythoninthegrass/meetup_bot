@@ -9,6 +9,7 @@ else
 	export VENV="/opt/venv"
 fi
 export PATH="${VENV}/bin:$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+export PYTHONPATH="${top_dir}"
 
 server() {
 	gunicorn \
