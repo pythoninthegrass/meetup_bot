@@ -25,6 +25,8 @@ PORT = config("PORT", default=3000, cast=int)
 SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = config("ALGORITHM", default="HS256")
 TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
+COOKIE_NAME = "session_token"  # Name of the cookie that will store the session token
+IS_DEV = HOST in ["localhost", "127.0.0.1", "0.0.0.0"] or PORT == 3000  # Development mode check
 
 # Database settings
 DB_NAME = config("DB_NAME")

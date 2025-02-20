@@ -6,11 +6,18 @@ import json
 import pandas as pd
 import sys
 import time
-from app.core.db import (
+from app.core.auth import (
+    OAuth2PasswordRequestForm,
     Token,
     TokenData,
     User,
-    UserInDB,
+    check_auth,
+    current_active_user_dependency,
+    current_user_dependency,
+    ip_whitelist_auth_dependency,
+    oauth_form_dependency,
+)
+from app.core.db import (
     authenticate_user,
     create_access_token,
     db,
@@ -37,18 +44,12 @@ from datetime import UTC, datetime, timedelta, timezone
 from decouple import config
 from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.models import SecuritySchemeType
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
-from fastapi.security.base import SecurityBase
-from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.templating import Jinja2Templates
 from icecream import ic
-from jose import JWTError, jwt
 from math import ceil
 from pathlib import Path
 from pydantic import BaseModel
-from typing import Union
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -74,34 +75,6 @@ pd.set_option("display.max_colwidth", None)
 # index
 templates = Jinja2Templates(directory=Path("resources/templates"))
 
-# creds
-TTL = config("TTL", default=3600, cast=int)
-HOST = config("HOST")
-PORT = config("PORT", default=3000, cast=int)
-SECRET_KEY = config("SECRET_KEY")
-ALGORITHM = config("ALGORITHM", default="HS256")
-TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
-COOKIE_NAME = "session_token"  # Name of the cookie that will store the session token
-IS_DEV = HOST in ["localhost", "127.0.0.1", "0.0.0.0"] or PORT == 3000  # Development mode check
-
-"""
-IP Address Whitelisting
-"""
-
-class IPConfig(BaseModel):
-    whitelist: list[str] = ["localhost", "127.0.0.1"]
-    public_ips: list[str] = []  # TODO: add whitelisted public IPs here
-
-ip_config = IPConfig()
-
-def is_ip_allowed(request: Request):
-    client_host = request.client.host
-    return client_host in ip_config.whitelist or client_host in ip_config.public_ips
-
-"""
-FastAPI app
-"""
-
 # Create the app with minimal initial setup
 app = FastAPI(
     title="meetup_bot API",
@@ -112,18 +85,9 @@ app = FastAPI(
 api_router = APIRouter(prefix="/api")
 
 # CORS
-origins = [
-    "http://localhost",
-    "http://localhost:" + str(PORT),
-    "http://127.0.0.1",
-    "http://127.0.0.1:" + str(PORT),
-    "http://0.0.0.0",
-    "http://0.0.0.0:" + str(PORT),
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -132,121 +96,11 @@ app.add_middleware(
 # Initialize database
 init_db()
 
-"""
-Authentication
-"""
-
-# Authentication schemes
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="token",
-    auto_error=False
-)
-
-class CookieOrHeaderToken(SecurityBase):
-    def __init__(
-        self,
-        *,
-        cookie_name: str = COOKIE_NAME,
-        scheme_name: str | None = None,
-        description: str | None = None,
-        auto_error: bool = True,
-    ):
-        self.cookie_name = cookie_name
-        self.scheme_name = scheme_name or self.__class__.__name__
-        self.description = description
-        self.auto_error = auto_error
-        self.model = {
-            "type": SecuritySchemeType.http,
-            "scheme": "bearer",
-        }
-
-    async def __call__(self, request: Request) -> str | None:
-        # First try cookie
-        cookie_token = request.cookies.get(self.cookie_name)
-        if cookie_token:
-            return cookie_token
-
-        # Then try Authorization header
-        authorization = request.headers.get("Authorization")
-        if not authorization:
-            return None
-
-        scheme, token = get_authorization_scheme_param(authorization)
-        if scheme.lower() != "bearer":
-            return None
-
-        return token
-
-# Security schemes
-security = CookieOrHeaderToken(auto_error=False)  # Don't auto-error so we can try form auth
-oauth_form_dependency = Depends(OAuth2PasswordRequestForm)
-
 # Update app to include both security schemes
 app.swagger_ui_init_oauth = {
     "usePkceWithAuthorizationCodeGrant": True,
     "clientId": "meetup_bot",
 }
-
-async def get_current_user(
-    request: Request,
-    token: str | None = Depends(security),
-    form_token: str | None = Depends(oauth2_scheme),
-):
-    """Get current user from session cookie, bearer token, or form authentication"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    # Try cookie/header token first, then form token
-    token_to_verify = token or form_token
-    if not token_to_verify:
-        raise credentials_exception
-
-    try:
-        payload = jwt.decode(token_to_verify, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError as err:
-        raise credentials_exception from err
-
-    user = get_user(username=token_data.username)
-    if user is None:
-        raise credentials_exception
-
-    return user
-
-current_user_dependency = Depends(get_current_user)
-
-async def get_current_active_user(current_user: User = current_user_dependency):
-    """Get current active user"""
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-
-    return current_user
-
-current_active_user_dependency = Depends(get_current_active_user)
-
-async def ip_whitelist_or_auth(request: Request, current_user: User = current_active_user_dependency):
-    if is_ip_allowed(request):
-        return {"bypass_auth": True}
-
-    return current_user
-
-ip_whitelist_auth_dependency = Depends(ip_whitelist_or_auth)
-
-def check_auth(auth: dict | User) -> None:
-    """
-    Shared function to check authentication result.
-    Raises an HTTPException if authentication fails.
-    """
-    if isinstance(auth, dict) and auth.get("bypass_auth"):
-        print("Authentication bypassed due to whitelisted IP")
-    elif not isinstance(auth, User):
-        raise HTTPException(status_code=401, detail="Unauthorized")
 
 @app.post("/token", response_model=Token)
 async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
@@ -275,11 +129,6 @@ async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordReq
     )
 
     return {"access_token": oauth_token, "token_type": "bearer"}
-
-
-"""
-Login
-"""
 
 @app.get("/healthz", status_code=200)
 def health_check():
@@ -320,8 +169,6 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         detail="Incorrect username or password"
     )
 
-
-# TODO: use refresh token to get new access token
 @api_router.get("/token")
 def generate_token(current_user: User = current_active_user_dependency):
     """
@@ -347,7 +194,6 @@ def generate_token(current_user: User = current_active_user_dependency):
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
     return access_token, refresh_token
-
 
 @api_router.get("/events")
 def get_events(auth: dict = ip_whitelist_auth_dependency,
@@ -378,7 +224,6 @@ def get_events(auth: dict = ip_whitelist_auth_dependency,
     events = get_all_events(exclusion_list)
 
     return events
-
 
 @api_router.get("/check-schedule")
 def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Request = None):
@@ -421,7 +266,6 @@ def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Req
             return {
                 "should_post": False,
             }
-
 
 @api_router.post("/slack")
 def post_slack(
@@ -477,11 +321,11 @@ def post_slack(
     except Exception as e:
         return {"message": f"Error posting to Slack: {str(e)}", "status": "error"}
 
-
 @api_router.post("/snooze")
 def snooze_slack_post(
     duration: str,
     auth: dict = ip_whitelist_auth_dependency,
+    current_user: User = current_active_user_dependency,
     ):
     """
     Snooze the Slack post for the specified duration
@@ -506,8 +350,6 @@ def snooze_slack_post(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-
-# TODO: test IP whitelisting
 @api_router.get("/schedule")
 def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
     """
@@ -532,7 +374,6 @@ def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
                 )
 
     return {"schedules": schedules}
-
 
 # routes
 app.include_router(api_router)
