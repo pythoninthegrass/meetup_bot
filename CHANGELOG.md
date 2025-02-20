@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.2...v1.2.0) (2025-02-20)
+
+
+### Features
+
+* store auth in cookie ([76be173](https://github.com/pythoninthegrass/meetup_bot/commit/76be17370d5af3771af67589c59432facca07c59))
+
+
+### Bug Fixes
+
+* module regression ([155d5db](https://github.com/pythoninthegrass/meetup_bot/commit/155d5dbcee72f8099a82a5d386ea9f42fde447ea))
+
 ## [1.1.2](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.1...v1.1.2) (2025-02-19)
 
 
