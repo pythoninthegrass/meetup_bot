@@ -21,11 +21,13 @@ TOKEN_EXPIRE = config("TOKEN_EXPIRE", default=30, cast=int)
 # Initialize database
 db = Database()
 
+
 # User model
 class UserInfo(db.Entity):
     username = Required(str, unique=True)
     hashed_password = Required(str)
     email = Optional(str)
+
 
 # Initialize database connection
 def init_db():
@@ -44,32 +46,40 @@ def init_db():
             hashed_password = pwd_context.hash(DB_PASS)
             UserInfo(username=DB_USER, hashed_password=hashed_password)
 
+
 # Authentication models
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: str | None = None
+
 
 class User(BaseModel):
     username: str
     email: str | None = None
     disabled: bool | None = None
 
+
 class UserInDB(User):
     hashed_password: str
 
+
 # Password handling
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 def verify_password(plain_password, hashed_password):
     """Validate plaintext password against hashed password"""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     """Return hashed password"""
     return pwd_context.hash(password)
+
 
 # User management
 def get_user(username: str):
@@ -78,6 +88,7 @@ def get_user(username: str):
         user = UserInfo.get(username=username)
         if user:
             return UserInDB(username=user.username, hashed_password=user.hashed_password)
+
 
 def authenticate_user(username: str, password: str):
     """Authenticate user"""
@@ -88,6 +99,7 @@ def authenticate_user(username: str, password: str):
         return False
     return user
 
+
 def load_user(username: str):
     """Load user from database"""
     with db_session:
@@ -96,6 +108,7 @@ def load_user(username: str):
             return user
         else:
             raise HTTPException(status_code=404, detail="User not found")
+
 
 # Token management
 def create_access_token(data: dict, expires_delta: timedelta | None = None):

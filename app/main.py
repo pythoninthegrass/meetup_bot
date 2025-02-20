@@ -102,6 +102,7 @@ app.swagger_ui_init_oauth = {
     "clientId": "meetup_bot",
 }
 
+
 @app.post("/token", response_model=Token)
 async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordRequestForm = oauth_form_dependency):
     """Login for oauth access token"""
@@ -130,15 +131,18 @@ async def login_for_oauth_token(response: Response, form_data: OAuth2PasswordReq
 
     return {"access_token": oauth_token, "token_type": "bearer"}
 
+
 @app.get("/healthz", status_code=200)
 def health_check():
     """Smoke test to check if the app is running"""
     return {"status": "ok"}
 
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     with open(Path("resources/templates/login.html")) as f:
         return HTMLResponse(content=f.read(), status_code=200)
+
 
 @app.post("/auth/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -169,6 +173,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         detail="Incorrect username or password"
     )
 
+
 @api_router.get("/token")
 def generate_token(current_user: User = current_active_user_dependency):
     """
@@ -194,6 +199,7 @@ def generate_token(current_user: User = current_active_user_dependency):
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
     return access_token, refresh_token
+
 
 @api_router.get("/events")
 def get_events(auth: dict = ip_whitelist_auth_dependency,
@@ -224,6 +230,7 @@ def get_events(auth: dict = ip_whitelist_auth_dependency,
     events = get_all_events(exclusion_list)
 
     return events
+
 
 @api_router.get("/check-schedule")
 def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Request = None):
@@ -266,6 +273,7 @@ def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Req
             return {
                 "should_post": False,
             }
+
 
 @api_router.post("/slack")
 def post_slack(
@@ -321,6 +329,7 @@ def post_slack(
     except Exception as e:
         return {"message": f"Error posting to Slack: {str(e)}", "status": "error"}
 
+
 @api_router.post("/snooze")
 def snooze_slack_post(
     duration: str,
@@ -350,6 +359,7 @@ def snooze_slack_post(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+
 @api_router.get("/schedule")
 def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
     """
@@ -374,6 +384,7 @@ def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
                 )
 
     return {"schedules": schedules}
+
 
 # routes
 app.include_router(api_router)

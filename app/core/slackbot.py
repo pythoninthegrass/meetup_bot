@@ -32,6 +32,7 @@ HOST = config('HOST', default='localhost')
 # strip double quotes from env strings (local image)
 CHANNEL = CHANNEL.strip('"')
 
+
 def load_channels():
     # read channel
     chan = pd.read_csv('channels.csv', header=0)
@@ -63,6 +64,7 @@ def load_channels():
         }
 
     return channels
+
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)

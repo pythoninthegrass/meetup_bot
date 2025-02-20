@@ -38,6 +38,7 @@ oauth2_scheme = OAuth2PasswordBearer(
     auto_error=False
 )
 
+
 class CookieOrHeaderToken(SecurityBase):
     def __init__(
         self,
@@ -73,20 +74,25 @@ class CookieOrHeaderToken(SecurityBase):
 
         return token
 
+
 # Security schemes
 security = CookieOrHeaderToken(auto_error=False)  # Don't auto-error so we can try form auth
 oauth_form_dependency = Depends(OAuth2PasswordRequestForm)
+
 
 class IPConfig(BaseModel):
     whitelist: list[str] = ["localhost", "127.0.0.1"]
     public_ips: list[str] = []  # TODO: add whitelisted public IPs here
 
+
 ip_config = IPConfig()
+
 
 def is_ip_allowed(request: Request):
     """Check if the client IP is in the whitelist"""
     client_host = request.client.host
     return client_host in ip_config.whitelist or client_host in ip_config.public_ips
+
 
 async def get_current_user(
     request: Request,
@@ -120,17 +126,20 @@ async def get_current_user(
 
     return user
 
+
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     """Get current active user"""
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+
 async def ip_whitelist_or_auth(request: Request, current_user: User = Depends(get_current_active_user)):
     """Check if request is from whitelisted IP or authenticated user"""
     if is_ip_allowed(request):
         return {"bypass_auth": True}
     return current_user
+
 
 def check_auth(auth: dict | User) -> None:
     """
@@ -141,6 +150,7 @@ def check_auth(auth: dict | User) -> None:
         print("Authentication bypassed due to whitelisted IP")
     elif not isinstance(auth, User):
         raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 # Dependencies
 current_user_dependency = Depends(get_current_user)
