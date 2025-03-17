@@ -24,8 +24,9 @@ tasks:
 
   install:
     desc: "Install project dependencies"
+    deps: [venv]
     cmds:
-      - uv pip install -r pyproject.toml
+      - uv pip install -r pyproject.toml --all-extras
     dir: "{{.ROOT_DIR}}"
 
   lock:
@@ -40,6 +41,7 @@ tasks:
 
   sync:
     desc: "Sync dependencies with lockfile"
+    deps: [venv]
     summary: |
       Syncing ensures that all project dependencies are installed and up-to-date with the lockfile.
 

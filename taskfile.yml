@@ -32,8 +32,6 @@ tasks:
       echo -e "DOCKERFILE:\t{{.DOCKERFILE}}"
       echo -e "HEROKU_APP:\t{{.HEROKU_APP}}"
       echo -e "PLATFORM:\t{{.PLATFORM}}"
-      echo -e "POETRY:\t\t{{.POETRY}}"
-      echo -e "PY_VER:\t\t{{.PY_VER}}"
       echo -e "SCRIPT:\t\t{{.SCRIPT}}"
       echo -e "REGISTRY:\t$REGISTRY"
       echo -e "SERVICE:\t{{.SERVICE}}"
@@ -60,17 +58,22 @@ tasks:
   lint:
     desc: "Run linters"
     cmds:
-      - poetry run ruff check --fix --respect-gitignore
+      - uv run ruff check --fix --respect-gitignore
 
   format:
     desc: "Run formatters"
     cmds:
-      - poetry run ruff format --respect-gitignore
+      - uv run ruff format --respect-gitignore
 
   test:
     desc: "Run tests"
     cmds:
-      - poetry run pytest
+      - uv run pytest
+
+  deptry:
+    desc: "Run deptry"
+    cmds:
+      - uv run deptry {{.ROOT_DIR}}
 
   pyclean:
     desc: "Remove .pyc and __pycache__"
@@ -95,22 +98,3 @@ tasks:
     desc: "Check bash scripts"
     cmds:
       - checkbashism -x {{.TLD}}/app/*.sh
-
-  update-deps:
-    desc: "Update dependencies"
-    cmds:
-      - |
-        poetry cache clear --all pypi --no-ansi
-        poetry update --lock --no-ansi
-
-  export-reqs:
-    desc: "Export requirements.txt"
-    summary: |
-      Export the project dependencies to a requirements.txt file.
-    cmds:
-      - |
-        poetry export -f requirements.txt \
-          --output {{.TLD}}/requirements.txt \
-          --without-hashes \
-          --no-ansi
-    ignore_error: true
