@@ -125,7 +125,7 @@ def main(override=bypass_schedule):
     # Only send messages if we have events
     if messages:
         # send message as one concatenated string
-        for channel_name, channel_id in channels.items():
+        for _, channel_id in channels.items():
             send_message('\n'.join(messages), channel_id)
         print(f"Posted {len(messages)} events to {len(channels)} channels")
     else:
