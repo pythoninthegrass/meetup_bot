@@ -19,7 +19,7 @@ LOCAL_TIME = config("LOCAL_TIME", default="09:00")  # Local time for schedule
 loc_time = arrow.now().to(TZ)
 time.tzset()
 days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-enabled_days = ["Monday", "Wednesday", "Friday"]
+enabled_days = ["Sunday", "Tuesday", "Thursday"]
 
 # init db
 db = Database()
