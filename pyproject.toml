@@ -175,7 +175,7 @@ select = [
     # isort
     "I",
 ]
-ignore = ["D203", "E203", "E251", "E266", "E401", "E402", "E501", "F401", "F403", "F405"]
+ignore = ["D203", "E203", "E251", "E266", "E401", "E402", "E501", "F401", "F403", "F405", "F841"]
 
 # enable preview style formatting
 preview = true
