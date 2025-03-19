@@ -1,6 +1,6 @@
 [project]
 name = "meetup_bot"
-version = "1.2.0"
+version = "1.2.1"
 description = "Use Meetup Pro API to send Slack messages before events occur."
 authors = [
     {name = "pythoninthegrass", email = "4097471+pythoninthegrass@users.noreply.github.com"},
