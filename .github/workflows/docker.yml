@@ -8,18 +8,28 @@ on:
     tags:
       - '*.*.*'
     paths:
-      - 'Dockerfile'
-      - 'pyproject.toml'
-      - 'poetry.lock'
+      # Application code
+      - 'app/**'
+      - 'bin/**'
+      - 'config/**'
+      - 'tests/**'
+      - 'static/**'
+      # Docker and environment configs
+      - 'Dockerfile*'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.env.example'
+      # Dependencies and python configs
       - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      # Workflow files
+      - '.github/workflows/**'
+      # Shell scripts
       - '**/*.py'
       - '**/*.sh'
       - '**/*.js'
       - '**/*.css'
-      - '.dockerignore'
-      - '.env.example'
-      - '.github/workflows/**'
-      - 'static/**'
   # workflow_run:
   #   workflows: ["Run pytest"]
   #   types:
