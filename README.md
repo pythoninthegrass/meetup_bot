@@ -1,6 +1,7 @@
 <img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
 
 # meetup_bot
+
 **Table of Contents**
 * [meetup\_bot](#meetup_bot)
   * [Summary](#summary)
@@ -18,9 +19,11 @@
   * [Further Reading](#further-reading)
 
 ## Summary
+
 Use Meetup Pro API to send Slack messages before events occur.
 
 ## Minimum Requirements
+
 * [Python 3.11+](https://www.python.org/downloads/)
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 * [Create a Meetup API key](https://secure.meetup.com/meetup_api/key/)
@@ -29,14 +32,17 @@ Use Meetup Pro API to send Slack messages before events occur.
   * [Create a Slack bot](https://api.slack.com/bot-users)
 
 ## Recommended Requirements
+
 * [Devbox](https://www.jetpack.io/devbox/docs/quickstart/)
 * [Docker](https://www.docker.com/products/docker-desktop)
 
 ## Quickstart
+
 * Clone repo
 * Copy `.env.example` to `.env` and fill out environment variables
 
 ### Python only
+
 ```bash
 cd ./app
 
@@ -48,6 +54,7 @@ python main.py
 ```
 
 ### Shell wrapper
+
 ```bash
 cd ./app
 
@@ -62,6 +69,7 @@ cd ./app
 ```
 
 ### Devbox
+
 I.e., [Nix Package Manager](https://search.nixos.org/packages)
 ```bash
 # enter dev environment
@@ -81,6 +89,7 @@ devbox run test
 ```
 
 ### Docker
+
 ```bash
 cd ./app
 
@@ -92,14 +101,15 @@ docker run --name meetup_bot -it --rm --env-file .env -p 3000:3000 meetup_bot ba
 ```
 
 ### Docker Compose
+
 ```bash
 cd ./app
 
 # build image
-docker-compose build --remove-orphans
+docker compose build --remove-orphans
 
 # run image
-docker-compose up -d
+docker compose up -d
 
 # enter server container
 docker exec -it meetup_bot-cont bash
@@ -108,13 +118,14 @@ docker exec -it meetup_bot-cont bash
 exit
 
 # stop image
-docker-compose stop
+docker compose stop
 
 # remove image
-docker-compose down --volumes
+docker compose down --volumes
 ```
 
 ## TODO
+
 * Refactor authentication
   * passlib + bcrypt -> bcrypt (see: [AttributeError: module 'bcrypt' has no attribute '__about__' with new 4.1.1 version · Issue #684 · pyca/bcrypt](https://github.com/pyca/bcrypt/issues/684#issuecomment-1902590553))
   * Secured endpoints
@@ -137,6 +148,7 @@ docker-compose down --volumes
   * Coralogix logging
 
 ## Stretch Goals
+
 * Indicate online vs. in-person
 * Time Frame 
   * 2 hours before
@@ -180,6 +192,7 @@ docker-compose down --volumes
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Further Reading
+
 [API Doc Authentication | Meetup](https://www.meetup.com/api/authentication/#p04-jwt-flow-section)
 
 [How to Handle JWTs in Python](https://auth0.com/blog/how-to-handle-jwt-in-python/)
