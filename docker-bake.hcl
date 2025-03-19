@@ -20,21 +20,17 @@ variable "DOCKERFILE" {
 }
 
 // Base target with shared configuration
-target "docker-metadata-action" {
-  tags = [
-    "${REGISTRY_URL}/${REGISTRY_USER}/${IMAGE_NAME}:${TAG}",
-    "${REGISTRY_URL}/${REGISTRY_USER}/${IMAGE_NAME}:latest",
-  ]
-}
-
-// Default target that extends the base
-target "build" {
-  inherits = ["docker-metadata-action"]
+target "base" {
   context = "."
   dockerfile = "${DOCKERFILE}"
   args = {
     PYTHON_VERSION = "3.11"
   }
+}
+
+// Default target that extends the base
+target "build" {
+  inherits = ["base"]
 }
 
 // Group target to build both platforms

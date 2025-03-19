@@ -88,17 +88,15 @@ jobs:
       - name: Build and push with Docker Bake
         uses: docker/bake-action@v6
         with:
-          files: |
-            ./docker-bake.hcl
-            ${{ steps.meta.outputs.bake-file }}
+          files: ./docker-bake.hcl
           targets: multi-platform
           push: ${{ github.event_name != 'pull_request' }}
           set: |
+            *.tags=${{ steps.meta.outputs.tags }}
             *.cache-from=type=gha,scope=${{ github.workflow }}
             *.cache-to=type=gha,mode=max,scope=${{ github.workflow }}
             *.platform=linux/amd64,linux/arm64
             *.args.PYTHON_VERSION=3.11
-            *.args.PORT=3100
             REGISTRY_URL=${{ env.REGISTRY_URL }}
             REGISTRY_USER=${{ env.REGISTRY_USER }}
             IMAGE_NAME=${{ env.IMAGE_NAME }}
