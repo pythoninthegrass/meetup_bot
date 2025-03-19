@@ -1,60 +1,92 @@
 # syntax=docker/dockerfile:1.7.0
 
-ARG PYTHON_VERSION=3.11.9
+ARG PYTHON_VERSION=3.11
 
-FROM python:${PYTHON_VERSION}-alpine AS builder
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim as builder
 
-RUN apk add --no-cache \
-    curl \
-    gcc \
-    musl-dev \
-    python3-dev
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
-ENV PIP_NO_CACHE_DIR=off
-ENV PIP_DISABLE_PIP_VERSION_CHECK=on
-ENV PIP_DEFAULT_TIMEOUT=100
+# Configure the Python directory so it is consistent
+ENV UV_PYTHON_INSTALL_DIR /python
 
-ENV VENV="/opt/venv"
-ENV PATH="$VENV/bin:$PATH"
+# Only use the managed Python version
+ENV UV_PYTHON_PREFERENCE=only-managed
+
+# Install Python before the project for caching
+RUN uv python install "$PYTHON_VERSION"
 
 WORKDIR /app
 
-COPY requirements-dev.txt .
+COPY pyproject.toml .
 
-RUN python -m venv $VENV \
-    && . $VENV/bin/activate \
-    && python -m pip install --upgrade pip \
-    && python -m pip install -r requirements-dev.txt
+# venv
+ARG UV_PROJECT_ENVIRONMENT="/opt/venv"
+ENV VENV="${UV_PROJECT_ENVIRONMENT}"
+ENV PATH="$VENV/bin:$PATH"
 
-FROM python:${PYTHON_VERSION}-alpine AS runner
+RUN uv venv $UV_PROJECT_ENVIRONMENT \
+    && uv pip install -r pyproject.toml --all-extras
 
+FROM python:${PYTHON_VERSION}-slim-bookworm as deps
+
+# avoid stuck build due to user prompt
+ARG DEBIAN_FRONTEND=noninteractive
+
+# install dependencies
+RUN apt-get -qq update \
+    && apt-get -qq install \
+    --no-install-recommends -y \
+    curl \
+    sudo \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM deps as runner
+
+# set timezone
 ENV TZ=${TZ:-"America/Chicago"}
-RUN apk add --no-cache tzdata \
-    && ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime \
-    && echo "$TZ" > /etc/timezone
+RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "$TZ" > /etc/timezone
 
+# setup standard non-root user for use downstream
 ENV USER_NAME=appuser
-ENV VENV="/opt/venv"
+ARG VENV="/opt/venv"
 
-ENV PATH="${VENV}/bin:${VENV}/lib/python${PYTHON_VERSION}/site-packages:/usr/local/bin:${HOME}/.local/bin:/bin:/usr/bin:/usr/share/doc:$PATH"
+ENV PATH="${VENV}/bin:${HOME}/.local/bin:$PATH"
 
+# standardise on locale, don't generate .pyc, enable tracebacks on seg faults
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONFAULTHANDLER 1
 
+# add non-root user with sudo privileges
 ARG UID=10001
-RUN adduser -D -u ${UID} ${USER_NAME}
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/home/${USER_NAME}" \
+    --shell "/bin/bash" \
+    --uid "${UID}" \
+    ${USER_NAME} \
+    && echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME} \
+    && chmod 0440 /etc/sudoers.d/${USER_NAME}
 
 USER ${USER_NAME}
+WORKDIR /home/${USER_NAME}
+
+# Copy the Python version
+COPY --from=builder --chown=${USER_NAME}:${USER_NAME} /python /python
 
 WORKDIR /app
 
-COPY --chown=${USER_NAME} ./app .
+# Copy venv first (has better caching properties)
 COPY --from=builder --chown=${USER_NAME} "$VENV" "$VENV"
+
+# Copy application code last
+COPY --chown=${USER_NAME} ./app .
 
 CMD [ "sleep", "infinity" ]
 
 LABEL org.opencontainers.image.title="meetup_bot"
-LABEL org.opencontainers.image.version="test"
-LABEL org.opencontainers.image.description="meetup_bot image for running tests in CI"
+LABEL org.opencontainers.image.version="dev"
+LABEL org.opencontainers.image.description="meetup_bot image for development"
