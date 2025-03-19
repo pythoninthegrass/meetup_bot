@@ -4,6 +4,7 @@ import arrow
 import time
 from datetime import datetime, timedelta
 from decouple import config
+from math import ceil
 from pony.orm import Database, Optional, PrimaryKey, Required, Set, commit, db_session
 
 # env
@@ -188,6 +189,90 @@ def check_and_update_env_changes():
             print("No changes detected in environment variables.")
     else:
         print("Could not find a sample schedule to check against.")
+
+
+def should_post_to_slack(override=False):
+    """
+    Check if it's time to post to Slack based on the schedule
+    Returns: dict with should_post boolean and additional info
+    """
+    if override:
+        return {
+            "should_post": True,
+            "reason": "Schedule override enabled"
+        }
+
+    current_time_local = arrow.now(TZ)
+    current_day = current_time_local.format("dddd")  # Monday, Tuesday, etc.
+
+    with db_session:
+        check_and_revert_snooze()  # Check and revert any expired snoozes
+        schedule = get_schedule(current_day)
+
+        if schedule and schedule.enabled:
+            utc_time, local_time = get_current_schedule_time(schedule)
+
+            # Parse the schedule time
+            schedule_time_local = (
+                arrow.get(schedule.schedule_time, "HH:mm")
+                .replace(year=current_time_local.year, month=current_time_local.month, day=current_time_local.day, tzinfo="UTC")
+                .to(TZ)
+            )
+
+            # Calculate time difference in minutes and round up
+            time_diff = abs((schedule_time_local - current_time_local).total_seconds() / 60)
+            time_diff_rounded = ceil(time_diff)
+
+            # Check if current time is within 90 minutes of scheduled time
+            should_post = time_diff_rounded <= 90
+
+            return {
+                "should_post": should_post,
+                "current_time": current_time_local.format("dddd HH:mm ZZZ"),
+                "schedule_time": schedule_time_local.format("dddd HH:mm ZZZ"),
+                "time_diff_minutes": time_diff_rounded,
+            }
+
+        # If no schedule found or not enabled
+        return {
+            "should_post": False,
+            "reason": f"No schedule found for {current_day}" if not schedule else f"Schedule for {current_day} is disabled"
+        }
+
+
+@db_session
+def get_current_schedules():
+    """
+    Get all schedule information including active snoozes
+    Force-updates schedules to ensure DB consistency with enabled_days
+    """
+    # Force update of schedules based on enabled_days
+    for day in days:
+        update_schedule(day)
+
+    check_and_revert_snooze()  # Check and revert any expired snoozes
+
+    schedules = []
+    for day in days:
+        schedule = get_schedule(day)
+        if schedule:
+            # Double check enabled status matches enabled_days
+            enabled_status = day in enabled_days
+            if schedule.enabled != enabled_status:
+                print(f"Warning: DB inconsistency - {day} enabled in DB: {schedule.enabled}, should be: {enabled_status}")
+
+            schedules.append(
+                {
+                    "day": schedule.day,
+                    "schedule_time": schedule.schedule_time,
+                    "enabled": schedule.enabled,
+                    "snooze_until": schedule.snooze_until,
+                    "original_schedule_time": schedule.original_schedule_time,
+                    "in_enabled_days": day in enabled_days  # Add this for debugging
+                }
+            )
+
+    return schedules
 
 
 def main():

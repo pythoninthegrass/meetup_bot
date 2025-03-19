@@ -2,6 +2,7 @@
 
 import time
 from app.core.meetup_query import get_all_events
+from app.utils.schedule import should_post_to_slack
 from config import *
 from decouple import config
 from icecream import ic
@@ -19,6 +20,7 @@ csv_fn = config('CSV_FN', default='raw/output.csv')
 json_fn = config('JSON_FN', default='raw/output.json')
 groups_csv = Path('groups.csv')
 loc_time = CURRENT_TIME_LOCAL
+bypass_schedule = config('OVERRIDE', default=False, cast=bool)
 time.tzset()
 
 # creds
@@ -96,7 +98,18 @@ def send_message(message, channel_id):
         return None
 
 
-def main():
+def main(override=bypass_schedule):
+    """
+    Main function to post events to Slack channels
+    Only posts if the schedule allows it or if override is True
+    """
+    # Check if we should post based on schedule
+    schedule_check = should_post_to_slack(override)
+    if not schedule_check["should_post"]:
+        reason = schedule_check.get("reason", "Not scheduled for posting at this time")
+        print(f"Skipping Slack post: {reason}")
+        return []
+
     # load channels
     channels = load_channels()
 
@@ -114,6 +127,9 @@ def main():
         # send message as one concatenated string
         for channel_name, channel_id in channels.items():
             send_message('\n'.join(messages), channel_id)
+        print(f"Posted {len(messages)} events to {len(channels)} channels")
+    else:
+        print("No events to post")
 
     return ic(messages)
 

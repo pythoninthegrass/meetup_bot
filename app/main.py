@@ -34,7 +34,9 @@ from app.utils.schedule import (
     TZ,
     check_and_revert_snooze,
     get_current_schedule_time,
+    get_current_schedules,
     get_schedule,
+    should_post_to_slack,
     snooze_schedule,
 )
 from colorama import Fore
@@ -233,46 +235,12 @@ def get_events(auth: dict = ip_whitelist_auth_dependency,
 
 
 @api_router.get("/check-schedule")
-def should_post_to_slack(auth: dict = ip_whitelist_auth_dependency, request: Request = None):
+def should_post_to_slack_endpoint(auth: dict = ip_whitelist_auth_dependency, request: Request = None):
     """
     Check if it's time to post to Slack based on the schedule
     """
-
-    with db_session:
-        check_and_revert_snooze()  # Check and revert any expired snoozes
-        schedule = get_schedule(current_day)
-
-        if schedule and schedule.enabled:
-            utc_time, local_time = get_current_schedule_time(schedule)
-
-            # Parse the schedule time
-            schedule_time_local = (
-                arrow.get(schedule.schedule_time, "HH:mm")
-                .replace(year=current_time_local.year, month=current_time_local.month, day=current_time_local.day, tzinfo="UTC")
-                .to(tz)
-            )
-
-            # Calculate time difference in minutes and round up
-            time_diff = abs((schedule_time_local - current_time_local).total_seconds() / 60)
-            time_diff_rounded = ceil(time_diff)
-
-            # TODO: walk back to 5-10 minutes vs. 90 minutes
-            # Check if current time is within n minutes of scheduled time
-            should_post = time_diff_rounded <= 90
-
-            # TODO: verify if it's actually CST or CDT
-            return {
-                "should_post": should_post,
-                "current_time": current_time_local.format("dddd HH:mm ZZZ"),
-                "schedule_time": schedule_time_local.format("dddd HH:mm ZZZ"),
-                "time_diff_minutes": time_diff_rounded,
-            }
-
-        # If no schedule found or not enabled
-        elif not schedule or not schedule.enabled:
-            return {
-                "should_post": False,
-            }
+    # Use the centralized function from schedule.py
+    return should_post_to_slack()
 
 
 @api_router.post("/slack")
@@ -289,9 +257,15 @@ def post_slack(
 
     Calls main function to post formatted message to predefined channel
     """
-
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    # Check schedule first if not overridden
+    if not override:
+        schedule_check = should_post_to_slack(override)
+        if not schedule_check["should_post"]:
+            reason = schedule_check.get("reason", "Not scheduled for posting at this time")
+            return {"message": f"Skipping Slack post: {reason}", "status": "info"}
 
     # Get events and check for errors
     events = get_all_events([exclusions] if exclusions else None)
@@ -367,21 +341,8 @@ def get_current_schedule(auth: dict | User = ip_whitelist_auth_dependency):
     """
     check_auth(auth)
 
-    with db_session:
-        check_and_revert_snooze()  # Check and revert any expired snoozes
-        schedules = []
-        for day in ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]:
-            schedule = get_schedule(day)
-            if schedule:
-                schedules.append(
-                    {
-                        "day": schedule.day,
-                        "schedule_time": schedule.schedule_time,
-                        "enabled": schedule.enabled,
-                        "snooze_until": schedule.snooze_until,
-                        "original_schedule_time": schedule.original_schedule_time,
-                    }
-                )
+    # Use the centralized function from schedule.py
+    schedules = get_current_schedules()
 
     return {"schedules": schedules}
 
