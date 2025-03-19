@@ -111,3 +111,19 @@ tasks:
     cmds:
       - docker system prune --all --force
       - docker builder prune --all --force
+
+  validate:
+    desc: Validate the docker-bake.hcl file
+    vars:
+      BAKE_OUTPUT:
+        sh: docker buildx bake --file docker-bake.hcl --print 2>&1 || true
+      VALIDATION_ERROR:
+        sh: echo "{{.BAKE_OUTPUT}}" | grep -q "ERROR:" && echo "true" || echo "false"
+    preconditions:
+      - sh: "test {{.VALIDATION_ERROR}} = false"
+        msg: |
+          Docker bake file is invalid. Error details:
+          {{.BAKE_OUTPUT}}
+    cmds:
+      - cmd: echo "Docker bake file is valid"
+        silent: true
