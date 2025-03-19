@@ -31,6 +31,7 @@ target "base" {
 // Default target that extends the base
 target "build" {
   inherits = ["base"]
+  tags = []
 }
 
 // Group target to build both platforms
