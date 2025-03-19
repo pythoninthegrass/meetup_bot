@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/pythoninthegrass/meetup_bot/compare/v1.2.0...v1.2.1) (2025-03-19)
+
+
+### Documentation
+
+* update readme ([3105fd9](https://github.com/pythoninthegrass/meetup_bot/commit/3105fd9ce3ffb9a4a65240af2648d9f6bde31788))
+
 ## [1.2.0](https://github.com/pythoninthegrass/meetup_bot/compare/v1.1.2...v1.2.0) (2025-02-20)
 
 
