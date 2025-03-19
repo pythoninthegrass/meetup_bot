@@ -13,6 +13,10 @@
   },
   // Fenced code blocks should be surrounded by blank lines
   "MD031": false,
+  // No inline html
+  "MD033": false,
   // Empahsis as heading (e.g., table of contents)
-  "MD036": false
+  "MD036": false,
+  // First line heading
+  "MD041": false
 }
