@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import pandas as pd
 import time
 from app.core.meetup_query import get_all_events
 from app.utils.schedule import should_post_to_slack
