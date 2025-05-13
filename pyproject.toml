@@ -39,7 +39,7 @@ poetry-plugin-export = "^1.8.0"
 poetry-plugin-up = "^0.7.1"
 pyclean = "^3.0.0"
 rich = "^13.9.4"
-ruff = "^0.6.5"
+ruff = "^0.11.9"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.4"
