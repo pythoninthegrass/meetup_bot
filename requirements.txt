@@ -52,6 +52,6 @@ types-python-dateutil==2.9.0.20241206 ; python_version >= "3.11" and python_vers
 typing-extensions==4.12.2 ; python_version >= "3.11" and python_version < "3.13"
 tzdata==2024.2 ; python_version >= "3.11" and python_version < "3.13"
 url-normalize==1.4.3 ; python_version >= "3.11" and python_version < "3.13"
-urllib3==2.3.0 ; python_version >= "3.11" and python_version < "3.13"
+urllib3==2.4.0 ; python_version >= "3.11" and python_version < "3.13"
 uvicorn==0.29.0 ; python_version >= "3.11" and python_version < "3.13"
 wheel==0.43.0 ; python_version >= "3.11" and python_version < "3.13"
