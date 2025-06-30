@@ -11,8 +11,8 @@ from arrow import ParserError
 from colorama import Fore
 from decouple import config
 from icecream import ic
-from sign_jwt import main as gen_token
 from pathlib import Path
+from sign_jwt import main as gen_token
 
 # verbose icecream
 ic.configureOutput(includeContext=True)
@@ -45,8 +45,8 @@ if not groups_csv.exists():
         raise FileNotFoundError(f"groups.csv not found in {script_dir} or {cwd}")
 
 # time span (e.g., 3600 = 1 hour)
-sec = int(60)               # n seconds
-ttl = int(sec * 30)         # n minutes -> hours
+sec = 60  # n seconds
+ttl = int(sec * 30)  # n minutes -> hours
 
 # cache the requests as script basename, expire after n time
 requests_cache.install_cache(Path(cache_fn), expire_after=ttl)
@@ -148,17 +148,10 @@ def send_request(token, query, vars) -> str:
 
     endpoint = 'https://api.meetup.com/gql'
 
-    headers = {
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/json; charset=utf-8'
-    }
+    headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json; charset=utf-8'}
 
     try:
-        r = requests.post(
-            endpoint,
-            json={'query': query, 'variables': vars},
-            headers=headers
-        )
+        r = requests.post(endpoint, json={'query': query, 'variables': vars}, headers=headers)
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Response HTTP Response Body: {r.status_code}")
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
@@ -167,7 +160,7 @@ def send_request(token, query, vars) -> str:
         # formatted response
         # print('Response HTTP Response Body:\n{content}'.format(content=pretty_response))
     except requests.exceptions.RequestException as e:
-        print('HTTP Request failed:\n{error}'.format(error=e))
+        print(f'HTTP Request failed:\n{e}')
         sys.exit(1)
 
     return pretty_response
@@ -303,7 +296,7 @@ def sort_json(filename) -> None:
         pass
 
     # control for timestamp edge case `1-07-21 18:00:00` || `1-01-25 10:00:00` raising OutOfBoundsError
-    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%dT%H:%M:%S', errors='coerce')
 
     # convert datetimeindex to datetime
     df['date'] = df['date'].dt.tz_localize(None)
@@ -327,7 +320,7 @@ def sort_json(filename) -> None:
         json.dump(data, f, indent=2)
 
 
-def export_to_file(response, type: str='json', exclusions: str='') -> None:
+def export_to_file(response, type: str = 'json', exclusions: str = '') -> None:
     """
     Export to CSV or JSON
     """
@@ -361,7 +354,7 @@ def export_to_file(response, type: str='json', exclusions: str='') -> None:
             and os.stat(json_fn).st_size > 0
         ):
             # append to json
-            with open(json_fn, 'r') as f:
+            with open(json_fn) as f:
                 data_json = json.load(f)
                 data_json.extend(data)
                 with open(json_fn, 'w', encoding='utf-8') as f:
@@ -393,7 +386,7 @@ def main():
     # first-party query
     response = send_request(access_token, query, vars)
     # format_response(response, exclusions=exclusions)                      # don't need if exporting to file
-    export_to_file(response, format, exclusions=exclusions)                  # csv/json
+    export_to_file(response, format, exclusions=exclusions)  # csv/json
 
     # third-party query
     output = []

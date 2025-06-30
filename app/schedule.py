@@ -4,7 +4,7 @@ import arrow
 import time
 from datetime import datetime, timedelta
 from decouple import config
-from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
+from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 
 # env
 DB_NAME = config("DB_NAME")
@@ -12,7 +12,7 @@ DB_USER = config("DB_USER")
 DB_PASS = config("DB_PASS")
 DB_HOST = config("DB_HOST")
 DB_PORT = config("DB_PORT", default=5432, cast=int)
-TZ = config("TZ", default="America/Chicago")        # Set this to local timezone
+TZ = config("TZ", default="America/Chicago")  # Set this to local timezone
 LOCAL_TIME = config("LOCAL_TIME", default="09:00")  # Local time for schedule
 
 # time

@@ -48,7 +48,7 @@ chan = pd.read_csv('channels.csv', header=0)
 chan_dict = {}
 
 # loop through channels and find id
-for name, id in zip(chan['name'], chan['id']):
+for name, id in zip(chan['name'], chan['id'], strict=False):
     chan_dict[name] = id
 
 # channel name and id
@@ -61,14 +61,9 @@ hard_chan = ''
 # add hard-coded channel
 if hard_chan != '':
     hard_id = chan_dict[hard_chan]
-    channels = {
-        channel_name: channel_id,
-        hard_chan: hard_id
-    }
+    channels = {channel_name: channel_id, hard_chan: hard_id}
 else:
-    channels = {
-        channel_name: channel_id
-    }
+    channels = {channel_name: channel_id}
 
 # python sdk
 client = WebClient(token=BOT_USER_TOKEN)
@@ -82,10 +77,7 @@ def fmt_json(filename):
     df = pd.DataFrame(data)
 
     # add column: 'message' with date, name, title, eventUrl
-    df['message'] = df.apply(
-        lambda x: f'• {x["date"]} *{x["name"]}* <{x["eventUrl"]}|{x["title"]}> ',
-        axis=1
-    )
+    df['message'] = df.apply(lambda x: f'• {x["date"]} *{x["name"]}* <{x["eventUrl"]}|{x["title"]}> ', axis=1)
 
     # convert message column to list of strings (avoids alignment shenanigans)
     msg = df['message'].tolist()
@@ -101,17 +93,7 @@ def send_message(message, channel_id):
     """
     try:
         response = client.chat_postMessage(
-            channel=channel_id,
-            text="",
-            blocks=[
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": message
-                    }
-                }
-            ]
+            channel=channel_id, text="", blocks=[{"type": "section", "text": {"type": "mrkdwn", "text": message}}]
         )
         return response
     except SlackApiError as e:

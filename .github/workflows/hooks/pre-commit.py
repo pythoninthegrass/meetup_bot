@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import subprocess
+import sys
 
 
 def gitleaksEnabled():
@@ -23,5 +23,7 @@ To disable the gitleaks precommit hook run the following command:
 ''')
         sys.exit(1)
 else:
-    print('gitleaks precommit disabled\
-     (enable with `git config hooks.gitleaks true`)')
+    print(
+        'gitleaks precommit disabled\
+     (enable with `git config hooks.gitleaks true`)'
+    )
