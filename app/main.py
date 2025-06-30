@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import arrow
+import os
 import pandas as pd
 import sys
 import time
@@ -18,9 +19,9 @@ from math import ceil
 from meetup_query import *
 from passlib.context import CryptContext
 from pathlib import Path
-from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
+from pony.orm import Database, Optional, PrimaryKey, Required, Set, db_session
 from pydantic import BaseModel
-from schedule import get_schedule, get_current_schedule_time, snooze_schedule, check_and_revert_snooze
+from schedule import check_and_revert_snooze, get_current_schedule_time, get_schedule, snooze_schedule
 from sign_jwt import main as gen_token
 from slackbot import *
 from typing import List, Union
@@ -74,8 +75,8 @@ IP Address Whitelisting
 
 
 class IPConfig(BaseModel):
-    whitelist: List[str] = ["localhost", "127.0.0.1"]
-    public_ips: List[str] = []  # TODO: add whitelisted public IPs here
+    whitelist: list[str] = ["localhost", "127.0.0.1"]
+    public_ips: list[str] = []  # TODO: add whitelisted public IPs here
 
 
 ip_config = IPConfig()
@@ -254,7 +255,7 @@ async def ip_whitelist_or_auth(request: Request, current_user: User = Depends(ge
     return current_user
 
 
-def check_auth(auth: Union[dict, User]) -> None:
+def check_auth(auth: dict | User) -> None:
     """
     Shared function to check authentication result.
     Raises an HTTPException if authentication fails.
@@ -276,9 +277,7 @@ async def login_for_oauth_token(form_data: OAuth2PasswordRequestForm = Depends()
             headers={"WWW-Authenticate": "Bearer"},
         )
     oauth_token_expires = timedelta(minutes=TOKEN_EXPIRE)
-    oauth_token = create_access_token(
-        data={"sub": user.username}, expires_delta=oauth_token_expires
-    )
+    oauth_token = create_access_token(data={"sub": user.username}, expires_delta=oauth_token_expires)
 
     return {"access_token": oauth_token, "token_type": "bearer"}
 
@@ -416,6 +415,10 @@ def get_events(auth: dict = Depends(ip_whitelist_or_auth),
     # cleanup output file
     sort_json(json_fn)
 
+    # check if file exists after sorting
+    if not os.path.exists(json_fn) or os.stat(json_fn).st_size == 0:
+        return {"message": "No events found", "events": []}
+
     return pd.read_json(json_fn)
 
 
@@ -524,7 +527,7 @@ def post_slack(
 def snooze_slack_post(
     duration: str,
     auth: dict = Depends(ip_whitelist_or_auth),
-    ):
+):
     """
     Snooze the Slack post for the specified duration
 
@@ -544,7 +547,7 @@ def snooze_slack_post(
 
 # TODO: test IP whitelisting
 @api_router.get("/schedule")
-def get_current_schedule(auth: Union[dict, User] = Depends(ip_whitelist_or_auth)):
+def get_current_schedule(auth: dict | User = Depends(ip_whitelist_or_auth)):
     """
     Get the current schedule including any active snoozes
     """
