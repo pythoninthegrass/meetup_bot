@@ -1,5 +1,8 @@
 # TODO
 
+* Move exclusions to either
+  * GraphQL
+  * Filter by url (e.g., `https://www.meetup.com/project3810/events/308160679/`)
 * Convert code base to golang
 * Refactor authentication
   * Store auth in browser session vs. memory

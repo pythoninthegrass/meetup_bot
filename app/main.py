@@ -384,7 +384,12 @@ def get_events(auth: dict = Depends(ip_whitelist_or_auth),
     access_token, refresh_token = generate_token()
 
     # default exclusions
-    exclusion_list = ["36\u00b0N", "Nerdy Girls"]
+    exclusion_list = [
+        '36\u00b0N',
+        'Bitcoin',
+        'Nerdy Girls',
+        'Project 3810',
+    ]
 
     # if exclusions, add to list of exclusions
     if exclusions is not None:
