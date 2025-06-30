@@ -1,10 +1,10 @@
-import pytest
-import json
-from unittest.mock import patch, mock_open
-from pathlib import Path
-import pandas as pd
 import arrow
-from meetup_query import send_request, format_response, sort_csv, sort_json, export_to_file, main
+import json
+import pandas as pd
+import pytest
+from meetup_query import export_to_file, format_response, main, send_request, sort_csv, sort_json
+from pathlib import Path
+from unittest.mock import mock_open, patch
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def test_sort_json(tmp_path):
     with patch("arrow.now", return_value=arrow.get("2024-09-18")):
         sort_json(test_json)
 
-    with open(test_json, "r") as f:
+    with open(test_json) as f:
         sorted_data = json.load(f)
 
     assert sorted_data == data, "Data should remain unchanged if not sorted"
@@ -99,7 +99,7 @@ def test_export_to_file(mock_response, tmp_path):
     with patch("meetup_query.json_fn", test_json), patch("arrow.now", return_value=arrow.get("2024-09-18")):
         export_to_file(mock_response, type="json")
 
-    with open(test_json, "r") as f:
+    with open(test_json) as f:
         exported_data = json.load(f)
 
     assert len(exported_data) == 1

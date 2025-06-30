@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from distutils.log import warn
 import arrow
 import atexit
 import os
@@ -10,6 +9,7 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from colorama import Fore
 from decouple import config
+from distutils.log import warn
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -48,9 +48,7 @@ def get_token():
 
     payload = f"username={DB_USER}&password={DB_PASS}"
 
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
     try:
         res = requests.request("POST", url, headers=headers, data=payload)
@@ -63,7 +61,7 @@ def get_token():
 
 
 # @sched.scheduled_job(trigger='cron', hour='9,17,20,23', id='post_slack')      # 9am, 5pm, 8pm, 11pm
-@sched.scheduled_job(trigger='cron', hour='*', id='post_slack')                 # every hour
+@sched.scheduled_job(trigger='cron', hour='*', id='post_slack')  # every hour
 # @sched.scheduled_job(trigger='cron', minute='*/30', id='post_slack')          # every n minutes
 def post_to_slack():
     """Post to Slack"""
@@ -72,15 +70,9 @@ def post_to_slack():
 
     url = f"http://{HOST}:{PORT}/api/slack"
 
-    payload = urlencode({
-        'location': 'Oklahoma City',
-        'exclusions': 'Tulsa'
-    })
+    payload = urlencode({'location': 'Oklahoma City', 'exclusions': 'Tulsa'})
 
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'accept': 'application/json'
-    }
+    headers = {'Authorization': f'Bearer {access_token}', 'accept': 'application/json'}
 
     try:
         res = requests.request("POST", url, headers=headers, data=payload)

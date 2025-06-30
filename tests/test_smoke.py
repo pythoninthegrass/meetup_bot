@@ -10,6 +10,7 @@ else:
 
 response = requests.get(f"{url}/healthz")
 
+
 def test_healthz_endpoint():
     assert response.status_code == 200, f"Expected status code 200, got {response.status_code}"
     assert response.text == '{"status":"ok"}', f"Unexpected response content: {response.text}"
