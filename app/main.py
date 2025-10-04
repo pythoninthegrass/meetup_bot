@@ -421,7 +421,7 @@ def get_events(
     if not os.path.exists(json_fn) or os.stat(json_fn).st_size == 0:
         return {"message": "No events found", "events": []}
 
-    return pd.read_json(json_fn)
+    return pd.read_json(json_fn).to_dict('records')
 
 
 @api_router.get("/check-schedule")

@@ -76,6 +76,10 @@ def fmt_json(filename):
     # create dataframe
     df = pd.DataFrame(data)
 
+    # handle empty dataframe case
+    if df.empty:
+        return []
+
     # add column: 'message' with date, name, title, eventUrl
     df['message'] = df.apply(lambda x: f'• {x["date"]} *{x["name"]}* <{x["eventUrl"]}|{x["title"]}> ', axis=1)
 
