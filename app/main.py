@@ -135,12 +135,13 @@ class UserInfo(db.Entity):
 DB_PASS = DB_PASS.strip('"')
 
 # postgres db
-db.bind(provider='postgres',
-        user=DB_USER,
-        password=DB_PASS,
-        host=DB_HOST,
-        database=DB_NAME,
-        port=DB_PORT,
+db.bind(
+    provider='postgres',
+    user=DB_USER,
+    password=DB_PASS,
+    host=DB_HOST,
+    database=DB_NAME,
+    port=DB_PORT,
 )
 
 # generate mapping
@@ -364,11 +365,12 @@ def generate_token(current_user: User = Depends(get_current_active_user)):
 
 # TODO: decouple export from formatted response
 @api_router.get("/events")
-def get_events(auth: dict = Depends(ip_whitelist_or_auth),
-               location: str = "Oklahoma City",
-               exclusions: str = "Tulsa",
-               current_user: User = Depends(get_current_active_user)
-    ):
+def get_events(
+    auth: dict = Depends(ip_whitelist_or_auth),
+    location: str = "Oklahoma City",
+    exclusions: str = "Tulsa",
+    current_user: User = Depends(get_current_active_user),
+):
     """
     Query upcoming Meetup events
 
@@ -584,12 +586,7 @@ def main():
     import uvicorn
 
     try:
-        uvicorn.run("main:app",
-                    host="0.0.0.0",
-                    port=PORT,
-                    limit_max_requests=10000,
-                    log_level="warning",
-                    reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=PORT, limit_max_requests=10000, log_level="warning", reload=True)
     except KeyboardInterrupt:
         print("\nExiting...")
         sys.exit(0)

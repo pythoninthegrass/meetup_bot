@@ -22,9 +22,9 @@ pd.set_option('display.max_colwidth', None)
 base_url = "https://www.meetup.com"
 # * # anyDistance (default), twoMiles, fiveMiles, tenMiles, twentyFiveMiles, fiftyMiles, hundredMiles
 distance = "tenMiles"
-source = "GROUPS"                       # EVENTS (default), GROUPS
-category_id = "546"                     # technology groups
-location = "us--ok--Oklahoma%20City"    # OKC
+source = "GROUPS"  # EVENTS (default), GROUPS
+category_id = "546"  # technology groups
+location = "us--ok--Oklahoma%20City"  # OKC
 
 url = base_url + "/find/?distance=" + distance + "&source=" + source + "&categoryId=" + category_id + "&location=" + location
 
