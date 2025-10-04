@@ -1,5 +1,6 @@
 # ETC
 .bash_history
+.serena/
 *.db
 *.key
 *.pem
@@ -8,6 +9,7 @@
 *.sqlite
 *cache
 *report.json
+CLAUDE.md
 gen_token.py
 gitleaks_report*.json
 raw/

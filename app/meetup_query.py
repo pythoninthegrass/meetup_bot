@@ -74,8 +74,8 @@ query {
         name
         username
         memberUrl
-        upcomingEvents {
-            count
+        memberEvents(first: 10) {
+            totalCount
             pageInfo {
                 endCursor
             }
@@ -112,8 +112,8 @@ query($urlname: String!) {
         urlname
         city
         link
-        upcomingEvents(input: { first: 1 }) {
-            count
+        events(first: 10) {
+            totalCount
             pageInfo {
                 endCursor
             }
@@ -143,15 +143,21 @@ def send_request(token, query, vars) -> str:
     """
     Request
 
-    POST https://api.meetup.com/gql
+    POST https://api.meetup.com/gql-ext
     """
 
-    endpoint = 'https://api.meetup.com/gql'
+    endpoint = 'https://api.meetup.com/gql-ext'
 
     headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json; charset=utf-8'}
 
     try:
-        r = requests.post(endpoint, json={'query': query, 'variables': vars}, headers=headers)
+        # Parse vars string to JSON object if it's a string
+        if isinstance(vars, str):
+            variables = json.loads(vars)
+        else:
+            variables = vars
+        
+        r = requests.post(endpoint, json={'query': query, 'variables': variables}, headers=headers)
         print(f"{Fore.GREEN}{info:<10}{Fore.RESET}Response HTTP Response Body: {r.status_code}")
 
         # pretty prints json response content but skips sorting keys as it rearranges graphql response
@@ -180,24 +186,36 @@ def format_response(response, location: str = "Oklahoma City", exclusions: str =
 
     # TODO: add arg for `self` or `groupByUrlname`
     # extract data from json
-    try:
-        data = response_json['data']['self']['upcomingEvents']['edges']
-        if data[0]['node']['group']['city'] != location:
-            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping event outside of {location}")
-    except KeyError:
-        if response_json['data']['groupByUrlname'] is None:
-            data = ""
-            print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping group due to empty response")
-            pass
-        else:
-            data = response_json['data']['groupByUrlname']['upcomingEvents']['edges']
-            # TODO: handle no upcoming events to fallback on initial response
-            if response_json['data']['groupByUrlname']['city'] != location:
-                print(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
-                pass
+    data = None
+
+    # Check if response has expected structure
+    if 'data' not in response_json:
+        print(
+            f"{Fore.RED}{error:<10}{Fore.RESET}GraphQL response missing 'data' key. Response: {json.dumps(response_json, indent=2)[:500]}"
+        )
+        data = ""
+    else:
+        try:
+            data = response_json['data']['self']['memberEvents']['edges']
+            if data and len(data) > 0 and data[0]['node']['group']['city'] != location:
+                print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping event outside of {location}")
+        except KeyError:
+            try:
+                if response_json['data'].get('groupByUrlname') is None:
+                    data = ""
+                    print(f"{Fore.YELLOW}{warning:<10}{Fore.RESET}Skipping group due to empty response")
+                else:
+                    data = response_json['data']['groupByUrlname']['events']['edges']
+                    # TODO: handle no upcoming events to fallback on initial response
+                    if response_json['data']['groupByUrlname']['city'] != location:
+                        print(f"{Fore.RED}{error:<10}{Fore.RESET}No data for {location} found")
+            except KeyError as e:
+                print(f"{Fore.RED}{error:<10}{Fore.RESET}KeyError accessing GraphQL data: {e}")
+                print(f"{Fore.RED}{error:<10}{Fore.RESET}Response structure: {json.dumps(response_json, indent=2)[:500]}")
+                data = ""
 
     # append data to rows
-    if data is not None:
+    if data:
         for i in range(len(data)):
             df.loc[i, 'name'] = data[i]['node']['group']['name']
             df.loc[i, 'date'] = data[i]['node']['dateTime']
